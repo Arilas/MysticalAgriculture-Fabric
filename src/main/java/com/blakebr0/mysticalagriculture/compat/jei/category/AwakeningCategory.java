@@ -2,6 +2,7 @@ package com.blakebr0.mysticalagriculture.compat.jei.category;
 
 import com.blakebr0.mysticalagriculture.MysticalAgriculture;
 import com.blakebr0.mysticalagriculture.api.crafting.IAwakeningRecipe;
+import com.blakebr0.mysticalagriculture.api.crafting.IngredientWithCount;
 import com.blakebr0.mysticalagriculture.init.ModBlocks;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
@@ -19,7 +20,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 import java.util.List;
 
@@ -85,7 +85,7 @@ public class AwakeningCategory implements IRecipeCategory<RecipeHolder<IAwakenin
         builder.addSlot(RecipeIngredientRole.OUTPUT, 123, 33).add(result);
     }
 
-    private static List<ItemStack> createEssenceIngredient(SizedIngredient ingredient) {
-        return ingredient.ingredient().items().map(item -> new ItemStack(item, ingredient.count())).toList();
+    private static List<ItemStack> createEssenceIngredient(IngredientWithCount ingredient) {
+        return ingredient.ingredient().items().map(item -> new ItemStack(item.value(), ingredient.count())).toList();
     }
 }

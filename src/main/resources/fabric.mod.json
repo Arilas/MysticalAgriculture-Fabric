@@ -31,6 +31,9 @@
     ],
     "jei_mod_plugin": [
       "com.blakebr0.mysticalagriculture.compat.jei.JeiCompat"
+    ],
+    "jade": [
+      "com.blakebr0.mysticalagriculture.compat.JadeCompat"
     ]
   },
   "mixins": [

@@ -68,6 +68,6 @@ public class CruxCategory implements IRecipeCategory<CruxRecipe> {
         builder.addSlot(RecipeIngredientRole.INPUT, 1, 19).add(inputs.get(1));
         builder.addSlot(RecipeIngredientRole.INPUT, 1, 37).add(inputs.get(2));
 
-        builder.addSlot(RecipeIngredientRole.INPUT, 59, 20).add(output);
+        builder.addSlot(RecipeIngredientRole.OUTPUT, 59, 20).add(output);
     }
 }

@@ -40,7 +40,7 @@ public class SouliumSpawnerCategory implements IRecipeCategory<RecipeHolder<ISou
 
     public SouliumSpawnerCategory(IGuiHelper helper) {
         this.background = helper.createDrawable(TEXTURE, 0, 0, 82, 26);
-        this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(ModBlocks.REPROCESSOR));
+        this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(ModBlocks.SOULIUM_SPAWNER));
 
         var arrow = helper.createDrawable(TEXTURE, 85, 0, 24, 17);
 
@@ -93,7 +93,7 @@ public class SouliumSpawnerCategory implements IRecipeCategory<RecipeHolder<ISou
                 .addItemStacks(outputs)
                 .addRichTooltipCallback((slots, tooltip) -> slots.getDisplayedItemStack().ifPresent(stack -> {
                     var data = stack.get(DataComponents.CUSTOM_DATA);
-                    if (data == null || !data.contains("Weight"))
+                    if (data == null || !data.copyTag().contains("Weight"))
                         return;
 
                     var weight = data.copyTag().getIntOr("Weight", 0);

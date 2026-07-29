@@ -9,23 +9,76 @@ import com.blakebr0.mysticalagriculture.block.MysticalCropBlock;
 import com.blakebr0.mysticalagriculture.config.ModConfigs;
 import com.blakebr0.mysticalagriculture.lib.ModCrops;
 import com.blakebr0.mysticalagriculture.lib.ModTooltips;
+import com.blakebr0.mysticalagriculture.tileentity.EssenceFurnaceTileEntity;
+import com.blakebr0.mysticalagriculture.tileentity.HarvesterTileEntity;
+import com.blakebr0.mysticalagriculture.tileentity.OreInfuserTileEntity;
+import com.blakebr0.mysticalagriculture.tileentity.ReprocessorTileEntity;
+import com.blakebr0.mysticalagriculture.tileentity.SoulExtractorTileEntity;
+import com.blakebr0.mysticalagriculture.tileentity.SouliumSpawnerTileEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import snownee.jade.api.Accessor;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IBlockComponentProvider;
 import snownee.jade.api.ITooltip;
 import snownee.jade.api.IWailaClientRegistration;
+import snownee.jade.api.IWailaCommonRegistration;
 import snownee.jade.api.IWailaPlugin;
 import snownee.jade.api.WailaPlugin;
 import snownee.jade.api.config.IPluginConfig;
+import snownee.jade.api.view.IServerExtensionProvider;
+import snownee.jade.api.view.ProgressView;
+import snownee.jade.api.view.ViewGroup;
+
+import java.util.List;
+import java.util.function.ToIntFunction;
 
 @WailaPlugin
 public class JadeCompat implements IWailaPlugin {
     private static final Identifier CROP_PROVIDER = MysticalAgriculture.resource("crop");
     private static final Identifier INFERIUM_CROP_PROVIDER = MysticalAgriculture.resource("inferium_crop");
     private static final Identifier INFUSED_FARMLAND_PROVIDER = MysticalAgriculture.resource("infused_farmland");
+    private static final Identifier MACHINE_PROGRESS_PROVIDER = MysticalAgriculture.resource("machine_progress");
+
+    @Override
+    public void register(IWailaCommonRegistration registration) {
+        registration.registerProgress(progress(
+                EssenceFurnaceTileEntity.class,
+                EssenceFurnaceTileEntity::getProgress,
+                EssenceFurnaceTileEntity::getOperationTime
+        ), EssenceFurnaceTileEntity.class);
+        registration.registerProgress(progress(
+                HarvesterTileEntity.class,
+                HarvesterTileEntity::getProgress,
+                HarvesterTileEntity::getOperationTime
+        ), HarvesterTileEntity.class);
+        registration.registerProgress(progress(
+                ReprocessorTileEntity.class,
+                ReprocessorTileEntity::getProgress,
+                ReprocessorTileEntity::getOperationTime
+        ), ReprocessorTileEntity.class);
+        registration.registerProgress(progress(
+                SoulExtractorTileEntity.class,
+                SoulExtractorTileEntity::getProgress,
+                SoulExtractorTileEntity::getOperationTime
+        ), SoulExtractorTileEntity.class);
+        registration.registerProgress(progress(
+                SouliumSpawnerTileEntity.class,
+                SouliumSpawnerTileEntity::getProgress,
+                SouliumSpawnerTileEntity::getOperationTime
+        ), SouliumSpawnerTileEntity.class);
+        registration.registerProgress(progress(
+                OreInfuserTileEntity.class,
+                OreInfuserTileEntity::getProgress,
+                OreInfuserTileEntity::getOperationTime
+        ), OreInfuserTileEntity.class);
+        MysticalAgriculture.LOGGER.info(
+                "Registered Jade progress providers for 6 machines; Jade universal storage supplies item and energy views"
+        );
+    }
 
     @Override
     public void registerClient(IWailaClientRegistration registration) {
@@ -68,8 +121,8 @@ public class JadeCompat implements IWailaPlugin {
 
                 var biomes = crop.getRequiredBiomes();
                 if (!biomes.isEmpty()) {
-                    var biome = level.getBiome(pos).getKey();
-                    if (biome != null && !biomes.contains(biome.identifier())) {
+                    var biome = level.getBiome(pos).unwrapKey();
+                    if (biome.isPresent() && !biomes.contains(biome.get().identifier())) {
                         tooltip.add(ModTooltips.INVALID_BIOME.color(ChatFormatting.RED).toComponent());
                     }
                 }
@@ -120,5 +173,39 @@ public class JadeCompat implements IWailaPlugin {
                 return INFUSED_FARMLAND_PROVIDER;
             }
         }, InfusedFarmlandBlock.class);
+        MysticalAgriculture.LOGGER.info("Registered 3 Mystical Agriculture Jade block tooltip providers");
+    }
+
+    private static <T extends BlockEntity> IServerExtensionProvider<ProgressView.Data> progress(
+            Class<T> type,
+            ToIntFunction<T> progress,
+            ToIntFunction<T> target
+    ) {
+        return new IServerExtensionProvider<>() {
+            @Override
+            public List<ViewGroup<ProgressView.Data>> getGroups(Accessor<?> accessor) {
+                if (!(accessor instanceof BlockAccessor blockAccessor))
+                    return List.of();
+
+                var blockEntity = blockAccessor.getBlockEntity();
+                if (!type.isInstance(blockEntity))
+                    return List.of();
+
+                var machine = type.cast(blockEntity);
+                var current = progress.applyAsInt(machine);
+                var maximum = target.applyAsInt(machine);
+                if (current <= 0 || maximum <= 0)
+                    return List.of();
+
+                return List.of(new ViewGroup<>(List.of(
+                        new ProgressView.Data(current, 0, maximum)
+                )));
+            }
+
+            @Override
+            public Identifier getUid() {
+                return MACHINE_PROGRESS_PROVIDER;
+            }
+        };
     }
 }

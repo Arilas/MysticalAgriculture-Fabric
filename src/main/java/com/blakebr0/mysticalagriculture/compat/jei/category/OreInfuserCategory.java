@@ -1,6 +1,7 @@
 package com.blakebr0.mysticalagriculture.compat.jei.category;
 
 import com.blakebr0.mysticalagriculture.MysticalAgriculture;
+import com.blakebr0.mysticalagriculture.api.crafting.IngredientWithCount;
 import com.blakebr0.mysticalagriculture.api.crafting.IOreInfusionRecipe;
 import com.blakebr0.mysticalagriculture.init.ModBlocks;
 import mezz.jei.api.constants.VanillaTypes;
@@ -20,7 +21,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 import java.util.List;
 
@@ -83,7 +83,7 @@ public class OreInfuserCategory implements IRecipeCategory<RecipeHolder<IOreInfu
         builder.addSlot(RecipeIngredientRole.OUTPUT, 81, 5).add(result);
     }
 
-    private static List<ItemStack> createInputsList(SizedIngredient input) {
+    private static List<ItemStack> createInputsList(IngredientWithCount input) {
         return input.ingredient()
                 .items()
                 .map(item -> new ItemStack(item.value(), input.count()))

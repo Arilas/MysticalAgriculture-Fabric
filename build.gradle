@@ -17,6 +17,20 @@ println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty '
 
 repositories {
     mavenCentral()
+    maven {
+        name = "BlameJared"
+        url = "https://maven.blamejared.com"
+        content {
+            includeGroupByRegex "mezz\\.jei.*"
+        }
+    }
+    maven {
+        name = "CurseMaven"
+        url = "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
 }
 
 sourceSets {
@@ -59,6 +73,10 @@ fabricApi {
     }
 }
 
+tasks.named('runGameTest') {
+    useArgFile.set(false)
+}
+
 sourceSets.main.resources {
     exclude ".cache"
 }
@@ -93,6 +111,8 @@ configurations {
     apiSurfaceImplementation.extendsFrom implementation
     apiCompatibilityImplementation.extendsFrom implementation
     task4GametestImplementation.extendsFrom implementation
+    testCompileOnly.extendsFrom compileOnly
+    testRuntimeOnly.extendsFrom compileOnly
     task3LoaderRuntime {
         canBeConsumed = false
         canBeResolved = true
@@ -114,6 +134,17 @@ dependencies {
 
     api "teamreborn:energy:${energy_version}"
     include "teamreborn:energy:${energy_version}"
+
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}"
+    compileOnly "curse.maven:jade-324717:${jade_version}"
+
+    if (project.hasProperty("enable_jei_runtime")) {
+        localRuntime "mezz.jei:jei-${minecraft_version}-fabric:${jei_version}"
+    }
+    if (project.hasProperty("enable_jade_runtime")) {
+        localRuntime "curse.maven:jade-324717:${jade_version}"
+    }
 
     testImplementation platform("org.junit:junit-bom:5.12.2")
     testImplementation "org.junit.jupiter:junit-jupiter"
@@ -153,6 +184,7 @@ def task5MainOutput = layout.buildDirectory.dir("classes/java/task5Main")
 def task5LoaderModOutput = layout.buildDirectory.dir("task5LoaderMod")
 def task6TestOutput = layout.buildDirectory.dir("classes/java/task6Test")
 def task6MainOutput = layout.buildDirectory.dir("classes/java/task6Main")
+def task7TestOutput = layout.buildDirectory.dir("classes/java/task7Test")
 
 tasks.register('compileTask2TestJava', JavaCompile) {
     source file("src/test/java/com/blakebr0/mysticalagriculture/registry/PluginRegistryTest.java")
@@ -554,6 +586,33 @@ tasks.register('task6Test', Test) {
     useJUnitPlatform()
 }
 
+tasks.register('compileTask7TestJava', JavaCompile) {
+    dependsOn tasks.named('classes')
+    source fileTree("src/test/java/com/blakebr0/mysticalagriculture/compat") {
+        include "**/*Test.java"
+    }
+    classpath = sourceSets.main.output + configurations.compileClasspath + configurations.testCompileClasspath
+    destinationDirectory = task7TestOutput
+    options.sourcepath = files("src/test/java")
+    options.compilerArgs += ["-implicit:none"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('task7Test', Test) {
+    dependsOn tasks.named('compileTask7TestJava'), tasks.named('jar')
+    testClassesDirs = files(task7TestOutput)
+    classpath = sourceSets.main.output + sourceSets.test.runtimeClasspath + configurations.compileClasspath + files(task7TestOutput)
+    systemProperty "task7Artifact", tasks.named('jar', Jar).flatMap { it.archiveFile }.get().asFile.absolutePath
+    useJUnitPlatform()
+}
+
+tasks.named('test') {
+    // Tasks 2-7 run their loader/API/client/compat contracts on isolated classpaths below.
+    include "**/config/ModConfigsTest.class"
+}
+
 sourceSets {
     task6Client {
         java.srcDirs = []
@@ -670,7 +729,15 @@ tasks.withType(Test).configureEach {
 }
 
 tasks.named('check') {
-    dependsOn tasks.named('compileApiCompatibilityJava')
+    dependsOn tasks.named('compileApiCompatibilityJava'),
+            tasks.named('task2Test'),
+            tasks.named('task3Test'),
+            tasks.named('task3LoaderTest'),
+            tasks.named('task4Test'),
+            tasks.named('task4LoaderTest'),
+            tasks.named('task5Test'),
+            tasks.named('task6Test'),
+            tasks.named('task7Test')
 }
 
 tasks.withType(JavaCompile).configureEach {
