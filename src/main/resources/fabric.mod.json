@@ -34,6 +34,9 @@
     ],
     "jade": [
       "com.blakebr0.mysticalagriculture.compat.JadeCompat"
+    ],
+    "cucumber:feature_flags": [
+      "com.blakebr0.mysticalagriculture.config.ModFeatureFlags"
     ]
   },
   "mixins": [

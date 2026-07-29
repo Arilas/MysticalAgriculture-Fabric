@@ -17,6 +17,10 @@ public class FlightAugment extends Augment {
     public void onPlayerTick(ServerPlayer player, AbilityCache cache) {
         var abilities = player.getAbilities();
 
+        if (cache.isCached(this, player) && !abilities.mayfly) {
+            cache.removeQuietly(this, player);
+        }
+
         if (!cache.isCached(this, player)) {
             var couldAlreadyFly = abilities.mayfly;
             abilities.mayfly = true;

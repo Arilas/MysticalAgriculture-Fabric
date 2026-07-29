@@ -16,6 +16,7 @@ import com.blakebr0.mysticalagriculture.item.armor.EssenceChestplateItem;
 import com.blakebr0.mysticalagriculture.lib.ModAugments;
 import com.blakebr0.mysticalagriculture.lib.ModCrops;
 import com.blakebr0.mysticalagriculture.lib.ModMobSoulTypes;
+import com.blakebr0.cucumber.util.FeatureFlag;
 import com.mojang.authlib.GameProfile;
 import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
@@ -58,6 +59,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class GameplayGameTests {
+    @GameTest
+    public void cucumberDiscoversConfigBoundFeatureFlagsThroughFabricEntrypoint(GameTestHelper helper) {
+        require(
+                FeatureFlag.from(MysticalAgriculture.resource("dragon_drops_essence")).isEnabled(),
+                "Cucumber did not discover the default-enabled Mystical Agriculture feature flag"
+        );
+        require(
+                !FeatureFlag.from(MysticalAgriculture.resource("seed_crafting_recipes")).isEnabled(),
+                "the discovered feature flag ignored its default-disabled config value"
+        );
+        helper.succeed();
+    }
+
     @GameTest
     public void experienceCapsuleAbsorbsOrbValueBeforeVanillaExperience(GameTestHelper helper) {
         var player = helper.makeMockServerPlayerInLevel();
@@ -245,6 +259,27 @@ public final class GameplayGameTests {
         require(player.getAbilities().mayfly, "the augment revoked flight that it did not grant");
         require(ModAugments.NO_FALL_DAMAGE.onPlayerFall(player, 100.0F),
                 "the no-fall augment did not veto server fall damage");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void flightAugmentRegrantsAfterVanillaClearsFlight(GameTestHelper helper) {
+        var player = makePermissionPlayer(helper, _ -> true);
+        var cache = new AbilityCache();
+        var augment = new FlightAugment(MysticalAgriculture.resource("gametest_flight_reset"), 5);
+
+        player.getAbilities().mayfly = true;
+        augment.onPlayerTick(player, cache);
+
+        player.getAbilities().mayfly = false;
+        augment.onPlayerTick(player, cache);
+
+        require(player.getAbilities().mayfly,
+                "the equipped flight augment did not recover after vanilla cleared mayfly");
+
+        cache.remove(augment, player);
+        require(!player.getAbilities().mayfly,
+                "the refreshed flight augment ownership was not revoked on removal");
         helper.succeed();
     }
 

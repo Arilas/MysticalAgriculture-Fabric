@@ -24,7 +24,7 @@ external server EULA was touched.
 
 ## Automated gameplay and persistence
 
-- [x] 39 integrated Fabric GameTests pass.
+- [x] 41 integrated Fabric GameTests pass.
 - [x] Essence Furnace, Seed Reprocessor, Soul Extractor, and Ore Infuser
   execute real production recipes across progress save/reload, with upgrade
   timing and exact input/output assertions.

@@ -47,7 +47,7 @@ Generator cache manifests are ignored and excluded from artifacts.
 | Machines and storage | NeoForge item/energy capabilities | Fabric Transfer API sided storage and Team Reborn Energy with transaction rollback/commit semantics | Storage unit tests and integrated GameTests | Inventory, energy, progress, upgrade and output keys retained; Harvester reads legacy fuel key |
 | Menus | NeoForge extended menu factories | Fabric extended menu codecs with level-aware block-entity validation | Menu boundary and integrated Spawner transfer tests | Container IDs and save data unaffected |
 | Networking and reload | NeoForge payload registration/events | Fabric typed payload codecs, server validation, login/reload synchronization and disconnect cleanup | Payload/AOE tests, client state tests, real `/reload` | Wire protocol is loader-specific; server remains authoritative |
-| Gameplay callbacks | NeoForge event bus/capability hooks | Fabric events plus two narrow mixins for XP pickup and item attribute iteration | 20 production-backed gameplay GameTests | Gameplay intent and component/save IDs retained |
+| Gameplay callbacks | NeoForge event bus/capability hooks | Fabric events plus two narrow mixins for XP pickup and item attribute iteration | 22 production-backed gameplay GameTests | Gameplay intent and component/save IDs retained |
 | Client | NeoForge client events/extensions | Fabric screen, renderer, model-loading, tint, tooltip, HUD and key callbacks | Client contracts, standard title/resource reload, four real world joins | No save impact; unchecked visual presentation remains manual |
 | JEI | NeoForge JEI plugin | Fabric JEI discovery; nine serializers explicitly synchronize recipes | API/layout tests and JEI world join with nonzero recipe counts | Optional, no save impact |
 | Jade | NeoForge Waila bridge | Fabric Jade plugin with native item, energy and progress providers | Provider tests and Jade world join | Optional, read-only, no save impact |
@@ -81,7 +81,7 @@ Generator cache manifests are ignored and excluded from artifacts.
 ## Final executable and artifact evidence
 
 - Java 25 clean build: 92 JUnit tests passed with zero failures, errors, or
-  skips; all 39 required integrated server GameTests passed.
+  skips; all 41 required integrated server GameTests passed.
 - Standalone `runGameTest`, real integrated `runClientGameTest`, and
   API-consumer compatibility compilation passed. The client test covered join,
   `/reload`, disconnect cleanup, and reopening the same save with coherent

@@ -10,6 +10,9 @@
     ],
     "fabric-gametest": [
       "com.blakebr0.mysticalagriculture.gametest.GameplayGameTests"
+    ],
+    "cucumber:feature_flags": [
+      "com.blakebr0.mysticalagriculture.config.ModFeatureFlags"
     ]
   },
   "mixins": [

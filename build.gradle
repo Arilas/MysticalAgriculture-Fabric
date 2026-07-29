@@ -467,6 +467,7 @@ tasks.register('compileTask5Java', JavaCompile) {
     source file("src/main/java/com/blakebr0/mysticalagriculture/MysticalAgriculture.java")
     source file("src/main/java/com/blakebr0/mysticalagriculture/MysticalAgricultureClient.java")
     source file("src/main/java/com/blakebr0/mysticalagriculture/client/handler/MachineUpgradeTooltipHandler.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/config/ModFeatureFlags.java")
     source file("src/main/java/com/blakebr0/mysticalagriculture/handler/AugmentHandler.java")
     source file("src/main/java/com/blakebr0/mysticalagriculture/handler/ExperienceCapsuleHandler.java")
     source file("src/main/java/com/blakebr0/mysticalagriculture/handler/MobDropHandler.java")

@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: Arilas/Cucumber
-          ref: fabric/26.2
+          ref: 598ee054d6d6826b8c150d32e7bf46ca412d0ff1
           path: Cucumber-Fabric
           persist-credentials: false
 

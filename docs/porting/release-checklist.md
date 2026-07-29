@@ -1,7 +1,6 @@
 # Fabric 26.2 release checklist
 
-No tag or release may be created from this checklist without a separate release
-decision.
+Release publication was approved on 2026-07-30.
 
 ## Source and ancestry
 
@@ -40,12 +39,12 @@ decision.
 - [x] `fabric.mod.json` version/dependencies/contact links verified.
 - [x] Release and sources JAR SHA-256 recorded:
   - release:
-    `dd2da86f6c5d9c383aa50bc3c5016c3611d68e7c4ce61418e12584bdd640a007`
+    `c8a4b7ba16bd0901bbdf26b5d061ae335a89081c077d663243515cb2c11deee1`
   - sources:
-    `c4bb0bdf4cc3132ed8c16231c74c12b001a88b1df8336534d9707916797147e1`
+    `95b399cc18657ac38e58c077378c62153a67ae3e20e8ede0ea02d77f38c80ad3`
 
 The inspected release JAR has 4,360 entries and contains one declared embedded
-dependency, Team Reborn Energy 5.0.0. The clean-clone sources JAR has 4,311
+dependency, Team Reborn Energy 5.0.0. The sources JAR has 4,313
 entries. JEI and Jade integration classes/resources are part of Mystical
 Agriculture, but their API implementation packages are not bundled.
 
@@ -64,5 +63,5 @@ Agriculture, but their API implementation packages are not bundled.
 - [ ] Complete unchecked end-to-end gameplay items in
   `server-smoke-checklist.md`.
 
-Suggested future tag after approval:
-`26.2-9.0.4+fabric.1`.
+Approved release tag, matching the Cucumber Fabric convention:
+`v9.0.4+fabric.1-mc26.2`.
