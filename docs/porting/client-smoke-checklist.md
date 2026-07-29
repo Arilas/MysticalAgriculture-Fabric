@@ -61,9 +61,11 @@ registration or compilation alone is not treated as a completed UI interaction.
   types. The ResourceManager reload completed through all texture-atlas
   creation, and the process remained running at the title screen until stopped.
 - The focused launch runtime classpath points directly at
-  `build/classes/java/task6Main`. A clean-build launch emitted no
-  `Class path entries reference missing files` warning, and the generated
-  argument file contains no `build/classes/java/task6Client` entry.
+  `build/classes/java/task6Main` and producer-backed
+  `build/resources/task6Client`. Clean launches with and without configuration
+  cache emitted no missing-classpath/resource warning. The focused run uses
+  Loom's bare-classpath mode, so it no longer depends on an undeclared
+  argument-file side effect across `clean` and configuration-cache reuse.
 - The focused runtime intentionally contained neither JEI nor Jade. No missing
   compatibility entrypoint or optional-mod exception occurred.
 - The first runtime pass exposed a missing `particle` reference in the

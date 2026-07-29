@@ -565,13 +565,17 @@ configurations {
     task6ClientImplementation.extendsFrom implementation
 }
 
+def task6MainRuntimeOutput = files(task6MainOutput) {
+    builtBy tasks.named('compileTask6Java')
+}
+def task6ClientRuntimeResources = files(sourceSets.task6Client.output.resourcesDir) {
+    builtBy tasks.named('processTask6ClientResources')
+}
+
 sourceSets.task6Client.compileClasspath =
         configurations.compileClasspath + files(task6MainOutput)
 sourceSets.task6Client.runtimeClasspath =
-        configurations.runtimeClasspath + files(
-                task6MainOutput,
-                sourceSets.task6Client.output.resourcesDir
-        )
+        configurations.runtimeClasspath + task6MainRuntimeOutput + task6ClientRuntimeResources
 
 loom {
     mods {
@@ -589,13 +593,19 @@ loom {
 }
 
 tasks.named('runTask6FocusedClient') {
-    dependsOn tasks.named('compileTask6Java')
+    dependsOn task6MainRuntimeOutput, task6ClientRuntimeResources
+    useArgFile.set(false)
 }
 
 tasks.register('verifyTask6FocusedClientClasspath') {
-    dependsOn tasks.named('compileTask6Java'), tasks.named('processTask6ClientResources')
-    inputs.files(tasks.named('runTask6FocusedClient').get().classpath)
+    var runTask = tasks.named('runTask6FocusedClient').get()
+
+    dependsOn runTask.taskDependencies
+    inputs.files(runTask.classpath)
     inputs.property('expectedTask6MainOutput', task6MainOutput.map { it.asFile.absolutePath })
+    inputs.property('expectedTask6ResourcesOutput', layout.buildDirectory.dir('resources/task6Client').map { it.asFile.absolutePath })
+    inputs.property('usesArgFile', runTask.useArgFile)
+    inputs.property('runTaskArgFile', layout.buildDirectory.file('loom-cache/argFiles/runTask6FocusedClient').map { it.asFile.absolutePath })
 
     doLast { task ->
         var classpath = task.inputs.files.files
@@ -607,6 +617,35 @@ tasks.register('verifyTask6FocusedClientClasspath') {
         var expected = new File(task.inputs.properties.expectedTask6MainOutput)
         if (!classpath.contains(expected)) {
             throw new GradleException("Focused client classpath omits compiled Task 6 output: ${expected}")
+        }
+
+        var resources = new File(task.inputs.properties.expectedTask6ResourcesOutput)
+        if (!classpath.contains(resources)) {
+            throw new GradleException("Focused client classpath omits processed Task 6 resources: ${resources}")
+        }
+
+        if (task.inputs.properties.usesArgFile) {
+            var argFile = new File(task.inputs.properties.runTaskArgFile)
+            if (!argFile.isFile()) {
+                throw new GradleException("Focused client run task did not generate its argument file: ${argFile}")
+            }
+
+            var arguments = argFile.readLines()
+            var classpathIndex = arguments.indexOf('-classpath')
+            if (classpathIndex < 0 || classpathIndex + 1 >= arguments.size()) {
+                throw new GradleException("Focused client argument file does not contain a classpath: ${argFile}")
+            }
+
+            var argumentClasspath = arguments[classpathIndex + 1]
+                    .split(java.util.regex.Pattern.quote(File.pathSeparator))
+                    .collect { new File(it) }
+            var missingArgumentEntries = argumentClasspath.findAll { !it.exists() }
+            if (!missingArgumentEntries.isEmpty()) {
+                throw new GradleException("Focused client argument file contains missing entries: ${missingArgumentEntries}")
+            }
+            if (!argumentClasspath.contains(expected) || !argumentClasspath.contains(resources)) {
+                throw new GradleException("Focused client argument file omits Task 6 output or resources: ${argFile}")
+            }
         }
     }
 }
