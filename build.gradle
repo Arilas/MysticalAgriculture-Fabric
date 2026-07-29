@@ -69,11 +69,11 @@ fabricApi {
         createSourceSet = true
         modId = "mysticalagriculture-gametest"
         enableGameTests = true
-        enableClientGameTests = false
+        enableClientGameTests = true
     }
 }
 
-['runClient', 'runServer', 'runGameTest', 'runDatagen'].each { runTaskName ->
+['runClient', 'runServer', 'runGameTest', 'runClientGameTest', 'runDatagen'].each { runTaskName ->
     tasks.named(runTaskName) {
         // Loom's generated argfile lives under build/, so a clean task in the
         // same graph can delete it after launch configuration has run.
@@ -641,6 +641,8 @@ tasks.register('task7LoaderTest', Test) {
 tasks.named('test') {
     // Tasks 2-7 run their loader/API/client/compat contracts on isolated classpaths below.
     include "**/config/ModConfigsTest.class"
+    include "**/porting/ParityCategoryRulesTest.class"
+    systemProperty "portingRepoRoot", rootProject.projectDir.absolutePath
 }
 
 sourceSets {

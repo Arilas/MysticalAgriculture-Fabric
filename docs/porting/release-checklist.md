@@ -10,7 +10,7 @@ decision.
   `cc1e1a3e9efdb8e9b8e327e9f5e6723fc4d15462`.
 - [x] No upstream `26.2` branch existed at the audit.
 - [x] The pinned upstream commit is an ancestor of `fabric/26.2`.
-- [ ] Cucumber commit `598ee054d6d6826b8c150d32e7bf46ca412d0ff1`
+- [x] Cucumber commit `598ee054d6d6826b8c150d32e7bf46ca412d0ff1`
   is present on remote `Arilas/Cucumber` branch `fabric/26.2`.
 
 ## Verification
@@ -21,12 +21,14 @@ decision.
   unstaged diff.
 - [x] `./gradlew clean build`
 - [x] `./gradlew runGameTest`
+- [x] `./gradlew runClientGameTest`
 - [x] `./gradlew compileApiCompatibilityJava`
 - [x] Standard client survives `clean` both with a new and reused
   configuration-cache entry.
 - [x] Dedicated server loads, reloads, saves, stops, and restarts the retained
   world.
-- [ ] Clean-room sibling clone build and GameTest pass from remote branches.
+- [x] Clean-room sibling clone build and server/client GameTests pass from
+  remote branches.
 
 ## Artifact
 
@@ -40,18 +42,18 @@ decision.
   - release:
     `dd2da86f6c5d9c383aa50bc3c5016c3611d68e7c4ce61418e12584bdd640a007`
   - sources:
-    `2d0b932ba59bf42264d825839dde0fef152f5610d7ca32831a968029fb5a3605`
+    `c4bb0bdf4cc3132ed8c16231c74c12b001a88b1df8336534d9707916797147e1`
 
 The inspected release JAR has 4,360 entries and contains one declared embedded
-dependency, Team Reborn Energy 5.0.0. The sources JAR has 4,313 entries. JEI
-and Jade integration classes/resources are part of Mystical Agriculture, but
-their API implementation packages are not bundled.
+dependency, Team Reborn Energy 5.0.0. The clean-clone sources JAR has 4,311
+entries. JEI and Jade integration classes/resources are part of Mystical
+Agriculture, but their API implementation packages are not bundled.
 
-## Publication blockers
+## Publication readiness
 
-- [ ] Push the required Cucumber commit after explicit approval.
-- [ ] Push this branch after the Cucumber dependency is available remotely.
-- [ ] Run the clean-room sibling-clone build and GameTests from those remote
+- [x] Push the required Cucumber commit after explicit approval.
+- [x] Push this branch after the Cucumber dependency is available remotely.
+- [x] Run the clean-room sibling-clone build and server/client GameTests from those remote
   branches.
 
 ## Manual debt

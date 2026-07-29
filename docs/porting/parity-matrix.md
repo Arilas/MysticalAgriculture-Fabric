@@ -2,12 +2,14 @@
 
 Baseline: upstream `26.1` commit
 `cc1e1a3e9efdb8e9b8e327e9f5e6723fc4d15462`.
+Audited port snapshot:
+`14e9e7a58f36ecccd48127fdd88d0d4b745d894f`.
 
-The audit classifies every path changed from that baseline through the Task 8
-handoff. The categories below are disjoint and exhaustive: 893 changed files,
-zero unreviewed. Generated JSON was parsed with `jq`; production source and
-resources were searched for NeoForge loader symbols; executable suites and
-runtime evidence are listed per subsystem.
+The categories below are ordered, disjoint, and exhaustive for that snapshot:
+893 changed files, zero unreviewed. `ParityCategoryRulesTest` runs the same
+rules against the Git diff, fails on zero or multiple matches, and pins every
+aggregate below. Generated/resource families remain covered by their schema and
+datagen contracts instead of a duplicated 893-row manifest.
 
 ## Exhaustive file classification
 
@@ -25,11 +27,12 @@ runtime evidence are listed per subsystem.
 
 Data detail: 136 generated recipe resources, five deleted stale upstream
 datagen cache manifests, and 459 main data-resource files changed. All current
-JSON parses; 592 files use Fabric resource conditions and none use a NeoForge
-condition/type. Three deleted biome-modifier JSON files are replaced by Fabric
-biome modifications. The two remaining `#forge:` strings are intentional
-legacy cross-loader material tag aliases, not loader metadata. Generator cache
-manifests are ignored and excluded from artifacts.
+JSON parses; 590 recipe files declare Fabric load conditions and two dagger
+recipes use Fabric's `fabric:components` custom-ingredient schema. None uses a
+NeoForge condition/type. Three deleted biome-modifier JSON files are replaced
+by Fabric biome modifications. The two remaining `#forge:` strings are
+intentional legacy cross-loader material tag aliases, not loader metadata.
+Generator cache manifests are ignored and excluded from artifacts.
 
 ## Behavioral parity and intentional differences
 
@@ -39,7 +42,7 @@ manifests are ignored and excluded from artifacts.
 | Registries | Deferred holders and register events | Direct vanilla registration in deterministic order with duplicate/freeze diagnostics; dynamic crops retain upstream all-essence then all-seed order | Registry tests and real startup counts | Registry IDs stable; add-ons must register during plugin lifecycle |
 | Plugin discovery | NeoForge annotation/scan integration | Fabric `mysticalagriculture:plugin` entrypoint; legacy annotation is deprecated because Fabric cannot scan it safely | 18 plugin/registry tests, including fatal-error propagation | Add-ons add a Fabric metadata entrypoint; API objects/IDs retained |
 | Public recipe API | NeoForge `SizedIngredient` | Loader-neutral `IngredientWithCount` with map/network codecs | API consumer compile; codec and loader tests | Source signature change is necessary to remove NeoForge API; serialized count/ingredient fields retained |
-| Conditions and data | NeoForge conditions and biome modifiers | Fabric conditions and biome modification API | Datagen execution, JSON parse, 592-condition inventory, server datapack load | Recipe IDs/results retained; no save impact |
+| Conditions and data | NeoForge conditions and biome modifiers | Fabric conditions and biome modification API | Datagen execution, JSON parse, 590 condition files plus 2 custom-ingredient schema files, server datapack load | Recipe IDs/results retained; no save impact |
 | Enchanter matching | NeoForge matcher accepts unordered inputs; remaining stacks were positional | Fabric backtracking match and consumption use the same assignment, preventing wrong-slot consumption | Red/green unordered-consumption regression | Correctness fix; recipe/save format unchanged |
 | Machines and storage | NeoForge item/energy capabilities | Fabric Transfer API sided storage and Team Reborn Energy with transaction rollback/commit semantics | Storage unit tests and integrated GameTests | Inventory, energy, progress, upgrade and output keys retained; Harvester reads legacy fuel key |
 | Menus | NeoForge extended menu factories | Fabric extended menu codecs with level-aware block-entity validation | Menu boundary and integrated Spawner transfer tests | Container IDs and save data unaffected |
@@ -68,7 +71,7 @@ manifests are ignored and excluded from artifacts.
   now that the complete source set compiles.
 - Compiler warnings: local unchecked Jade proxy warnings were isolated to typed
   cast helpers. Remaining warnings are inventoried API deprecations (Minecraft,
-  Fabric resource reload, Cucumber, JEI), four removal warnings for the only
+  Fabric resource reload, Cucumber, JEI), five removal warnings for the only
   GameTest helper that returns a `ServerPlayer`, one generic test-registry
   bridge cast, and JOML's Java 25 `Unsafe` warning. None is hidden in production
   with a blanket suppression.
@@ -77,19 +80,22 @@ manifests are ignored and excluded from artifacts.
 
 ## Final executable and artifact evidence
 
-- Java 25 clean build: 91 JUnit tests passed with zero failures, errors, or
-  skips; all 33 required integrated GameTests passed.
-- Standalone `runGameTest` and API-consumer compatibility compilation passed.
+- Java 25 clean build: 92 JUnit tests passed with zero failures, errors, or
+  skips; all 39 required integrated server GameTests passed.
+- Standalone `runGameTest`, real integrated `runClientGameTest`, and
+  API-consumer compatibility compilation passed. The client test covered join,
+  `/reload`, disconnect cleanup, and reopening the same save with coherent
+  synchronized recipe/cache/color state.
 - Datagen reported 1,061 old and new resources, removed zero stale resources,
   and wrote zero files on the second run.
-- The release JAR contains 4,360 entries and the sources JAR contains 4,313.
+- The release JAR contains 4,360 entries and the clean-clone sources JAR
+  contains 4,311.
   Both expanded artifacts were scanned for NeoForge residue, development/run
   files, generated caches, absolute local paths, test classes, and vendored
   JEI/Jade API packages. No forbidden content remains.
 - Release SHA-256:
   `dd2da86f6c5d9c383aa50bc3c5016c3611d68e7c4ce61418e12584bdd640a007`.
   Sources SHA-256:
-  `2d0b932ba59bf42264d825839dde0fef152f5610d7ca32831a968029fb5a3605`.
-- Remote sibling-clone verification remains blocked until the already-tested
-  Cucumber commit is explicitly approved for push; it is not inferred from
-  the local composite build.
+  `c4bb0bdf4cc3132ed8c16231c74c12b001a88b1df8336534d9707916797147e1`.
+- Remote sibling-clone CI run `30485870564` passed from the pushed Cucumber and
+  Mystical Agriculture Fabric branches.

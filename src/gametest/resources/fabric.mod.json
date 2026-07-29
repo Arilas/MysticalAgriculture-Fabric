@@ -5,9 +5,13 @@
   "name": "Mystical Agriculture Game Tests",
   "environment": "*",
   "entrypoints": {
+    "fabric-client-gametest": [
+      "com.blakebr0.mysticalagriculture.gametest.ClientSynchronizationGameTest"
+    ],
     "fabric-gametest": [
       "com.blakebr0.mysticalagriculture.gametest.MachineStorageGameTests",
       "com.blakebr0.mysticalagriculture.gametest.MachinePersistenceGameTests",
+      "com.blakebr0.mysticalagriculture.gametest.MachineOperationGameTests",
       "com.blakebr0.mysticalagriculture.gametest.GameplayGameTests"
     ]
   },

@@ -39,10 +39,10 @@ registration or compilation alone is not treated as a completed UI interaction.
 - [x] Holding an arrow does not repeatedly send AOE offset payloads.
 - [ ] Holding control shows the AOE block outline.
 - [x] Recipe lists/maps populate after recipe synchronization.
-- [ ] Ingredient-cache and essence-color payloads update client state.
+- [x] Ingredient-cache and essence-color payloads update client state.
 - [ ] Resource reload preserves functional models, tints, and overlays.
 - [x] Disconnect clears recipe/cache/color client state.
-- [ ] Reconnect repopulates recipe/cache/color client state without duplicate callbacks.
+- [x] Reconnect repopulates recipe/cache/color client state without duplicate callbacks.
 - [x] Client remains safe with JEI and Jade absent.
 
 ## Evidence
@@ -55,6 +55,13 @@ registration or compilation alone is not treated as a completed UI interaction.
   Fabric tooltip factory, model-plugin idempotency, AOE key-edge behavior,
   equipment layer JSON, item-definition schema, and standalone staff particle
   texture, and disconnect cleanup of recipe/cache/color state.
+- `./gradlew runClientGameTest --rerun-tasks --console=plain` passed in the
+  built-in Fabric client GameTest runtime. It created and joined a real
+  integrated world, observed nonzero synchronized recipes, ingredient-cache
+  types/items, and four essence-vessel colors. Test-only receiver probes wrapped
+  the registered production receivers and observed exactly one cache payload
+  and one color payload on each join/reload/rejoin. The test also verified
+  disconnect cleanup and coherent repopulation when reopening the same save.
 - `./gradlew runTask6FocusedClient --console=plain` launched Minecraft 26.2 with
   Java 25 and Loader 0.19.3. Mystical Agriculture registered its plug-in and
   loaded 136 crops, 6 crop tiers, 2 crop types, 55 augments, and 23 mob soul
