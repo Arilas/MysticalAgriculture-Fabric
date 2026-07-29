@@ -18,16 +18,20 @@ import com.blakebr0.mysticalagriculture.container.SouliumSpawnerContainer;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
 import com.blakebr0.mysticalagriculture.util.RecipeIngredientCache;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.random.Weighted;
 import net.minecraft.world.Containers;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.Mob;
@@ -42,16 +46,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements MenuProvider, IUpgradeableMachine {
+public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements ExtendedMenuProvider<BlockPos>, IUpgradeableMachine {
     private static final int INPUT_SLOT = 0;
     private static final int FUEL_SLOT = 1;
 
@@ -81,7 +83,7 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
     public SouliumSpawnerTileEntity(BlockPos pos, BlockState state) {
         super(ModTileEntities.SOULIUM_SPAWNER, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.onInventoryChanged(), this::getLevel);
-        this.upgradeInventory = new MachineUpgradeItemStackHandler();
+        this.upgradeInventory = new MachineUpgradeItemStackHandler((_, _) -> this.setChanged());
         this.energy = new CEnergyStorage(FUEL_CAPACITY, _ -> this.setChangedFast());
         this.sidedInventoryWrappers = SidedInventoryWrapper.create(this.inventory, List.of(Direction.UP, Direction.DOWN, Direction.NORTH), this::canInsertStackSided, null);
         this.recipe = new CachedRecipe<>(ModRecipeTypes.SOULIUM_SPAWNER);
@@ -111,6 +113,14 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
         this.recipeId = input.read("recipe_id", Identifier.CODEC).orElse(null);
         this.energy.deserialize(input.childOrEmpty("energy"));
         this.upgradeInventory.deserialize(input.childOrEmpty("upgrade_inventory"));
+
+        if (this.level != null) {
+            if (this.level.isClientSide()) {
+                this.reloadDisplayEntities();
+            } else {
+                this.reloadActiveRecipe();
+            }
+        }
     }
 
     @Override
@@ -121,26 +131,18 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
         output.putInt("fuel_left", this.fuelLeft);
         output.putInt("fuel_item_value", this.fuelItemValue);
         output.storeNullable("recipe_id", Identifier.CODEC, this.recipeId);
-        output.putChild("energy", this.energy);
-        output.putChild("upgrade_inventory", this.upgradeInventory);
+        this.energy.serialize(output.child("energy"));
+        this.upgradeInventory.serialize(output.child("upgrade_inventory"));
     }
 
     @Override
-    public void onLoad() {
-        super.onLoad();
-        this.reloadActiveRecipe();
-    }
-
-    @Override
-    public void onDataPacket(Connection net, ValueInput input) {
-        super.onDataPacket(net, input);
-        this.reloadDisplayEntities();
-    }
-
-    @Override
-    public void handleUpdateTag(ValueInput input) {
-        super.handleUpdateTag(input);
-        this.reloadDisplayEntities();
+    public void setLevel(Level level) {
+        super.setLevel(level);
+        if (level.isClientSide()) {
+            this.reloadDisplayEntities();
+        } else {
+            this.reloadActiveRecipe();
+        }
     }
 
     @Override
@@ -158,6 +160,11 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
     }
 
     @Override
+    public BlockPos getScreenOpeningData(ServerPlayer player) {
+        return this.getBlockPos().immutable();
+    }
+
+    @Override
     public AbstractContainerMenu createMenu(int id, Inventory playerInventory, Player player) {
         return new SouliumSpawnerContainer(id, playerInventory, this.inventory, this.upgradeInventory, this.dataAccess, this.getBlockPos());
     }
@@ -172,23 +179,26 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
         this.upgradeInventory.clear();
     }
 
-    public ItemStacksResourceHandler getSidedInventory(Direction direction) {
-        if (direction == null) direction = Direction.NORTH;
+    public @Nullable Storage<ItemVariant> getSidedInventory(@Nullable Direction direction) {
+        if (direction == null) {
+            return null;
+        }
 
-        return switch (direction) {
+        var wrapper = switch (direction) {
             case UP -> this.sidedInventoryWrappers[0];
             case DOWN -> this.sidedInventoryWrappers[1];
             default -> this.sidedInventoryWrappers[2];
         };
+        return ContainerStorage.of(wrapper, direction);
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, SouliumSpawnerTileEntity tile) {
         if (tile.energy.getAmountAsInt() < tile.energy.getCapacityAsInt()) {
             var fuel = tile.inventory.getResource(FUEL_SLOT);
 
-            try (var tx = Transaction.openRoot()) {
-                if (tile.fuelLeft <= 0 && !fuel.isEmpty()) {
-                    tile.fuelItemValue = fuel.toStack().getBurnTime(null, level.fuelValues());
+            try (var tx = Transaction.openOuter()) {
+                if (tile.fuelLeft <= 0 && !fuel.isBlank()) {
+                    tile.fuelItemValue = level.fuelValues().burnDuration(fuel.toStack());
 
                     if (tile.fuelItemValue > 0) {
                         tile.fuelLeft = tile.fuelItemValue *= FUEL_TICK_MULTIPLIER;
@@ -235,7 +245,7 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
         if (tile.energy.getAmountAsInt() >= tile.getFuelUsage() && !isDisabled) {
             var input = tile.inventory.getResource(INPUT_SLOT);
 
-            if (!input.isEmpty()) {
+            if (!input.isBlank()) {
                 var recipe = tile.getActiveRecipe();
                 var amount = tile.inventory.getAmountAsInt(INPUT_SLOT);
 
@@ -243,7 +253,7 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
                     tile.isRunning = true;
                     tile.progress++;
 
-                    try (var tx = Transaction.openRoot()) {
+                    try (var tx = Transaction.openOuter()) {
                         tile.energy.extract(tile.getFuelUsage(), tx);
 
                         if (tile.progress >= tile.getOperationTime()) {
@@ -315,6 +325,10 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
         return this.recipe.get();
     }
 
+    public @Nullable Identifier getActiveRecipeId() {
+        return this.recipeId;
+    }
+
     public CEnergyStorage getEnergy() {
         return this.energy;
     }
@@ -378,7 +392,7 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
         if (entity == null)
             return false;
 
-        var entities = this.level.getEntitiesOfClass(entity.getClass(), AABB.ofSize(this.getBlockPos().getCenter(), SPAWN_RADIUS * 2, SPAWN_RADIUS * 2, SPAWN_RADIUS * 2))
+        var entities = this.level.getEntitiesOfClass(entity.getClass(), AABB.ofSize(Vec3.atCenterOf(this.getBlockPos()), SPAWN_RADIUS * 2, SPAWN_RADIUS * 2, SPAWN_RADIUS * 2))
                 .stream()
                 .filter(Entity::isAlive)
                 .count();
@@ -500,7 +514,7 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
         }
     }
 
-    private boolean canInsertStackSided(int slot, ItemResource resource, Direction direction) {
+    private boolean canInsertStackSided(int slot, ItemVariant resource, Direction direction) {
         var stack = resource.toStack();
         if (direction == null)
             return true;

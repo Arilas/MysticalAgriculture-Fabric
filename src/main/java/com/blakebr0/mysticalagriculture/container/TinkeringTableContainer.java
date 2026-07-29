@@ -8,9 +8,7 @@ import com.blakebr0.mysticalagriculture.container.slot.AugmentSlot;
 import com.blakebr0.mysticalagriculture.container.slot.ElementSlot;
 import com.blakebr0.mysticalagriculture.container.slot.TinkerableSlot;
 import com.blakebr0.mysticalagriculture.init.ModMenuTypes;
-import com.blakebr0.mysticalagriculture.tileentity.TinkeringTableTileEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -19,10 +17,6 @@ import net.minecraft.world.item.ItemStack;
 
 public class TinkeringTableContainer extends BaseContainerMenu {
     private final CItemStacksHandler inventory;
-
-    public TinkeringTableContainer(int id, Inventory playerInventory, RegistryFriendlyByteBuf buffer) {
-        this(id, playerInventory, TinkeringTableTileEntity.createInventoryHandler(), buffer.readBlockPos());
-    }
 
     public TinkeringTableContainer(int id, Inventory playerInventory, CItemStacksHandler inventory, BlockPos pos) {
         super(ModMenuTypes.TINKERING_TABLE, id, pos);
@@ -52,13 +46,13 @@ public class TinkeringTableContainer extends BaseContainerMenu {
     public void slotsChanged(Container inventory) {
         var tinkerable = this.inventory.getResource(0);
 
-        if (!tinkerable.isEmpty()) {
+        if (!tinkerable.isBlank()) {
             for (int i = 0; i < 2; i++) {
                 var stack = this.inventory.getResource(i + 1);
                 var item = stack.getItem();
                 var augmentInSlot = AugmentUtils.getAugment(tinkerable, i);
 
-                if (!stack.isEmpty() && item instanceof IAugmentProvider) {
+                if (!stack.isBlank() && item instanceof IAugmentProvider) {
                     var augment = ((IAugmentProvider) item).getAugment();
                     if (augment != augmentInSlot)
                        this.inventory.set(0, AugmentUtils.addAugment(tinkerable, augment, i), 1);

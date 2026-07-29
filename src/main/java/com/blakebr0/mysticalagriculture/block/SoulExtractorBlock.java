@@ -5,6 +5,7 @@ import com.blakebr0.cucumber.helper.BlockHelper;
 import com.blakebr0.cucumber.iface.IHoverTextProvider;
 import com.blakebr0.cucumber.lib.Tooltips;
 import com.blakebr0.cucumber.util.Formatting;
+import com.blakebr0.mysticalagriculture.client.util.ClientInputUtil;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
 import com.blakebr0.mysticalagriculture.lib.ModTooltips;
 import com.blakebr0.mysticalagriculture.tileentity.SoulExtractorTileEntity;
@@ -73,7 +74,7 @@ public class SoulExtractorBlock extends BaseTileEntityBlock implements IHoverTex
             var tile = level.getBlockEntity(pos);
 
             if (tile instanceof SoulExtractorTileEntity extractor) {
-                player.openMenu(extractor, pos);
+                player.openMenu(extractor);
             }
         }
 
@@ -82,7 +83,7 @@ public class SoulExtractorBlock extends BaseTileEntityBlock implements IHoverTex
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
-        if (flag.hasShiftDown()) {
+        if (ClientInputUtil.isShiftDown()) {
             var speed = Formatting.number(SoulExtractorTileEntity.OPERATION_TIME).withStyle(ChatFormatting.WHITE);
             var fuelRate = Formatting.number(SoulExtractorTileEntity.FUEL_USAGE).withStyle(ChatFormatting.WHITE);
             var fuelCapacity = Formatting.number(SoulExtractorTileEntity.FUEL_CAPACITY).withStyle(ChatFormatting.WHITE);

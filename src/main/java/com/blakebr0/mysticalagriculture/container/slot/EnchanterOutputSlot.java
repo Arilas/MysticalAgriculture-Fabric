@@ -2,6 +2,7 @@ package com.blakebr0.mysticalagriculture.container.slot;
 
 import com.blakebr0.cucumber.inventory.CItemStacksHandler;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.core.NonNullList;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
@@ -9,7 +10,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.transfer.item.ItemResource;
 
 public class EnchanterOutputSlot extends Slot {
     private final AbstractContainerMenu container;
@@ -37,7 +37,7 @@ public class EnchanterOutputSlot extends Slot {
 
         for (int i = 0; i < remaining.size(); i++) {
             var remainder = remaining.get(i);
-            this.matrix.set(i, ItemResource.of(remainder), remainder.count());
+            this.matrix.set(i, ItemVariant.of(remainder), remainder.count());
         }
 
         this.container.slotsChanged(this.matrix.toRecipeInventory());

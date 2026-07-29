@@ -5,15 +5,16 @@ import com.blakebr0.cucumber.inventory.OnContentsChangedFunction;
 import com.blakebr0.cucumber.tileentity.BaseInventoryTileEntity;
 import com.blakebr0.mysticalagriculture.container.EnchanterContainer;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.MenuProvider;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class EnchanterTileEntity extends BaseInventoryTileEntity implements MenuProvider {
+public class EnchanterTileEntity extends BaseInventoryTileEntity implements ExtendedMenuProvider<BlockPos> {
     private static final int INPUT_SLOT = 0;
     private static final int OUTPUT_SLOT = 1;
 
@@ -32,6 +33,11 @@ public class EnchanterTileEntity extends BaseInventoryTileEntity implements Menu
     @Override
     public Component getDisplayName() {
         return Component.translatable("container.mysticalagriculture.enchanter");
+    }
+
+    @Override
+    public BlockPos getScreenOpeningData(ServerPlayer player) {
+        return this.getBlockPos().immutable();
     }
 
     @Override

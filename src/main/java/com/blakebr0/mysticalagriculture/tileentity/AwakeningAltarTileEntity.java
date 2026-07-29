@@ -8,6 +8,7 @@ import com.blakebr0.mysticalagriculture.api.crafting.IAwakeningRecipe;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
 import com.blakebr0.mysticalagriculture.util.IActivatable;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ItemParticleOption;
@@ -21,7 +22,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.transfer.item.ItemResource;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class AwakeningAltarTileEntity extends BaseInventoryTileEntity implements
         super(ModTileEntities.AWAKENING_ALTAR, pos, state);
         this.inventory = CItemStacksHandler.create(2, (_, _) -> this.setChanged(), handler -> {
             handler.setDefaultSlotLimit(1);
-            handler.setCanInsert((_, _) -> handler.getResource(1).isEmpty());
+            handler.setCanInsert((_, _) -> handler.getResource(1).isBlank());
             handler.setOutputSlots(1);
         });
         this.recipeInventory = CItemStacksHandler.create(9);
@@ -91,7 +91,7 @@ public class AwakeningAltarTileEntity extends BaseInventoryTileEntity implements
     public static void tick(Level level, BlockPos pos, BlockState state, AwakeningAltarTileEntity tile) {
         var input = tile.inventory.getResource(0);
 
-        if (!input.isEmpty()) {
+        if (!input.isBlank()) {
             var recipe = tile.getActiveRecipe();
 
             if (tile.isActive()) {
@@ -108,7 +108,7 @@ public class AwakeningAltarTileEntity extends BaseInventoryTileEntity implements
                             var inventory = pedestal.getInventory();
                             var remainder = remaining.get(i + 1);
 
-                            inventory.set(0, ItemResource.of(remainder), remainder.count());
+                            inventory.set(0, ItemVariant.of(remainder), remainder.count());
 
                             tile.spawnParticles(ParticleTypes.SMOKE, pedestal.getBlockPos(), 1.2D, 20);
                         }
@@ -118,7 +118,7 @@ public class AwakeningAltarTileEntity extends BaseInventoryTileEntity implements
                             var inventory = vessel.getInventory();
                             var remainder = remaining.get(i + 5);
 
-                            inventory.set(0, ItemResource.of(remainder), remainder.count());
+                            inventory.set(0, ItemVariant.of(remainder), remainder.count());
 
                             tile.spawnParticles(ParticleTypes.SMOKE, vessel.getBlockPos(), 1.2D, 20);
                         }
@@ -246,8 +246,8 @@ public class AwakeningAltarTileEntity extends BaseInventoryTileEntity implements
         level.sendParticles(particle, x, y, z, count, 0, 0, 0, 0.1D);
     }
 
-    private void spawnItemParticles(BlockPos pedestalPos, ItemResource resource) {
-        if (this.level == null || this.level.isClientSide() || resource.isEmpty())
+    private void spawnItemParticles(BlockPos pedestalPos, ItemVariant resource) {
+        if (this.level == null || this.level.isClientSide() || resource.isBlank())
             return;
 
         var level = (ServerLevel) this.level;

@@ -4,6 +4,7 @@ import com.blakebr0.cucumber.block.BaseTileEntityBlock;
 import com.blakebr0.cucumber.helper.BlockHelper;
 import com.blakebr0.cucumber.util.VoxelShapeBuilder;
 import com.blakebr0.mysticalagriculture.tileentity.AwakeningPedestalTileEntity;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
@@ -23,7 +24,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.transfer.item.ItemResource;
 
 public class AwakeningPedestalBlock extends BaseTileEntityBlock {
     public static final VoxelShape PEDESTAL_SHAPE = VoxelShapeBuilder.fromShapes(
@@ -59,6 +59,10 @@ public class AwakeningPedestalBlock extends BaseTileEntityBlock {
 
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (level.isClientSide()) {
+            return InteractionResult.SUCCESS;
+        }
+
         var tile = level.getBlockEntity(pos);
 
         if (tile instanceof AwakeningPedestalTileEntity pedestal) {
@@ -66,15 +70,15 @@ public class AwakeningPedestalBlock extends BaseTileEntityBlock {
             var input = inventory.getResource(0);
             var held = player.getItemInHand(hand);
 
-            if (input.isEmpty() && !held.isEmpty()) {
-                inventory.set(0, ItemResource.of(held), 1);
+            if (input.isBlank() && !held.isEmpty()) {
+                inventory.set(0, ItemVariant.of(held), 1);
                 player.setItemInHand(hand, held.copyWithCount(held.count() - 1));
                 level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1.0F, 1.0F);
-            } else if (!input.isEmpty()) {
+            } else if (!input.isBlank()) {
                 var amount = inventory.getAmountAsInt(0);
                 var item = new ItemEntity(level, player.getX(), player.getY(), player.getZ(), input.toStack(amount));
 
-                inventory.set(0, ItemResource.EMPTY, 0);
+                inventory.set(0, ItemVariant.blank(), 0);
 
                 item.setNoPickUpDelay();
                 level.addFreshEntity(item);

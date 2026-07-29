@@ -8,32 +8,24 @@ import com.blakebr0.mysticalagriculture.api.machine.IMachineUpgrade;
 import com.blakebr0.mysticalagriculture.api.machine.MachineUpgradeItemStackHandler;
 import com.blakebr0.mysticalagriculture.init.ModMenuTypes;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
-import com.blakebr0.mysticalagriculture.tileentity.OreInfuserTileEntity;
 import com.blakebr0.mysticalagriculture.util.RecipeIngredientCache;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class OreInfuserContainer extends BaseContainerMenu {
     private final ContainerData data;
     private final QuickMover mover;
-
-    public OreInfuserContainer(int id, Inventory playerInventory, RegistryFriendlyByteBuf buffer) {
-        this(id, playerInventory, OreInfuserTileEntity.createInventoryHandler(), new MachineUpgradeItemStackHandler(), new SimpleContainerData(6), buffer.readBlockPos());
-    }
 
     public OreInfuserContainer(int id, Inventory playerInventory, CItemStacksHandler inventory, MachineUpgradeItemStackHandler upgradeInventory, ContainerData data, BlockPos pos) {
         super(ModMenuTypes.ORE_INFUSER, id, pos);
         this.data = data;
         this.mover = new QuickMover(this::moveItemStackTo);
 
-        this.addSlot(new ResourceHandlerSlot(upgradeInventory, upgradeInventory::set, 0, 152, 9));
+        this.addSlot(new CSlot(upgradeInventory, 0, 152, 9));
 
         this.addSlot(new CSlot(inventory, 0, 60, 52));
         this.addSlot(new CSlot(inventory, 1, 80, 52));
@@ -53,7 +45,7 @@ public class OreInfuserContainer extends BaseContainerMenu {
         this.mover.after(5)
                 .add((slot, stack, player) -> stack.getItem() instanceof IMachineUpgrade, 0, 1) // machine upgrade
                 .add((slot, stack, player) -> isRecipeInput(stack), 1, 2) // inputs
-                .add((slot, stack, player) -> stack.getBurnTime(null, player.level().fuelValues()) > 0, 4, 1) // fuel
+                .add((slot, stack, player) -> player.level().fuelValues().isFuel(stack), 4, 1) // fuel
                 .add((slot, stack, player) -> slot < this.slots.size() - 4, this.slots.size() - 4, 9) // hotbar
                 .add((slot, stack, player) -> slot >= this.slots.size() - 4, this.slots.size() - 31, 27); // inventory
         this.mover.fallback(5, 36);

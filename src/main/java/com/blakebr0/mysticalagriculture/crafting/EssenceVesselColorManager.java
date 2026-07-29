@@ -23,7 +23,8 @@ public class EssenceVesselColorManager implements SimpleSynchronousResourceReloa
     private static final org.slf4j.Logger LOGGER =
             LoggerFactory.getLogger("Mystical Agriculture");
 
-    private final Map<String, Integer> colors = new HashMap<>();
+    private volatile Map<String, Integer> colors = Map.of();
+    private Map<String, Integer> pendingColors;
 
     public static void register() {
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(INSTANCE);
@@ -36,7 +37,7 @@ public class EssenceVesselColorManager implements SimpleSynchronousResourceReloa
 
     @Override
     public void onResourceManagerReload(ResourceManager manager) {
-        this.load(manager);
+        this.stage(manager);
     }
 
     public int getColor(ItemStack stack) {
@@ -46,19 +47,31 @@ public class EssenceVesselColorManager implements SimpleSynchronousResourceReloa
 
     public void addColor(ItemStack stack, int color) {
         var id = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        this.colors.put(id.toString(), color);
+        var updated = new HashMap<>(this.colors);
+        updated.put(id.toString(), color);
+        this.colors = Map.copyOf(updated);
     }
 
     public void setColors(Map<String, Integer> colors) {
-        this.colors.clear();
-        this.colors.putAll(colors);
+        this.colors = Map.copyOf(colors);
     }
 
-    private void load(ResourceManager manager) {
+    public Map<String, Integer> copyColors() {
+        return this.colors;
+    }
+
+    public void finishReload() {
+        if (this.pendingColors != null) {
+            this.setColors(this.pendingColors);
+            this.pendingColors = null;
+        }
+    }
+
+    private void stage(ResourceManager manager) {
         var stopwatch = Stopwatch.createStarted();
         var resources = manager.listResources("mysticalagriculture/essence_vessel_colors.json", s -> s.getPath().endsWith(".json"));
-
-        this.colors.clear();
+        var nextColors = new HashMap<String, Integer>();
+        var failed = false;
 
         for (var resource : resources.entrySet()) {
             try (var reader = resource.getValue().openAsReader()) {
@@ -68,13 +81,20 @@ public class EssenceVesselColorManager implements SimpleSynchronousResourceReloa
                     var item = entry.getKey();
                     var color = ParsingHelper.parseHex(entry.getValue().getAsString(), item);
 
-                    this.colors.put(item, color);
+                    nextColors.put(item, color);
                 }
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException e) {
+                failed = true;
                 LOGGER.error("Failed to load {}", resource.getKey(), e);
             }
         }
 
-        LOGGER.info("Loaded {} essence vessel colors in {} ms", this.colors.size(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
+        if (failed) {
+            this.pendingColors = null;
+            LOGGER.warn("Keeping {} previously valid essence vessel colors", this.colors.size());
+        } else {
+            this.pendingColors = Map.copyOf(nextColors);
+            LOGGER.info("Staged {} essence vessel colors in {} ms", nextColors.size(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
+        }
     }
 }

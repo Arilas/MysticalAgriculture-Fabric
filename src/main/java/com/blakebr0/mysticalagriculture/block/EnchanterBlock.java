@@ -71,7 +71,7 @@ public class EnchanterBlock extends BaseTileEntityBlock {
             var tile = level.getBlockEntity(pos);
 
             if (tile instanceof EnchanterTileEntity enchanter) {
-                player.openMenu(enchanter, pos);
+                player.openMenu(enchanter);
             }
         }
 

@@ -8,15 +8,16 @@ import com.blakebr0.mysticalagriculture.api.tinkering.ITinkerable;
 import com.blakebr0.mysticalagriculture.container.TinkeringTableContainer;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
 import com.blakebr0.mysticalagriculture.lib.ModCrops;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.MenuProvider;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class TinkeringTableTileEntity extends BaseInventoryTileEntity implements MenuProvider {
+public class TinkeringTableTileEntity extends BaseInventoryTileEntity implements ExtendedMenuProvider<BlockPos> {
     private final CItemStacksHandler inventory;
 
     public TinkeringTableTileEntity(BlockPos pos, BlockState state) {
@@ -32,6 +33,11 @@ public class TinkeringTableTileEntity extends BaseInventoryTileEntity implements
     @Override
     public Component getDisplayName() {
         return Component.translatable("container.mysticalagriculture.tinkering_table");
+    }
+
+    @Override
+    public BlockPos getScreenOpeningData(ServerPlayer player) {
+        return this.getBlockPos().immutable();
     }
 
     @Override

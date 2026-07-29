@@ -5,6 +5,7 @@ import com.blakebr0.cucumber.helper.BlockHelper;
 import com.blakebr0.cucumber.iface.IHoverTextProvider;
 import com.blakebr0.cucumber.lib.Tooltips;
 import com.blakebr0.cucumber.util.Formatting;
+import com.blakebr0.mysticalagriculture.client.util.ClientInputUtil;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
 import com.blakebr0.mysticalagriculture.lib.ModTooltips;
 import com.blakebr0.mysticalagriculture.tileentity.EssenceFurnaceTileEntity;
@@ -73,7 +74,7 @@ public class EssenceFurnaceBlock extends BaseTileEntityBlock implements IHoverTe
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
-        if (flag.hasShiftDown()) {
+        if (ClientInputUtil.isShiftDown()) {
             var speed = Formatting.number(EssenceFurnaceTileEntity.OPERATION_TIME).withStyle(ChatFormatting.WHITE);
             var fuelRate = Formatting.number(EssenceFurnaceTileEntity.FUEL_USAGE).withStyle(ChatFormatting.WHITE);
             var fuelCapacity = Formatting.number(EssenceFurnaceTileEntity.FUEL_CAPACITY).withStyle(ChatFormatting.WHITE);
@@ -92,7 +93,7 @@ public class EssenceFurnaceBlock extends BaseTileEntityBlock implements IHoverTe
             var tile = level.getBlockEntity(pos);
 
             if (tile instanceof EssenceFurnaceTileEntity furnace) {
-                player.openMenu(furnace, pos);
+                player.openMenu(furnace);
             }
         }
 

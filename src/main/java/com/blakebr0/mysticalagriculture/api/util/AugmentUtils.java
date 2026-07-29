@@ -7,13 +7,13 @@ import com.blakebr0.mysticalagriculture.api.components.AugmentComponent;
 import com.blakebr0.mysticalagriculture.api.tinkering.AOEAugment;
 import com.blakebr0.mysticalagriculture.api.tinkering.Augment;
 import com.blakebr0.mysticalagriculture.api.tinkering.ITinkerable;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.transfer.item.ItemResource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,12 +53,12 @@ public class AugmentUtils {
      * @param resource the {@link ITinkerable} item
      * @param augment  the augment
      * @param slot     the augment slot
-     * @return the new {@link ItemResource} with the added augment
+     * @return the new {@link ItemVariant} with the added augment
      */
-    public static ItemResource addAugment(ItemResource resource, Augment augment, int slot) {
+    public static ItemVariant addAugment(ItemVariant resource, Augment augment, int slot) {
         var stack = resource.toStack();
         addAugment(stack, augment, slot);
-        return ItemResource.of(stack);
+        return ItemVariant.of(stack);
     }
 
     /**
@@ -96,12 +96,12 @@ public class AugmentUtils {
      *
      * @param resource the {@link ITinkerable} item
      * @param slot     the augment slot
-     * @return the {@link ItemResource} without the removed augment
+     * @return the {@link ItemVariant} without the removed augment
      */
-    public static ItemResource removeAugment(ItemResource resource, int slot) {
+    public static ItemVariant removeAugment(ItemVariant resource, int slot) {
         var stack = resource.toStack();
         removeAugment(stack, slot);
-        return ItemResource.of(stack);
+        return ItemVariant.of(stack);
     }
 
     /**
@@ -142,7 +142,7 @@ public class AugmentUtils {
      * @param slot     the augment slot
      * @return the augment
      */
-    public static Augment getAugment(ItemResource resource, int slot) {
+    public static Augment getAugment(ItemVariant resource, int slot) {
         return getAugment(resource.toStack(), slot);
     }
 
@@ -180,7 +180,7 @@ public class AugmentUtils {
      * @param resource the {@link ITinkerable}
      * @return the installed augments
      */
-    public static List<Augment> getAugments(ItemResource resource) {
+    public static List<Augment> getAugments(ItemVariant resource) {
         return getAugments(resource.toStack());
     }
 

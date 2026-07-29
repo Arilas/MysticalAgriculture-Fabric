@@ -1,6 +1,7 @@
 package com.blakebr0.mysticalagriculture.util;
 
 import com.blakebr0.cucumber.event.RecipeManagerLoadedEvent;
+import com.blakebr0.mysticalagriculture.crafting.EssenceVesselColorManager;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.google.common.base.Stopwatch;
 import net.minecraft.core.Holder;
@@ -29,12 +30,10 @@ public class RecipeIngredientCache {
     private static final org.slf4j.Logger LOGGER =
             LoggerFactory.getLogger("Mystical Agriculture");
 
-    private final Map<RecipeType<?>, Map<Item, List<Ingredient>>> caches;
-    private final Set<Item> validVesselItems;
+    private volatile State state;
 
     private RecipeIngredientCache() {
-        this.caches = new HashMap<>();
-        this.validVesselItems = new HashSet<>();
+        this.state = new State(Map.of(), Set.of());
     }
 
     public static void register() {
@@ -45,38 +44,41 @@ public class RecipeIngredientCache {
         var stopwatch = Stopwatch.createStarted();
         var manager = event.getRecipeManager();
         var recipes = RecipeMap.create(manager.getRecipes());
+        var nextCaches = new HashMap<RecipeType<?>, Map<Item, List<Ingredient>>>();
+        var nextValidVesselItems = new HashSet<Item>();
 
-        this.caches.clear();
-
-        cache(recipes, RecipeType.SMELTING, recipe -> List.of(recipe.input()));
-        cache(recipes, ModRecipeTypes.REPROCESSOR, recipe -> List.of(recipe.getIngredient()));
-        cache(recipes, ModRecipeTypes.SOUL_EXTRACTION, recipe -> List.of(recipe.getIngredient()));
-        cache(recipes, ModRecipeTypes.SOULIUM_SPAWNER, recipe -> List.of(recipe.getIngredient().ingredient()));
-        cache(recipes, ModRecipeTypes.ORE_INFUSION, recipe -> recipe.getIngredients().stream()
+        cache(nextCaches, recipes, RecipeType.SMELTING, recipe -> List.of(recipe.input()));
+        cache(nextCaches, recipes, ModRecipeTypes.REPROCESSOR, recipe -> List.of(recipe.getIngredient()));
+        cache(nextCaches, recipes, ModRecipeTypes.SOUL_EXTRACTION, recipe -> List.of(recipe.getIngredient()));
+        cache(nextCaches, recipes, ModRecipeTypes.SOULIUM_SPAWNER, recipe -> List.of(recipe.getIngredient().ingredient()));
+        cache(nextCaches, recipes, ModRecipeTypes.ORE_INFUSION, recipe -> recipe.getIngredients().stream()
                 .map(com.blakebr0.mysticalagriculture.api.crafting.IngredientWithCount::ingredient)
                 .toList());
 
-        this.validVesselItems.clear();
-
-        cacheVesselItems(recipes);
+        cacheVesselItems(nextValidVesselItems, recipes);
+        this.setState(nextCaches, nextValidVesselItems);
+        EssenceVesselColorManager.INSTANCE.finishReload();
 
         LOGGER.info("Recipe ingredient caching done in {} ms", stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
     }
 
-    // called on the client by ReloadIngredientCacheMessage
-    public void setCaches(Map<RecipeType<?>, Map<Item, List<Ingredient>>> caches) {
-        this.caches.clear();
-        this.caches.putAll(caches);
+    public void setState(
+            Map<RecipeType<?>, Map<Item, List<Ingredient>>> caches,
+            Set<Item> validVesselItems
+    ) {
+        this.state = new State(immutableCaches(caches), Set.copyOf(validVesselItems));
     }
 
-    // called on the client by ReloadIngredientCacheMessage
-    public void setValidVesselItems(Set<Item> validVesselItems) {
-        this.validVesselItems.clear();
-        this.validVesselItems.addAll(validVesselItems);
+    public Map<RecipeType<?>, Map<Item, List<Ingredient>>> copyCaches() {
+        return this.state.caches;
+    }
+
+    public Set<Item> copyValidVesselItems() {
+        return this.state.validVesselItems;
     }
 
     public boolean isValidInput(ItemStack stack, RecipeType<?> type) {
-        var cache = this.caches.getOrDefault(type, Collections.emptyMap()).get(stack.getItem());
+        var cache = this.state.caches.getOrDefault(type, Collections.emptyMap()).get(stack.getItem());
         return cache != null && cache.stream().anyMatch(i -> i.test(stack));
     }
 
@@ -86,11 +88,16 @@ public class RecipeIngredientCache {
     }
 
     public boolean isValidVesselItem(ItemStack stack) {
-        return this.validVesselItems.contains(stack.getItem());
+        return this.state.validVesselItems.contains(stack.getItem());
     }
 
-    private static <C extends RecipeInput, T extends @NonNull Recipe<C>> void cache(RecipeMap recipes, RecipeType<T> type, Function<T, List<Ingredient>> ingredients) {
-        INSTANCE.caches.put(type, new HashMap<>());
+    private static <C extends RecipeInput, T extends @NonNull Recipe<C>> void cache(
+            Map<RecipeType<?>, Map<Item, List<Ingredient>>> caches,
+            RecipeMap recipes,
+            RecipeType<T> type,
+            Function<T, List<Ingredient>> ingredients
+    ) {
+        caches.put(type, new HashMap<>());
 
         for (var holder : recipes.byType(type)) {
             for (var ingredient : ingredients.apply(holder.value())) {
@@ -100,7 +107,7 @@ public class RecipeIngredientCache {
                     if (items.contains(item))
                         continue;
 
-                    var cache = INSTANCE.caches.get(type).computeIfAbsent(item, _ -> new ArrayList<>());
+                    var cache = caches.get(type).computeIfAbsent(item, _ -> new ArrayList<>());
 
                     items.add(item);
                     cache.add(ingredient);
@@ -109,14 +116,32 @@ public class RecipeIngredientCache {
         }
     }
 
-    private static void cacheVesselItems(RecipeMap recipes) {
+    private static void cacheVesselItems(Set<Item> validVesselItems, RecipeMap recipes) {
         for (var holder : recipes.byType(ModRecipeTypes.AWAKENING)) {
             var recipe = holder.value();
             for (var essence : recipe.getEssenceIngredients()) {
-                INSTANCE.validVesselItems.addAll(
+                validVesselItems.addAll(
                         essence.ingredient().items().map(Holder::value).toList()
                 );
             }
         }
+    }
+
+    private static Map<RecipeType<?>, Map<Item, List<Ingredient>>> immutableCaches(
+            Map<RecipeType<?>, Map<Item, List<Ingredient>>> caches
+    ) {
+        var copy = new HashMap<RecipeType<?>, Map<Item, List<Ingredient>>>();
+        caches.forEach((type, cache) -> {
+            var itemCopy = new HashMap<Item, List<Ingredient>>();
+            cache.forEach((item, ingredients) -> itemCopy.put(item, List.copyOf(ingredients)));
+            copy.put(type, Map.copyOf(itemCopy));
+        });
+        return Map.copyOf(copy);
+    }
+
+    private record State(
+            Map<RecipeType<?>, Map<Item, List<Ingredient>>> caches,
+            Set<Item> validVesselItems
+    ) {
     }
 }

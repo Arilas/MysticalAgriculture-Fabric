@@ -12,12 +12,16 @@ import com.blakebr0.mysticalagriculture.api.machine.MachineUpgradeTier;
 import com.blakebr0.mysticalagriculture.block.HarvesterBlock;
 import com.blakebr0.mysticalagriculture.container.HarvesterContainer;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -29,14 +33,12 @@ import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-public class HarvesterTileEntity extends BaseInventoryTileEntity implements MenuProvider, IUpgradeableMachine {
+public class HarvesterTileEntity extends BaseInventoryTileEntity implements ExtendedMenuProvider<BlockPos>, IUpgradeableMachine {
     private static final int FUEL_SLOT = 0;
     private static final int[] OUTPUT_SLOTS = IntStream.rangeClosed(1, 15).toArray();
 
@@ -64,7 +66,7 @@ public class HarvesterTileEntity extends BaseInventoryTileEntity implements Menu
     public HarvesterTileEntity(BlockPos pos, BlockState state) {
         super(ModTileEntities.HARVESTER, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.setChanged(), this::getLevel);
-        this.upgradeInventory = new MachineUpgradeItemStackHandler();
+        this.upgradeInventory = new MachineUpgradeItemStackHandler((_, _) -> this.setChanged());
         this.energy = new CEnergyStorage(FUEL_CAPACITY, _ -> this.setChangedFast());
 
         this.dataAccess = ContainerDataBuilder.builder()
@@ -100,13 +102,18 @@ public class HarvesterTileEntity extends BaseInventoryTileEntity implements Menu
         output.putInt("fuel_left", this.fuelLeft);
         output.putInt("fuel_item_value", this.fuelItemValue);
         output.putInt("last_scan_index", this.lastScanIndex);
-        output.putChild("energy", this.energy);
-        output.putChild("upgrade_inventory", this.upgradeInventory);
+        this.energy.serialize(output.child("energy"));
+        this.upgradeInventory.serialize(output.child("upgrade_inventory"));
     }
 
     @Override
     public Component getDisplayName() {
         return Component.translatable("container.mysticalagriculture.harvester");
+    }
+
+    @Override
+    public BlockPos getScreenOpeningData(ServerPlayer player) {
+        return this.getBlockPos().immutable();
     }
 
     @Override
@@ -137,9 +144,9 @@ public class HarvesterTileEntity extends BaseInventoryTileEntity implements Menu
         if (tile.energy.getAmountAsInt() < tile.energy.getCapacityAsInt()) {
             var fuel = tile.inventory.getResource(FUEL_SLOT);
 
-            try (var tx = Transaction.openRoot()) {
-                if (tile.fuelLeft <= 0 && !fuel.isEmpty()) {
-                    tile.fuelItemValue = fuel.toStack().getBurnTime(null, level.fuelValues());
+            try (var tx = Transaction.openOuter()) {
+                if (tile.fuelLeft <= 0 && !fuel.isBlank()) {
+                    tile.fuelItemValue = level.fuelValues().burnDuration(fuel.toStack());
 
                     if (tile.fuelItemValue > 0) {
                         tile.fuelLeft = tile.fuelItemValue *= FUEL_TICK_MULTIPLIER;
@@ -191,7 +198,7 @@ public class HarvesterTileEntity extends BaseInventoryTileEntity implements Menu
             if (block instanceof CropBlock crop) {
                 var seed = CropHelper.getSeedsItem(block);
 
-                try (var tx = Transaction.openRoot()) {
+                try (var tx = Transaction.openOuter()) {
                     if (seed != null && crop.isMaxAge(cropState)) {
                         var drops = Block.getDrops(cropState, (ServerLevel) level, nextPos, tile);
 
@@ -206,7 +213,7 @@ public class HarvesterTileEntity extends BaseInventoryTileEntity implements Menu
 
                         for (var drop : drops) {
                             if (!drop.isEmpty()) {
-                                tile.addItemToInventory(drop, level, nextPos);
+                                tile.addItemToInventory(drop, level, nextPos, tx);
                             }
                         }
 
@@ -300,30 +307,22 @@ public class HarvesterTileEntity extends BaseInventoryTileEntity implements Menu
         };
     }
 
-    private void addItemToInventory(ItemStack stack, Level level, BlockPos pos) {
-        var remaining = stack.getCount();
-        for (int i = 1; i < this.inventory.size(); i++) {
+    private void addItemToInventory(ItemStack stack, Level level, BlockPos pos, TransactionContext transaction) {
+        long remaining = stack.getCount();
+        var resource = ItemVariant.of(stack);
+
+        for (int i = 1; i < this.inventory.getContainerSize(); i++) {
             var stackInSlot = this.inventory.getResource(i);
 
-            if (stackInSlot.isEmpty()) {
-                this.inventory.set(i, ItemResource.of(stack), stack.count());
-                return;
-            }
-
-            if (stackInSlot.matches(stack)) {
-                var stackInSlotAmount = this.inventory.getAmountAsInt(i);
-                var insertSize = Math.min(remaining, stackInSlot.getMaxStackSize() - stackInSlotAmount);
-
-                this.inventory.set(i, stackInSlot, stackInSlotAmount + insertSize);
-
-                remaining -= insertSize;
+            if (stackInSlot.isBlank() || stackInSlot.equals(resource)) {
+                remaining -= this.inventory.insert(i, resource, remaining, transaction, true);
             }
 
             if (remaining == 0)
                 return;
         }
 
-        Block.popResource(level, pos, stack.copyWithCount(remaining));
+        Block.popResource(level, pos, stack.copyWithCount(Math.toIntExact(remaining)));
     }
 
     public static CItemStacksHandler createInventoryHandler() {

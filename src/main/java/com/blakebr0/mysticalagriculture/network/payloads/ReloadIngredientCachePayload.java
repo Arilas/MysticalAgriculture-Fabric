@@ -1,7 +1,6 @@
 package com.blakebr0.mysticalagriculture.network.payloads;
 
-import com.blakebr0.mysticalagriculture.MysticalAgriculture;
-import com.blakebr0.mysticalagriculture.util.RecipeIngredientCache;
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -9,7 +8,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 public record ReloadIngredientCachePayload(Map<RecipeType<?>, Map<Item, List<Ingredient>>> caches, Set<Item> validVesselItems) implements CustomPacketPayload {
-    public static final Type<ReloadIngredientCachePayload> TYPE = new Type<>(MysticalAgriculture.resource("reload_ingredient_cache"));
+    public static final Type<ReloadIngredientCachePayload> TYPE = new Type<>(MysticalAgricultureAPI.resource("reload_ingredient_cache"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ReloadIngredientCachePayload> STREAM_CODEC = StreamCodec.of(
             ReloadIngredientCachePayload::toNetwork, ReloadIngredientCachePayload::fromNetwork
@@ -97,12 +95,5 @@ public record ReloadIngredientCachePayload(Map<RecipeType<?>, Map<Item, List<Ing
 
             buffer.writeIdentifier(id);
         }
-    }
-
-    public static void handleClient(ReloadIngredientCachePayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> {
-            RecipeIngredientCache.INSTANCE.setCaches(payload.caches);
-            RecipeIngredientCache.INSTANCE.setValidVesselItems(payload.validVesselItems);
-        });
     }
 }

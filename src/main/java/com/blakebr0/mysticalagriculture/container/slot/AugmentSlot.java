@@ -11,11 +11,13 @@ import net.minecraft.world.item.ItemStack;
 
 public class AugmentSlot extends CSlot implements IToggleableSlot {
     private final AbstractContainerMenu container;
+    private final CItemStacksHandler inventory;
     private final int augmentSlot;
 
     public AugmentSlot(AbstractContainerMenu container, CItemStacksHandler inventory, int index, int xPosition, int yPosition, int augmentSlot) {
         super(inventory, index, xPosition, yPosition);
         this.container = container;
+        this.inventory = inventory;
         this.augmentSlot = augmentSlot;
     }
 
@@ -26,8 +28,8 @@ public class AugmentSlot extends CSlot implements IToggleableSlot {
     }
 
     @Override
-    protected void setStackCopy(ItemStack stack) {
-        super.setStackCopy(stack);
+    public void setByPlayer(ItemStack stack, ItemStack oldStack) {
+        super.setByPlayer(stack, oldStack);
         this.container.slotsChanged(null);
     }
 
@@ -41,7 +43,7 @@ public class AugmentSlot extends CSlot implements IToggleableSlot {
         if (!super.mayPlace(stack) || !this.isActive())
             return false;
 
-        var stackInSlot = this.getResourceHandler().getResource(0);
+        var stackInSlot = this.inventory.getResource(0);
         var tinkerableItem = stackInSlot.getItem();
         var augmentItem = stack.getItem();
 
@@ -56,7 +58,7 @@ public class AugmentSlot extends CSlot implements IToggleableSlot {
 
     @Override
     public boolean isActive() {
-        var stack = this.getResourceHandler().getResource(0);
+        var stack = this.inventory.getResource(0);
         var item = stack.getItem();
 
         if (item instanceof ITinkerable tinkerable) {

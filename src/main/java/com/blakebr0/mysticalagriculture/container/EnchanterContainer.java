@@ -7,9 +7,7 @@ import com.blakebr0.mysticalagriculture.container.slot.EnchanterOutputSlot;
 import com.blakebr0.mysticalagriculture.container.slot.EnchanterSlot;
 import com.blakebr0.mysticalagriculture.init.ModMenuTypes;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
-import com.blakebr0.mysticalagriculture.tileentity.EnchanterTileEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
@@ -23,10 +21,6 @@ public class EnchanterContainer extends BaseContainerMenu {
     private final Level level;
     private final CItemStacksHandler inventory;
     private final Container result;
-
-    public EnchanterContainer(int id, Inventory playerInventory, RegistryFriendlyByteBuf buffer) {
-        this(id, playerInventory, EnchanterTileEntity.createInventoryHandler(), buffer.readBlockPos());
-    }
 
     public EnchanterContainer(int id, Inventory playerInventory, CItemStacksHandler inventory, BlockPos pos) {
         super(ModMenuTypes.ENCHANTER, id, pos);

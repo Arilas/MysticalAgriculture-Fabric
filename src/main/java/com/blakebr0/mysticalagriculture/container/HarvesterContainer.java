@@ -6,29 +6,21 @@ import com.blakebr0.cucumber.inventory.slot.CSlot;
 import com.blakebr0.mysticalagriculture.api.machine.MachineUpgradeItemStackHandler;
 import com.blakebr0.mysticalagriculture.init.ModMenuTypes;
 import com.blakebr0.mysticalagriculture.item.MachineUpgradeItem;
-import com.blakebr0.mysticalagriculture.tileentity.HarvesterTileEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class HarvesterContainer extends BaseContainerMenu {
     private final ContainerData data;
-
-    public HarvesterContainer(int id, Inventory playerInventory, RegistryFriendlyByteBuf buffer) {
-        this(id, playerInventory, HarvesterTileEntity.createInventoryHandler(), new MachineUpgradeItemStackHandler(), new SimpleContainerData(4), buffer.readBlockPos());
-    }
 
     public HarvesterContainer(int id, Inventory playerInventory, CItemStacksHandler inventory, MachineUpgradeItemStackHandler upgradeInventory, ContainerData data, BlockPos pos) {
         super(ModMenuTypes.HARVESTER, id, pos);
         this.data = data;
 
-        this.addSlot(new ResourceHandlerSlot(upgradeInventory, upgradeInventory::set, 0, 152, 9));
+        this.addSlot(new CSlot(upgradeInventory, 0, 152, 9));
 
         this.addSlot(new CSlot(inventory, 0, 30, 56));
 
@@ -65,7 +57,7 @@ public class HarvesterContainer extends BaseContainerMenu {
                     if (!this.moveItemStackTo(itemstack1, 0, 1, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (itemstack1.getBurnTime(null, player.level().fuelValues()) > 0) {
+                } else if (player.level().fuelValues().isFuel(itemstack1)) {
                     if (!this.moveItemStackTo(itemstack1, 1, 2, false)) {
                         return ItemStack.EMPTY;
                     }

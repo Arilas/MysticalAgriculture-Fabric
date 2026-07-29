@@ -3,27 +3,29 @@ package com.blakebr0.mysticalagriculture.container.slot;
 import com.blakebr0.cucumber.inventory.CItemStacksHandler;
 import com.blakebr0.cucumber.inventory.slot.CSlot;
 import com.blakebr0.mysticalagriculture.api.util.AugmentUtils;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
 
 public class TinkerableSlot extends CSlot {
     private final AbstractContainerMenu container;
+    private final CItemStacksHandler inventory;
 
     public TinkerableSlot(AbstractContainerMenu container, CItemStacksHandler inventory, int index, int xPosition, int yPosition) {
         super(inventory, index, xPosition, yPosition);
         this.container = container;
+        this.inventory = inventory;
     }
 
     @Override
     public void onTake(Player player, ItemStack stack) {
-        var inventory = this.getResourceHandler();
-        try (var tx = Transaction.openRoot()) {
+        var inventory = this.inventory;
+        try (var tx = Transaction.openOuter()) {
             for (int i = 0; i < 2; i++) {
                 var resource = inventory.getResource(i + 1);
-                if (resource.isEmpty())
+                if (resource.isBlank())
                     continue;
 
                 inventory.extract(i + 1, resource, 1, tx);
@@ -34,25 +36,25 @@ public class TinkerableSlot extends CSlot {
     }
 
     @Override
-    protected void setStackCopy(ItemStack stack) {
-        var inventory = this.getResourceHandler();
-        try (var tx = Transaction.openRoot()) {
+    public void setByPlayer(ItemStack stack, ItemStack oldStack) {
+        var inventory = this.inventory;
+        try (var tx = Transaction.openOuter()) {
             for (int i = 0; i < 2; i++) {
                 var augmentStack = inventory.getResource(i + 1);
-                if (!augmentStack.isEmpty()) {
-                    inventory.extract(i + 1, augmentStack, augmentStack.getMaxStackSize(), tx);
+                if (!augmentStack.isBlank()) {
+                    inventory.extract(i + 1, augmentStack, inventory.getAmountAsLong(i + 1), tx);
                 }
 
                 var augment = AugmentUtils.getAugment(stack, i);
                 if (augment != null) {
-                    inventory.insert(i + 1, ItemResource.of(augment.getItem()), stack.count(), tx);
+                    inventory.insert(i + 1, ItemVariant.of(augment.getItem()), stack.count(), tx);
                 }
             }
 
             tx.commit();
         }
 
-        super.setStackCopy(stack);
+        super.setByPlayer(stack, oldStack);
         this.container.slotsChanged(null);
     }
 }

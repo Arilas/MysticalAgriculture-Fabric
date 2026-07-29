@@ -1,64 +1,46 @@
 package com.blakebr0.mysticalagriculture.api.machine;
 
+import com.blakebr0.cucumber.inventory.CItemStacksHandler;
+import com.blakebr0.cucumber.inventory.OnContentsChangedFunction;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.ItemStackResourceHandler;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An implementation of {@link ItemStackResourceHandler} for {@link IMachineUpgrade}s.
+ * A single-slot transactional inventory for {@link IMachineUpgrade}s.
  */
-public class MachineUpgradeItemStackHandler extends ItemStackResourceHandler {
-    private ItemStack stack = ItemStack.EMPTY;
+public class MachineUpgradeItemStackHandler extends CItemStacksHandler {
+    public MachineUpgradeItemStackHandler() {
+        this(null);
+    }
 
-    /**
-     * Set the resource in this handler
-     * @param index unused
-     * @param resource the resource
-     * @param amount the amount of the resource
-     */
-    public void set(int index, ItemResource resource, int amount) {
-        this.stack = resource.toStack(amount);
+    public MachineUpgradeItemStackHandler(@Nullable OnContentsChangedFunction onContentsChanged) {
+        super(1, onContentsChanged);
+        this.setDefaultSlotLimit(1);
+        this.setCanInsert((_, resource) -> resource.getItem() instanceof IMachineUpgrade);
     }
 
     /**
-     * Gets the {@link MachineUpgradeTier} for the upgrade in this inventory, or null if empty
-     * @return the machine upgrade tier
+     * Gets the {@link MachineUpgradeTier} for the upgrade in this inventory, or null if empty.
      */
     @Nullable
     public MachineUpgradeTier getUpgradeTier() {
-        var item = this.stack.getItem();
-        if (item instanceof IMachineUpgrade upgrade)
-            return upgrade.getTier();
+        var item = this.getItem(0).getItem();
+        return item instanceof IMachineUpgrade upgrade ? upgrade.getTier() : null;
+    }
 
-        return null;
+    public ItemStack getStack() {
+        return this.getItem(0);
     }
 
     public ItemStack getStackCopy() {
-        return this.stack.copy();
+        return this.getItem(0).copy();
+    }
+
+    public void setStack(ItemStack stack) {
+        this.setItem(0, stack);
     }
 
     public void clear() {
-        this.stack = ItemStack.EMPTY;
-    }
-
-    @Override
-    protected int getCapacity(ItemResource resource) {
-        return 1;
-    }
-
-    @Override
-    protected boolean isValid(ItemResource resource) {
-        return resource.getItem() instanceof IMachineUpgrade;
-    }
-
-    @Override
-    protected ItemStack getStack() {
-        return this.stack;
-    }
-
-    @Override
-    protected void setStack(ItemStack stack) {
-        this.stack = stack;
+        this.clearContent();
     }
 }

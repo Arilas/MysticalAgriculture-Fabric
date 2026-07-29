@@ -116,6 +116,8 @@ def task3LoaderTestOutput = layout.buildDirectory.dir("classes/java/task3LoaderT
 def task3MainOutput = layout.buildDirectory.dir("classes/java/task3Main")
 def task3LoaderMainOutput = layout.buildDirectory.dir("classes/java/task3LoaderMain")
 def task3LoaderModOutput = layout.buildDirectory.dir("task3LoaderMod")
+def task4TestOutput = layout.buildDirectory.dir("classes/java/task4Test")
+def task4MainOutput = layout.buildDirectory.dir("classes/java/task4Main")
 
 tasks.register('compileTask2TestJava', JavaCompile) {
     source file("src/test/java/com/blakebr0/mysticalagriculture/registry/PluginRegistryTest.java")
@@ -240,6 +242,49 @@ tasks.register('compileTask3LoaderJava', JavaCompile) {
     source fileTree("src/main/java/com/blakebr0/mysticalagriculture/world")
     classpath = configurations.compileClasspath
     destinationDirectory = task3LoaderMainOutput
+    options.sourcepath = files("src/main/java")
+    options.compilerArgs += ["-implicit:class"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('compileTask4TestJava', JavaCompile) {
+    source file("src/test/java/com/blakebr0/mysticalagriculture/network/PayloadCodecTest.java")
+    classpath = configurations.testCompileClasspath
+    destinationDirectory = task4TestOutput
+    options.sourcepath = files("src/main/java", "src/test/java")
+    options.compilerArgs += ["-implicit:class"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('task4Test', Test) {
+    dependsOn tasks.named('compileTask4TestJava')
+    testClassesDirs = files(task4TestOutput)
+    classpath = configurations.testRuntimeClasspath + files(task4TestOutput)
+    include "**/PayloadCodecTest.class"
+    useJUnitPlatform()
+}
+
+tasks.register('compileTask4Java', JavaCompile) {
+    source file("src/main/java/com/blakebr0/mysticalagriculture/MysticalAgriculture.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/MysticalAgricultureClient.java")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/tileentity")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/container")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/network")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/handler/ModStorageProviders.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/handler/ReloadSyncHandler.java")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/api/machine")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/api/util/AugmentUtils.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/block/AwakeningAltarBlock.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/block/AwakeningPedestalBlock.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/block/EssenceVesselBlock.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/crafting/EssenceVesselColorManager.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/util/RecipeIngredientCache.java")
+    classpath = configurations.compileClasspath
+    destinationDirectory = task4MainOutput
     options.sourcepath = files("src/main/java")
     options.compilerArgs += ["-implicit:class"]
     javaCompiler = javaToolchains.compilerFor {

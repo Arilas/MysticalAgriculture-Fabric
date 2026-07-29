@@ -18,12 +18,17 @@ import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
 import com.blakebr0.mysticalagriculture.item.SoulJarItem;
 import com.blakebr0.mysticalagriculture.util.RecipeIngredientCache;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
+import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -33,15 +38,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
-import net.neoforged.neoforge.transfer.transaction.Transaction;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-public class SoulExtractorTileEntity extends BaseInventoryTileEntity implements MenuProvider, IUpgradeableMachine {
+public class SoulExtractorTileEntity extends BaseInventoryTileEntity implements ExtendedMenuProvider<BlockPos>, IUpgradeableMachine {
     private static final int INPUT_SLOT = 0;
     private static final int FUEL_SLOT = 1;
     private static final int OUTPUT_SLOT = 2;
@@ -68,7 +70,7 @@ public class SoulExtractorTileEntity extends BaseInventoryTileEntity implements 
     public SoulExtractorTileEntity(BlockPos pos, BlockState state) {
         super(ModTileEntities.SOUL_EXTRACTOR, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.setChanged(), this::getLevel);
-        this.upgradeInventory = new MachineUpgradeItemStackHandler();
+        this.upgradeInventory = new MachineUpgradeItemStackHandler((_, _) -> this.setChanged());
         this.energy = new CEnergyStorage(FUEL_CAPACITY, _ -> this.setChangedFast());
         this.sidedInventoryWrappers = SidedInventoryWrapper.create(this.inventory, List.of(Direction.UP, Direction.DOWN, Direction.NORTH), this::canInsertStackSided, null);
         this.recipe = new CachedRecipe<>(ModRecipeTypes.SOUL_EXTRACTION);
@@ -106,13 +108,18 @@ public class SoulExtractorTileEntity extends BaseInventoryTileEntity implements 
         output.putInt("progress", this.progress);
         output.putInt("fuel_left", this.fuelLeft);
         output.putInt("fuel_item_value", this.fuelItemValue);
-        output.putChild("energy", this.energy);
-        output.putChild("upgrade_inventory", this.upgradeInventory);
+        this.energy.serialize(output.child("energy"));
+        this.upgradeInventory.serialize(output.child("upgrade_inventory"));
     }
 
     @Override
     public Component getDisplayName() {
         return Component.translatable("container.mysticalagriculture.soul_extractor");
+    }
+
+    @Override
+    public BlockPos getScreenOpeningData(ServerPlayer player) {
+        return this.getBlockPos().immutable();
     }
 
     @Override
@@ -139,23 +146,26 @@ public class SoulExtractorTileEntity extends BaseInventoryTileEntity implements 
         this.upgradeInventory.clear();
     }
 
-    public ItemStacksResourceHandler getSidedInventory(@Nullable Direction direction) {
-        if (direction == null) direction = Direction.NORTH;
+    public @Nullable Storage<ItemVariant> getSidedInventory(@Nullable Direction direction) {
+        if (direction == null) {
+            return null;
+        }
 
-        return switch (direction) {
+        var wrapper = switch (direction) {
             case UP -> this.sidedInventoryWrappers[0];
             case DOWN -> this.sidedInventoryWrappers[1];
             default -> this.sidedInventoryWrappers[2];
         };
+        return ContainerStorage.of(wrapper, direction);
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, SoulExtractorTileEntity tile) {
         if (tile.energy.getAmountAsInt() < tile.energy.getCapacityAsInt()) {
             var fuel = tile.inventory.getResource(FUEL_SLOT);
 
-            try (var tx = Transaction.openRoot()) {
-                if (tile.fuelLeft <= 0 && !fuel.isEmpty()) {
-                    tile.fuelItemValue = fuel.toStack().getBurnTime(null, level.fuelValues());
+            try (var tx = Transaction.openOuter()) {
+                if (tile.fuelLeft <= 0 && !fuel.isBlank()) {
+                    tile.fuelItemValue = level.fuelValues().burnDuration(fuel.toStack());
 
                     if (tile.fuelItemValue > 0) {
                         tile.fuelLeft = tile.fuelItemValue *= FUEL_TICK_MULTIPLIER;
@@ -204,14 +214,17 @@ public class SoulExtractorTileEntity extends BaseInventoryTileEntity implements 
                 tile.isRunning = true;
                 tile.progress++;
 
-                try (var tx = Transaction.openRoot()) {
+                try (var tx = Transaction.openOuter()) {
                     tile.energy.extract(tile.getFuelUsage(), tx);
 
                     if (tile.progress >= tile.getOperationTime()) {
                         var result = recipe.assemble(tile.toCraftingInput());
+                        var output = tile.inventory.getResource(OUTPUT_SLOT);
+                        var outputAmount = tile.inventory.getAmountAsLong(OUTPUT_SLOT);
 
-                        tile.inventory.extract(0, tile.inventory.getResource(0), 1, tx, true);
-                        tile.inventory.set(2, ItemResource.of(result), result.count());
+                        tile.inventory.extract(INPUT_SLOT, tile.inventory.getResource(INPUT_SLOT), 1, tx, true);
+                        tile.inventory.extract(OUTPUT_SLOT, output, outputAmount, tx, true);
+                        tile.inventory.insert(OUTPUT_SLOT, ItemVariant.of(result), result.count(), tx, true);
 
                         tile.progress = 0;
                     }
@@ -279,7 +292,7 @@ public class SoulExtractorTileEntity extends BaseInventoryTileEntity implements 
         return this.inventory.toShapelessCraftingInput();
     }
 
-    private boolean canInsertStackSided(int slot, ItemResource resource, Direction direction) {
+    private boolean canInsertStackSided(int slot, ItemVariant resource, Direction direction) {
         var stack = resource.toStack();
         if (direction == null)
             return true;

@@ -5,6 +5,7 @@ import com.blakebr0.cucumber.helper.BlockHelper;
 import com.blakebr0.cucumber.iface.IHoverTextProvider;
 import com.blakebr0.cucumber.lib.Tooltips;
 import com.blakebr0.cucumber.util.Formatting;
+import com.blakebr0.mysticalagriculture.client.util.ClientInputUtil;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
 import com.blakebr0.mysticalagriculture.lib.ModTooltips;
 import com.blakebr0.mysticalagriculture.tileentity.HarvesterTileEntity;
@@ -69,7 +70,7 @@ public class HarvesterBlock extends BaseTileEntityBlock implements IHoverTextPro
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
-        if (flag.hasShiftDown()) {
+        if (ClientInputUtil.isShiftDown()) {
             var rangeString = String.valueOf(HarvesterTileEntity.BASE_RANGE * 2 + 1);
 
             var area = Component.literal(rangeString + "x" + rangeString).withStyle(ChatFormatting.WHITE);
@@ -94,7 +95,7 @@ public class HarvesterBlock extends BaseTileEntityBlock implements IHoverTextPro
             var tile = level.getBlockEntity(pos);
 
             if (tile instanceof HarvesterTileEntity harvester) {
-                player.openMenu(harvester, pos);
+                player.openMenu(harvester);
             }
         }
 

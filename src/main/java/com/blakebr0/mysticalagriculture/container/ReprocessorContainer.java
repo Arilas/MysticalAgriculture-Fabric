@@ -7,30 +7,22 @@ import com.blakebr0.mysticalagriculture.api.machine.MachineUpgradeItemStackHandl
 import com.blakebr0.mysticalagriculture.init.ModMenuTypes;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.blakebr0.mysticalagriculture.item.MachineUpgradeItem;
-import com.blakebr0.mysticalagriculture.tileentity.ReprocessorTileEntity;
 import com.blakebr0.mysticalagriculture.util.RecipeIngredientCache;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class ReprocessorContainer extends BaseContainerMenu {
     private final ContainerData data;
-
-    public ReprocessorContainer(int id, Inventory playerInventory, RegistryFriendlyByteBuf buffer) {
-        this(id, playerInventory, ReprocessorTileEntity.createInventoryHandler(), new MachineUpgradeItemStackHandler(), new SimpleContainerData(6), buffer.readBlockPos());
-    }
 
     public ReprocessorContainer(int id, Inventory playerInventory, CItemStacksHandler inventory, MachineUpgradeItemStackHandler upgradeInventory, ContainerData data, BlockPos pos) {
         super(ModMenuTypes.REPROCESSOR, id, pos);
         this.data = data;
 
-        this.addSlot(new ResourceHandlerSlot(upgradeInventory, upgradeInventory::set, 0, 152, 9));
+        this.addSlot(new CSlot(upgradeInventory, 0, 152, 9));
 
         this.addSlot(new CSlot(inventory, 0, 74, 52));
         this.addSlot(new CSlot(inventory, 1, 30, 56));
@@ -67,7 +59,7 @@ public class ReprocessorContainer extends BaseContainerMenu {
                     if (!this.moveItemStackTo(itemstack1, 1, 2, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (itemstack1.getBurnTime(null, player.level().fuelValues()) > 0) {
+                } else if (player.level().fuelValues().isFuel(itemstack1)) {
                     if (!this.moveItemStackTo(itemstack1, 2, 3, false)) {
                         return ItemStack.EMPTY;
                     }

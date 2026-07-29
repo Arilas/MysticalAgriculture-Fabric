@@ -4,9 +4,9 @@ import com.blakebr0.cucumber.inventory.CItemStacksHandler;
 import com.blakebr0.cucumber.tileentity.BaseInventoryTileEntity;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
 import com.blakebr0.mysticalagriculture.util.RecipeIngredientCache;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.transfer.item.ItemResource;
 
 public class EssenceVesselTileEntity extends BaseInventoryTileEntity {
     private static final int MAX_STACK_SIZE = 40;
@@ -25,7 +25,7 @@ public class EssenceVesselTileEntity extends BaseInventoryTileEntity {
         return this.inventory;
     }
 
-    private static boolean canInsertStack(ItemResource resource) {
-        return RecipeIngredientCache.INSTANCE.isValidVesselItem(resource);
+    private static boolean canInsertStack(ItemVariant resource) {
+        return RecipeIngredientCache.INSTANCE.isValidVesselItem(resource.toStack());
     }
 }

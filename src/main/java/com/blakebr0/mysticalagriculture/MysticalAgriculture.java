@@ -5,6 +5,8 @@ import com.blakebr0.mysticalagriculture.api.MysticalAgricultureConfigValues;
 import com.blakebr0.mysticalagriculture.config.ModConfigs;
 import com.blakebr0.mysticalagriculture.crafting.DynamicRecipeManager;
 import com.blakebr0.mysticalagriculture.crafting.EssenceVesselColorManager;
+import com.blakebr0.mysticalagriculture.handler.ModStorageProviders;
+import com.blakebr0.mysticalagriculture.handler.ReloadSyncHandler;
 import com.blakebr0.mysticalagriculture.init.ModBlocks;
 import com.blakebr0.mysticalagriculture.init.ModCreativeModeTabs;
 import com.blakebr0.mysticalagriculture.init.ModDataComponentTypes;
@@ -20,6 +22,7 @@ import com.blakebr0.mysticalagriculture.registry.AugmentRegistry;
 import com.blakebr0.mysticalagriculture.registry.CropRegistry;
 import com.blakebr0.mysticalagriculture.registry.FabricPluginRegistry;
 import com.blakebr0.mysticalagriculture.registry.MobSoulTypeRegistry;
+import com.blakebr0.mysticalagriculture.network.NetworkHandler;
 import com.blakebr0.mysticalagriculture.util.RecipeIngredientCache;
 import com.blakebr0.mysticalagriculture.world.ModWorldGeneration;
 import net.fabricmc.api.ModInitializer;
@@ -70,7 +73,12 @@ public final class MysticalAgriculture implements ModInitializer {
         RecipeIngredientCache.register();
         EssenceVesselColorManager.register();
 
-        // 8. Networking, storage, gameplay, and remaining lifecycle hooks are installed by Tasks 4–7.
+        // 8. Stateful machine boundaries and reload synchronization
+        NetworkHandler.register();
+        ModStorageProviders.register();
+        ReloadSyncHandler.register();
+
+        // 9. Remaining gameplay and client lifecycle hooks are installed by Tasks 5–7.
     }
 
     public static Identifier resource(String path) {
