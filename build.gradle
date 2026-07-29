@@ -1,16 +1,14 @@
 plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17.12'
     id 'java-library'
-    id 'eclipse'
-    id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.141'
 }
 
-version = '26.1.2-9.0.4'
-group = 'com.blakebr0.mysticalagriculture'
+version = "${minecraft_version}-${mod_version}"
+group = maven_group
 
 base {
-    archivesName = 'MysticalAgriculture'
+    archivesName = archives_base_name
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
@@ -18,95 +16,44 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 
 repositories {
-    maven { url 'https://maven.blakesmods.com' }
-    maven { url 'https://maven.blamejared.com' }
-    maven { url 'https://maven.tterrag.com' }
-    maven {
-        url 'https://cursemaven.com'
-        content {
-            includeGroup 'curse.maven'
-        }
-    }
-    mavenLocal()
+    mavenCentral()
 }
 
-tasks.register('syncTestDatapacks', Sync) {
-    if (file('run/saves').exists()) {
-        file('run/saves').eachDir { dir ->
-            project.sync {
-                from 'src/test/resources/datapacks'
-                into file(dir.path + '/datapacks')
-            }
-        }
-    }
-
-    project.sync {
-        from 'src/test/resources/datapacks'
-        into file('run/world/datapacks')
-    }
+loom {
+    accessWidenerPath = file("src/main/resources/mysticalagriculture.accesswidener")
 }
 
-tasks.register('syncTestScripts', Sync) {
-    from 'src/test/resources/scripts'
-    into 'run/scripts'
-}
-
-neoForge {
-    version = neo_version
-
-    runs {
-        client {
-            client()
-        }
-
-        server {
-            server()
-        }
-
-        data {
-            clientData()
-
-            programArguments.addAll '--mod', 'mysticalagriculture', '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-
-        configureEach {
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            systemProperty 'terminal.jline', 'true'
-            logLevel = org.slf4j.event.Level.DEBUG
-            ideName = "MysticalAgriculture - ${it.ideName.get()}"
-            taskBefore tasks.named('syncTestDatapacks')
-            taskBefore tasks.named('syncTestScripts')
-        }
+fabricApi {
+    configureDataGeneration {
+        modId = "mysticalagriculture"
+        outputDirectory = file("src/generated/resources")
+        createRunConfiguration = true
     }
-
-    mods {
-        mysticalagriculture {
-            sourceSet(sourceSets.main)
-        }
+    configureTests {
+        createSourceSet = true
+        modId = "mysticalagriculture-gametest"
+        enableGameTests = true
+        enableClientGameTests = false
     }
-}
-
-configurations {
-    runtimeClasspath.extendsFrom localRuntime
 }
 
 sourceSets.main.resources {
-    srcDirs 'src/generated/resources'
-    exclude '.cache'
+    exclude ".cache"
 }
 
 dependencies {
-    implementation "com.blakebr0.cucumber:Cucumber:${cucumber_version}"
+    minecraft "com.mojang:minecraft:${minecraft_version}"
 
-    implementation "curse.maven:jade-324717:${jade_version}"
-//  implementation "curse.maven:the-one-probe-245211:${top_version}"
-//  implementation "com.blamejared.crafttweaker:CraftTweaker-neoforge-${crafttweaker_version}"
+    implementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+    implementation "com.blakebr0.cucumber:Cucumber-Fabric:${cucumber_version}"
 
-    runtimeOnly "vazkii.patchouli:patchouli-neoforge:${patchouli_version}"
-    runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+    api "teamreborn:energy:${energy_version}"
+    include "teamreborn:energy:${energy_version}"
 
-    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
-    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    testImplementation platform("org.junit:junit-bom:5.12.2")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
 java.withSourcesJar()
@@ -125,14 +72,21 @@ artifacts {
 
 tasks.withType(ProcessResources).configureEach {
     var replaceProperties = [
-            mod_version            : version.split('-').last(),
-            cucumber_version       : cucumber_version.split('-').last(),
+            mod_version: mod_version,
     ]
     inputs.properties replaceProperties
 
-    filesMatching(['META-INF/neoforge.mods.toml']) {
+    filesMatching(['fabric.mod.json']) {
         expand replaceProperties
     }
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
 }
 
 publishing {
@@ -140,31 +94,5 @@ publishing {
         maven(MavenPublication) {
             from components.java
         }
-    }
-
-    repositories {
-        maven {
-            url = 'https://maven.blakesmods.com'
-
-            credentials {
-                username = System.getenv('BLAKESMODS_MAVEN_USERNAME')
-                password = System.getenv('BLAKESMODS_MAVEN_PASSWORD')
-            }
-
-            authentication {
-                basic(BasicAuthentication)
-            }
-        }
-    }
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-}
-
-idea {
-    module {
-        downloadSources = true
-        downloadJavadoc = true
     }
 }

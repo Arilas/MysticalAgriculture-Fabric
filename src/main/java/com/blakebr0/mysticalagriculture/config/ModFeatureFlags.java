@@ -6,6 +6,8 @@ import com.blakebr0.mysticalagriculture.MysticalAgriculture;
 
 @FeatureFlags
 public final class ModFeatureFlags {
+    // ConfigValue implements Supplier<Boolean>, so feature flags stay bound to
+    // the current validated value without exposing the JSON loader.
     public static final FeatureFlag DRAGON_DROPS_COGNIZANT = FeatureFlag.create(MysticalAgriculture.resource("dragon_crops_cognizant"), ModConfigs.DRAGON_DROPS_COGNIZANT);
     public static final FeatureFlag DRAGON_DROPS_ESSENCE = FeatureFlag.create(MysticalAgriculture.resource("dragon_drops_essence"), ModConfigs.DRAGON_DROPS_ESSENCE);
     public static final FeatureFlag ESSENCE_FARMLAND_CONVERSION = FeatureFlag.create(MysticalAgriculture.resource("essence_farmland_conversion"), ModConfigs.ESSENCE_FARMLAND_CONVERSION);

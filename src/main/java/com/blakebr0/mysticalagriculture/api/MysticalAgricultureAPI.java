@@ -39,7 +39,7 @@ public class MysticalAgricultureAPI {
     }
 
     /**
-     * Config values defined in the {@code mysticalagriculture-common.toml} config file
+     * Config values defined in the {@code mysticalagriculture.json} config file
      * @return mod config values
      */
     public static MysticalAgricultureConfigValues getConfigValues() {

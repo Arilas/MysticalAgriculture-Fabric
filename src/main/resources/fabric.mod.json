@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "mysticalagriculture",
+  "version": "${mod_version}",
+  "name": "Mystical Agriculture (Unofficial Fabric Fork)",
+  "description": "Grow all your resources!",
+  "authors": [
+    "BlakeBr0"
+  ],
+  "contributors": [
+    "Mark719",
+    "xun468",
+    "Cavemanrockx"
+  ],
+  "contact": {
+    "homepage": "https://github.com/Arilas/MysticalAgriculture-Fabric",
+    "sources": "https://github.com/Arilas/MysticalAgriculture-Fabric",
+    "issues": "https://github.com/Arilas/MysticalAgriculture-Fabric/issues"
+  },
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.blakebr0.mysticalagriculture.MysticalAgriculture"
+    ],
+    "client": [
+      "com.blakebr0.mysticalagriculture.MysticalAgricultureClient"
+    ],
+    "fabric-datagen": [
+      "com.blakebr0.mysticalagriculture.data.ModDataGenerators"
+    ],
+    "jei_mod_plugin": [
+      "com.blakebr0.mysticalagriculture.compat.jei.JeiCompat"
+    ]
+  },
+  "mixins": [
+    "mysticalagriculture.mixins.json"
+  ],
+  "accessWidener": "mysticalagriculture.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "26.2",
+    "java": ">=25",
+    "fabric-api": ">=0.155.2+26.2",
+    "cucumber": ">=9.0.5+fabric.1",
+    "team_reborn_energy": ">=5.0.0"
+  },
+  "suggests": {
+    "jei": "*",
+    "jade": "*"
+  }
+}

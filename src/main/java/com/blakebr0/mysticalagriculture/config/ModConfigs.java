@@ -1,103 +1,235 @@
 package com.blakebr0.mysticalagriculture.config;
 
-import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.common.ModConfigSpec;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.fabricmc.loader.api.FabricLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public final class ModConfigs {
-    public static final ModConfigSpec COMMON;
+    private static final Logger LOGGER = LoggerFactory.getLogger("Mystical Agriculture");
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
-    public static final ModConfigSpec.DoubleValue INFERIUM_DROP_CHANCE;
-    public static final ModConfigSpec.IntValue INFUSION_CRYSTAL_USES;
-    public static final ModConfigSpec.IntValue GROWTH_ACCELERATOR_COOLDOWN;
-    public static final ModConfigSpec.DoubleValue FERTILIZED_ESSENCE_DROP_CHANCE;
-    public static final ModConfigSpec.BooleanValue SECONDARY_SEED_DROPS;
-    public static final ModConfigSpec.BooleanValue REQUIRES_EFFECTIVE_FARMLAND;
-    public static final ModConfigSpec.BooleanValue WITHER_DROPS_ESSENCE;
-    public static final ModConfigSpec.BooleanValue WITHER_DROPS_COGNIZANT;
-    public static final ModConfigSpec.BooleanValue DRAGON_DROPS_ESSENCE;
-    public static final ModConfigSpec.BooleanValue DRAGON_DROPS_COGNIZANT;
-    public static final ModConfigSpec.BooleanValue ESSENCE_FARMLAND_CONVERSION;
-    public static final ModConfigSpec.BooleanValue SEED_CRAFTING_RECIPES;
-    public static final ModConfigSpec.BooleanValue UNBREAKABLE_SUPREMIUM_ARMOR;
-    public static final ModConfigSpec.BooleanValue FAKE_PLAYER_WATERING;
-    public static final ModConfigSpec.BooleanValue AWAKENED_SUPREMIUM_SET_BONUS;
+    public static final ConfigValue<Double> INFERIUM_DROP_CHANCE =
+            doubleValue("inferiumDropChance", 0.2, 0.0, 1.0);
+    public static final ConfigValue<Integer> INFUSION_CRYSTAL_USES =
+            intValue("infusionCrystalUses", 1000, 10, Integer.MAX_VALUE);
+    public static final ConfigValue<Integer> GROWTH_ACCELERATOR_COOLDOWN =
+            intValue("growthAcceleratorCooldown", 10, 1, Integer.MAX_VALUE);
+    public static final ConfigValue<Double> FERTILIZED_ESSENCE_DROP_CHANCE =
+            doubleValue("fertilizedEssenceChance", 0.1, 0.0, 1.0);
+    public static final ConfigValue<Boolean> SECONDARY_SEED_DROPS =
+            booleanValue("secondarySeedDrops", true);
+    public static final ConfigValue<Boolean> REQUIRES_EFFECTIVE_FARMLAND =
+            booleanValue("requiresEffectiveFarmland", false);
+    public static final ConfigValue<Boolean> WITHER_DROPS_ESSENCE =
+            booleanValue("witherDropsEssence", true);
+    public static final ConfigValue<Boolean> WITHER_DROPS_COGNIZANT =
+            booleanValue("witherDropsCognizant", true);
+    public static final ConfigValue<Boolean> DRAGON_DROPS_ESSENCE =
+            booleanValue("dragonDropsEssence", true);
+    public static final ConfigValue<Boolean> DRAGON_DROPS_COGNIZANT =
+            booleanValue("dragonDropsCognizant", true);
+    public static final ConfigValue<Boolean> ESSENCE_FARMLAND_CONVERSION =
+            booleanValue("essenceFarmlandConversion", true);
+    public static final ConfigValue<Boolean> SEED_CRAFTING_RECIPES =
+            booleanValue("seedCraftingRecipes", false);
+    public static final ConfigValue<Boolean> UNBREAKABLE_SUPREMIUM_ARMOR =
+            booleanValue("unbreakableSupremiumArmor", false);
+    public static final ConfigValue<Boolean> FAKE_PLAYER_WATERING =
+            booleanValue("fakePlayerWatering", true);
+    public static final ConfigValue<Boolean> AWAKENED_SUPREMIUM_SET_BONUS =
+            booleanValue("awakenedSupremiumSetBonus", true);
+    public static final ConfigValue<Boolean> GENERATE_PROSPERITY =
+            booleanValue("generateProsperityOre", true);
+    public static final ConfigValue<Boolean> GENERATE_INFERIUM =
+            booleanValue("generateInferiumOre", true);
+    public static final ConfigValue<Boolean> GENERATE_SOULSTONE =
+            booleanValue("generateSoulstone", true);
+    public static final ConfigValue<Double> SOULIUM_ORE_CHANCE =
+            doubleValue("souliumOreChance", 0.05, 0.0, 1.0);
 
-    public static final ModConfigSpec.BooleanValue GENERATE_PROSPERITY;
-    public static final ModConfigSpec.BooleanValue GENERATE_INFERIUM;
-    public static final ModConfigSpec.BooleanValue GENERATE_SOULSTONE;
-    public static final ModConfigSpec.DoubleValue SOULIUM_ORE_CHANCE;
+    private static final List<ConfigValue<?>> VALUES = List.of(
+            INFERIUM_DROP_CHANCE,
+            INFUSION_CRYSTAL_USES,
+            GROWTH_ACCELERATOR_COOLDOWN,
+            FERTILIZED_ESSENCE_DROP_CHANCE,
+            SECONDARY_SEED_DROPS,
+            REQUIRES_EFFECTIVE_FARMLAND,
+            WITHER_DROPS_ESSENCE,
+            WITHER_DROPS_COGNIZANT,
+            DRAGON_DROPS_ESSENCE,
+            DRAGON_DROPS_COGNIZANT,
+            ESSENCE_FARMLAND_CONVERSION,
+            SEED_CRAFTING_RECIPES,
+            UNBREAKABLE_SUPREMIUM_ARMOR,
+            FAKE_PLAYER_WATERING,
+            AWAKENED_SUPREMIUM_SET_BONUS,
+            GENERATE_PROSPERITY,
+            GENERATE_INFERIUM,
+            GENERATE_SOULSTONE,
+            SOULIUM_ORE_CHANCE
+    );
 
-    // Common
-    static {
-        final var common = new ModConfigSpec.Builder();
-
-        common.comment("General configuration options.").push("General");
-        INFERIUM_DROP_CHANCE = common
-                .comment("The percentage chance that a passive or hostile mob will drop an Inferium Essence when killed.")
-                .defineInRange("inferiumDropChance", 0.2, 0.0, 1.0);
-        INFUSION_CRYSTAL_USES = common
-                .comment("The number of uses the basic Infusion Crystal should have.")
-                .defineInRange("infusionCrystalUses", 1000, 10, Integer.MAX_VALUE);
-        GROWTH_ACCELERATOR_COOLDOWN = common
-                .comment("The amount of time in seconds between each Growth Accelerator growth tick.")
-                .defineInRange("growthAcceleratorCooldown", 10, 1, Integer.MAX_VALUE);
-        FERTILIZED_ESSENCE_DROP_CHANCE = common
-                .comment("The percentage chance that harvesting a Resource Crop will drop a Fertilized Essence.")
-                .defineInRange("fertilizedEssenceChance", 0.1, 0.0, 1.0);
-        SECONDARY_SEED_DROPS = common
-                .comment("Should crops have a chance of dropping a second seed when harvested?")
-                .define("secondarySeedDrops", true);
-        REQUIRES_EFFECTIVE_FARMLAND = common
-                .comment("Should resource crops need to be planted on their effective Farmland to grow?")
-                .define("requiresEffectiveFarmland", false);
-        WITHER_DROPS_ESSENCE = common
-                .comment("Should the Wither drop essence when killed with an essence weapon?")
-                .define("witherDropsEssence", true);
-        WITHER_DROPS_COGNIZANT = common
-                .comment("Should the Wither drop Cognizant Dust when killed with a Mystical Enlightenment enchanted essence weapon?")
-                .define("witherDropsCognizant", true);
-        DRAGON_DROPS_ESSENCE = common
-                .comment("Should the Ender Dragon drop essence when killed with an essence weapon?")
-                .define("dragonDropsEssence", true);
-        DRAGON_DROPS_COGNIZANT = common
-                .comment("Should the Ender Dragon drop Cognizant Dust when killed with a Mystical Enlightenment enchanted essence weapon?")
-                .define("dragonDropsCognizant", true);
-        ESSENCE_FARMLAND_CONVERSION = common
-                .comment("Should right-clicking on Farmland with an Essence create Essence Farmland?")
-                .define("essenceFarmlandConversion", true);
-        SEED_CRAFTING_RECIPES = common
-                .comment("Should vanilla crafting recipes for seeds be generated?")
-                .define("seedCraftingRecipes", false);
-        UNBREAKABLE_SUPREMIUM_ARMOR = common
-                .comment("Should Supremium & Awakened Supremium Armor be unbreakable?")
-                .define("unbreakableSupremiumArmor", false);
-        FAKE_PLAYER_WATERING = common
-                .comment("Should fake players be able to use watering cans?")
-                .define("fakePlayerWatering", true);
-        AWAKENED_SUPREMIUM_SET_BONUS = common
-                .comment("Should wearing a full set of Awakened Supremium armor grant the Plant Growth AOE set bonus?")
-                .define("awakenedSupremiumSetBonus", true);
-        common.pop();
-
-        common.comment("World generation options.").push("World");
-        GENERATE_PROSPERITY = common
-                .comment("Should Prosperity Ore generate in the world?")
-                .define("generateProsperityOre", true);
-        GENERATE_INFERIUM = common
-                .comment("Should Inferium Ore generate in the world?")
-                .define("generateInferiumOre", true);
-        GENERATE_SOULSTONE = common
-                .comment("Should Soulstone generate in the world?")
-                .define("generateSoulstone", true);
-        SOULIUM_ORE_CHANCE = common
-                .comment("The percentage chance a Soulium Ore spawns in a Soulstone cluster.")
-                .defineInRange("souliumOreChance", 0.05, 0, 1);
-        common.pop();
-
-        COMMON = common.build();
+    public static void load() {
+        load(FabricLoader.getInstance().getConfigDir()
+                .resolve("mysticalagriculture.json"));
     }
 
-    public static boolean isTheOneProbeInstalled() {
-        return ModList.get().isLoaded("theoneprobe");
+    static synchronized void load(Path path) {
+        resetDefaults();
+
+        try {
+            var parent = path.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+
+            if (Files.notExists(path)) {
+                writeDefaults(path);
+                return;
+            }
+
+            JsonObject json;
+            try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+                json = JsonParser.parseReader(reader).getAsJsonObject();
+            }
+
+            VALUES.forEach(value -> value.read(json));
+        } catch (Exception e) {
+            resetDefaults();
+            LOGGER.error("Could not read Mystical Agriculture config {}; using defaults without overwriting the file", path, e);
+        }
+    }
+
+    private static void resetDefaults() {
+        VALUES.forEach(ConfigValue::reset);
+    }
+
+    private static void writeDefaults(Path path) throws IOException {
+        var json = new JsonObject();
+        VALUES.forEach(value -> value.writeDefault(json));
+
+        try (Writer writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
+            GSON.toJson(json, writer);
+        }
+    }
+
+    private static ConfigValue<Boolean> booleanValue(String key, boolean defaultValue) {
+        return new ConfigValue<>(
+                key,
+                defaultValue,
+                element -> {
+                    if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isBoolean()) {
+                        throw new IllegalArgumentException("expected a boolean");
+                    }
+
+                    return element.getAsBoolean();
+                },
+                value -> true
+        );
+    }
+
+    private static ConfigValue<Integer> intValue(String key, int defaultValue, int minimum, int maximum) {
+        return new ConfigValue<>(
+                key,
+                defaultValue,
+                element -> {
+                    if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber()) {
+                        throw new IllegalArgumentException("expected an integer");
+                    }
+
+                    return element.getAsBigDecimal().intValueExact();
+                },
+                value -> value >= minimum && value <= maximum
+        );
+    }
+
+    private static ConfigValue<Double> doubleValue(String key, double defaultValue, double minimum, double maximum) {
+        return new ConfigValue<>(
+                key,
+                defaultValue,
+                element -> {
+                    if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber()) {
+                        throw new IllegalArgumentException("expected a number");
+                    }
+
+                    return element.getAsDouble();
+                },
+                value -> Double.isFinite(value) && value >= minimum && value <= maximum
+        );
+    }
+
+    public static final class ConfigValue<T> implements Supplier<T> {
+        private final String key;
+        private final T defaultValue;
+        private final Function<JsonElement, T> parser;
+        private final Predicate<T> validator;
+        private T value;
+
+        private ConfigValue(
+                String key,
+                T defaultValue,
+                Function<JsonElement, T> parser,
+                Predicate<T> validator
+        ) {
+            this.key = key;
+            this.defaultValue = defaultValue;
+            this.parser = parser;
+            this.validator = validator;
+            this.value = defaultValue;
+        }
+
+        @Override
+        public T get() {
+            return this.value;
+        }
+
+        private void read(JsonObject json) {
+            if (!json.has(this.key)) {
+                return;
+            }
+
+            var jsonValue = json.get(this.key);
+
+            try {
+                var parsed = this.parser.apply(jsonValue);
+                if (!this.validator.test(parsed)) {
+                    throw new IllegalArgumentException("value is outside the accepted range");
+                }
+
+                this.value = parsed;
+            } catch (RuntimeException e) {
+                this.reset();
+                LOGGER.warn(
+                        "Invalid Mystical Agriculture config key '{}' with value {}; using fallback {}",
+                        this.key,
+                        jsonValue,
+                        this.defaultValue
+                );
+            }
+        }
+
+        private void reset() {
+            this.value = this.defaultValue;
+        }
+
+        private void writeDefault(JsonObject json) {
+            json.add(this.key, GSON.toJsonTree(this.defaultValue));
+        }
     }
 }

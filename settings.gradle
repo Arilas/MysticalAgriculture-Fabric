@@ -1,11 +1,33 @@
 pluginManagement {
     repositories {
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
         mavenLocal()
         gradlePluginPortal()
-        maven { url = 'https://maven.neoforged.net/releases' }
     }
 }
 
 plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = "MysticalAgriculture-Fabric"
+
+def cucumberProjectPath = providers.gradleProperty("cucumber_project_path")
+        .getOrElse("../Cucumber-Fabric")
+def cucumberDirectory = file(cucumberProjectPath)
+
+if (!new File(cucumberDirectory, "settings.gradle").isFile()) {
+    throw new GradleException(
+            "Cucumber-Fabric was not found at '${cucumberDirectory}'. " +
+            "Clone it there or set -Pcucumber_project_path=/absolute/path/to/Cucumber-Fabric."
+    )
+}
+
+includeBuild(cucumberDirectory) {
+    dependencySubstitution {
+        substitute module("com.blakebr0.cucumber:Cucumber-Fabric") using project(":")
+    }
 }

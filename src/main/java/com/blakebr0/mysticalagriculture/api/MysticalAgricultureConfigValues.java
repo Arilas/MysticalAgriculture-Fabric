@@ -6,6 +6,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 public final class MysticalAgricultureConfigValues {
+    // Primitive suppliers keep the public API independent from Fabric Loader and
+    // the internal JSON configuration representation.
     private final DoubleSupplier inferiumDropChance;
     private final DoubleSupplier fertilizedEssenceDropChance;
     private final BooleanSupplier secondarySeedDrops;

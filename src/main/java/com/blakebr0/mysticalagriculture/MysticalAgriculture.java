@@ -2,158 +2,70 @@ package com.blakebr0.mysticalagriculture;
 
 import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.api.MysticalAgricultureConfigValues;
-import com.blakebr0.mysticalagriculture.client.ModClientExtensions;
-import com.blakebr0.mysticalagriculture.client.ModClientTooltipComponentFactories;
-import com.blakebr0.mysticalagriculture.client.ModMenuScreens;
-import com.blakebr0.mysticalagriculture.client.ModTESRs;
-import com.blakebr0.mysticalagriculture.client.handler.ModelHandler;
-import com.blakebr0.mysticalagriculture.client.handler.AOEAugmentClientHandler;
-import com.blakebr0.mysticalagriculture.client.handler.AugmentTooltipHandler;
-import com.blakebr0.mysticalagriculture.client.handler.ClientRecipeHandler;
-import com.blakebr0.mysticalagriculture.client.handler.GuiOverlayHandler;
-import com.blakebr0.mysticalagriculture.client.handler.ItemModelPropertyHandler;
-import com.blakebr0.mysticalagriculture.client.handler.TintSourceHandler;
 import com.blakebr0.mysticalagriculture.config.ModConfigs;
-import com.blakebr0.mysticalagriculture.crafting.DynamicRecipeManager;
-import com.blakebr0.mysticalagriculture.crafting.EssenceVesselColorManager;
-import com.blakebr0.mysticalagriculture.data.ModDataGenerators;
-import com.blakebr0.mysticalagriculture.handler.AugmentHandler;
-import com.blakebr0.mysticalagriculture.handler.ExperienceCapsuleHandler;
-import com.blakebr0.mysticalagriculture.handler.MobDropHandler;
-import com.blakebr0.mysticalagriculture.handler.MobSoulHandler;
-import com.blakebr0.mysticalagriculture.handler.RegisterCapabilityHandler;
-import com.blakebr0.mysticalagriculture.handler.TinkerableHandler;
-import com.blakebr0.mysticalagriculture.init.ModBiomeModifiers;
-import com.blakebr0.mysticalagriculture.init.ModBlocks;
-import com.blakebr0.mysticalagriculture.init.ModConditionSerializers;
-import com.blakebr0.mysticalagriculture.init.ModCreativeModeTabs;
-import com.blakebr0.mysticalagriculture.init.ModDataComponentTypes;
-import com.blakebr0.mysticalagriculture.init.ModIngredientTypes;
-import com.blakebr0.mysticalagriculture.init.ModItems;
-import com.blakebr0.mysticalagriculture.init.ModMenuTypes;
-import com.blakebr0.mysticalagriculture.init.ModRecipeSerializers;
-import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
-import com.blakebr0.mysticalagriculture.init.ModTileEntities;
-import com.blakebr0.mysticalagriculture.init.ModWorldFeatures;
-import com.blakebr0.mysticalagriculture.network.NetworkHandler;
 import com.blakebr0.mysticalagriculture.registry.AugmentRegistry;
 import com.blakebr0.mysticalagriculture.registry.CropRegistry;
 import com.blakebr0.mysticalagriculture.registry.MobSoulTypeRegistry;
 import com.blakebr0.mysticalagriculture.registry.PluginRegistry;
-import com.blakebr0.mysticalagriculture.util.RecipeIngredientCache;
+import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Mod(MysticalAgriculture.MOD_ID)
-public final class MysticalAgriculture {
-	public static final String MOD_ID = "mysticalagriculture";
-	public static final String NAME = "Mystical Agriculture";
-	public static final Logger LOGGER = LoggerFactory.getLogger(NAME);
+public final class MysticalAgriculture implements ModInitializer {
+    public static final String MOD_ID = "mysticalagriculture";
+    public static final String NAME = "Mystical Agriculture";
+    public static final Logger LOGGER = LoggerFactory.getLogger(NAME);
 
-	public MysticalAgriculture(IEventBus bus, ModContainer mod) throws NoSuchFieldException, IllegalAccessException {
-		bus.register(this);
-		bus.register(new ModBlocks());
-		bus.register(new ModItems());
-		bus.register(new ModDataGenerators());
+    @Override
+    public void onInitialize() {
+        // 1. Configuration
+        ModConfigs.load();
 
-		ModCreativeModeTabs.REGISTRY.register(bus);
-		ModTileEntities.REGISTRY.register(bus);
-		ModDataComponentTypes.REGISTRY.register(bus);
-		ModMenuTypes.REGISTRY.register(bus);
-		ModIngredientTypes.REGISTRY.register(bus);
-		ModConditionSerializers.REGISTRY.register(bus);
-		ModRecipeTypes.REGISTRY.register(bus);
-		ModRecipeSerializers.REGISTRY.register(bus);
-		ModWorldFeatures.REGISTRY.register(bus);
-		ModBiomeModifiers.REGISTRY.register(bus);
+        // 2. Public API references
+        initAPI();
 
-		bus.register(new NetworkHandler());
-		bus.register(new RegisterCapabilityHandler());
+        // 3. Built-in and external plug-in discovery
+        PluginRegistry.getInstance().loadPlugins();
 
-		if (FMLEnvironment.getDist() == Dist.CLIENT) {
-			bus.register(new TintSourceHandler());
-			bus.register(new ModelHandler());
-			bus.register(new ItemModelPropertyHandler());
-			bus.register(new ModTESRs());
-			bus.register(new ModClientTooltipComponentFactories());
-			bus.register(new ModMenuScreens());
-			bus.register(new ModClientExtensions());
-		}
+        // 4. Content collection and vanilla registration are installed by Task 2.
+        // 5. Recipe, world, network, and storage registration are installed by Tasks 3 and 4.
+        // 6. Dynamic registry finalization is installed after the direct registries exist.
+        // 7. Callbacks and reload listeners are installed by the gameplay and lifecycle tasks.
+    }
 
-		mod.registerConfig(ModConfig.Type.STARTUP, ModConfigs.COMMON, "mysticalagriculture-common.toml");
+    public static Identifier resource(String path) {
+        return Identifier.fromNamespaceAndPath(MOD_ID, path);
+    }
 
-		initAPI();
+    private static void initAPI() {
+        try {
+            var api = MysticalAgricultureAPI.class;
 
-		PluginRegistry.getInstance().loadPlugins();
-	}
+            var cropRegistry = api.getDeclaredField("cropRegistry");
+            var augmentRegistry = api.getDeclaredField("augmentRegistry");
+            var soulTypeRegistry = api.getDeclaredField("soulTypeRegistry");
 
-	@SubscribeEvent
-	public void onCommonSetup(FMLCommonSetupEvent event) {
-		NeoForge.EVENT_BUS.register(new MobDropHandler());
-		NeoForge.EVENT_BUS.register(new MobSoulHandler());
-		NeoForge.EVENT_BUS.register(new ExperienceCapsuleHandler());
-		NeoForge.EVENT_BUS.register(new AugmentHandler());
-		NeoForge.EVENT_BUS.register(new TinkerableHandler());
-		NeoForge.EVENT_BUS.register(DynamicRecipeManager.INSTANCE);
-        NeoForge.EVENT_BUS.register(EssenceVesselColorManager.INSTANCE);
-		NeoForge.EVENT_BUS.register(RecipeIngredientCache.INSTANCE);
+            cropRegistry.setAccessible(true);
+            cropRegistry.set(null, CropRegistry.getInstance());
+            augmentRegistry.setAccessible(true);
+            augmentRegistry.set(null, AugmentRegistry.getInstance());
+            soulTypeRegistry.setAccessible(true);
+            soulTypeRegistry.set(null, MobSoulTypeRegistry.getInstance());
 
-		NeoForge.EVENT_BUS.addListener(ModRecipeTypes::onDatapackSync);
+            var configValues = api.getDeclaredField("configValues");
 
-		CropRegistry.getInstance().onCommonSetup();
-		AugmentRegistry.getInstance().onCommonSetup();
-		MobSoulTypeRegistry.getInstance().onCommonSetup();
-	}
-
-	@SubscribeEvent
-	public void onClientSetup(FMLClientSetupEvent event) {
-		NeoForge.EVENT_BUS.register(new AugmentTooltipHandler());
-		NeoForge.EVENT_BUS.register(new GuiOverlayHandler());
-		NeoForge.EVENT_BUS.register(new AOEAugmentClientHandler());
-		NeoForge.EVENT_BUS.register(new ClientRecipeHandler());
-
-		NeoForge.EVENT_BUS.addListener(ModelHandler::onRegisterClientItems);
-	}
-
-	public static Identifier resource(String path) {
-		return Identifier.fromNamespaceAndPath(MOD_ID, path);
-	}
-
-	private static void initAPI() throws NoSuchFieldException, IllegalAccessException {
-		var api = MysticalAgricultureAPI.class;
-
-		var cropRegistry = api.getDeclaredField("cropRegistry");
-		var augmentRegistry = api.getDeclaredField("augmentRegistry");
-		var soulTypeRegistry = api.getDeclaredField("soulTypeRegistry");
-
-		cropRegistry.setAccessible(true);
-		cropRegistry.set(null, CropRegistry.getInstance());
-		augmentRegistry.setAccessible(true);
-		augmentRegistry.set(null, AugmentRegistry.getInstance());
-		soulTypeRegistry.setAccessible(true);
-		soulTypeRegistry.set(null, MobSoulTypeRegistry.getInstance());
-
-		var configValues = api.getDeclaredField("configValues");
-
-		configValues.setAccessible(true);
-		configValues.set(null, new MysticalAgricultureConfigValues(
-				ModConfigs.INFERIUM_DROP_CHANCE,
-				ModConfigs.FERTILIZED_ESSENCE_DROP_CHANCE,
-				ModConfigs.SECONDARY_SEED_DROPS,
-                ModConfigs.REQUIRES_EFFECTIVE_FARMLAND,
-				ModConfigs.UNBREAKABLE_SUPREMIUM_ARMOR,
-				ModConfigs.FAKE_PLAYER_WATERING
-		));
-	}
+            configValues.setAccessible(true);
+            configValues.set(null, new MysticalAgricultureConfigValues(
+                    ModConfigs.INFERIUM_DROP_CHANCE::get,
+                    ModConfigs.FERTILIZED_ESSENCE_DROP_CHANCE::get,
+                    ModConfigs.SECONDARY_SEED_DROPS::get,
+                    ModConfigs.REQUIRES_EFFECTIVE_FARMLAND::get,
+                    ModConfigs.UNBREAKABLE_SUPREMIUM_ARMOR::get,
+                    ModConfigs.FAKE_PLAYER_WATERING::get
+            ));
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Could not initialize the Mystical Agriculture API", e);
+        }
+    }
 }
