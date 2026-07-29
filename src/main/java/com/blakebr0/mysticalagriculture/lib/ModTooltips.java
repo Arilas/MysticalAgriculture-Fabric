@@ -2,9 +2,9 @@ package com.blakebr0.mysticalagriculture.lib;
 
 import com.blakebr0.cucumber.util.Tooltip;
 import com.blakebr0.mysticalagriculture.api.util.TinkerableUtils;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.neoforged.fml.ModList;
 
 public final class ModTooltips {
     public static final Tooltip EMPTY = new Tooltip("tooltip.mysticalagriculture.empty");
@@ -54,7 +54,10 @@ public final class ModTooltips {
     }
 
     public static Component getAddedByTooltip(String modid) {
-        var name = ModList.get().getModFileById(modid).getMods().getFirst().getDisplayName();
+        var name = FabricLoader.getInstance()
+                .getModContainer(modid)
+                .map(container -> container.getMetadata().getName())
+                .orElse(modid);
         return ModTooltips.ADDED_BY.args(name).toComponent();
     }
 }

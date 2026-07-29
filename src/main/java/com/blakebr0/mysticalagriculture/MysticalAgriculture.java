@@ -7,6 +7,11 @@ import com.blakebr0.mysticalagriculture.crafting.DynamicRecipeManager;
 import com.blakebr0.mysticalagriculture.crafting.EssenceVesselColorManager;
 import com.blakebr0.mysticalagriculture.handler.ModStorageProviders;
 import com.blakebr0.mysticalagriculture.handler.ReloadSyncHandler;
+import com.blakebr0.mysticalagriculture.handler.AugmentHandler;
+import com.blakebr0.mysticalagriculture.handler.ExperienceCapsuleHandler;
+import com.blakebr0.mysticalagriculture.handler.MobDropHandler;
+import com.blakebr0.mysticalagriculture.handler.MobSoulHandler;
+import com.blakebr0.mysticalagriculture.handler.TinkerableHandler;
 import com.blakebr0.mysticalagriculture.init.ModBlocks;
 import com.blakebr0.mysticalagriculture.init.ModCreativeModeTabs;
 import com.blakebr0.mysticalagriculture.init.ModDataComponentTypes;
@@ -78,7 +83,14 @@ public final class MysticalAgriculture implements ModInitializer {
         ModStorageProviders.register();
         ReloadSyncHandler.register();
 
-        // 9. Remaining gameplay and client lifecycle hooks are installed by Tasks 5–7.
+        // 9. Server-authoritative gameplay callbacks
+        MobDropHandler.register();
+        MobSoulHandler.register();
+        ExperienceCapsuleHandler.register();
+        AugmentHandler.register();
+        TinkerableHandler.register();
+
+        // 10. Remaining client lifecycle hooks are installed by Tasks 6–7.
     }
 
     public static Identifier resource(String path) {

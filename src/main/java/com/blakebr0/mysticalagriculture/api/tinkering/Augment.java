@@ -11,6 +11,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -267,7 +268,7 @@ public class Augment {
      * @param player the player
      * @param cache the ability to cache
      */
-    public void onPlayerTick(Level level, Player player, AbilityCache cache) { }
+    public void onPlayerTick(ServerPlayer player, AbilityCache cache) { }
 
     /**
      * Called when the player hits the ground.
@@ -276,7 +277,7 @@ public class Augment {
      * @param fallDistance the distance the player fell
      * @return {@code true} when the registered server damage callback should cancel fall damage
      */
-    public boolean onPlayerFall(Level level, Player player, float fallDistance) {
+    public boolean onPlayerFall(ServerPlayer player, float fallDistance) {
         return false;
     }
 

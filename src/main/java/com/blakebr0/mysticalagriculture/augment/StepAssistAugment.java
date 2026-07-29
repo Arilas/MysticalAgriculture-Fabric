@@ -5,10 +5,9 @@ import com.blakebr0.mysticalagriculture.api.lib.AbilityCache;
 import com.blakebr0.mysticalagriculture.api.tinkering.Augment;
 import com.blakebr0.mysticalagriculture.api.tinkering.AugmentType;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 
 import java.util.EnumSet;
 
@@ -20,7 +19,7 @@ public class StepAssistAugment extends Augment {
     }
 
     @Override
-    public void onPlayerTick(Level level, Player player, AbilityCache cache) {
+    public void onPlayerTick(ServerPlayer player, AbilityCache cache) {
         if (!player.isShiftKeyDown() && !cache.isCached(this, player)) {
             var height = player.getAttribute(Attributes.STEP_HEIGHT);
             if (height == null)

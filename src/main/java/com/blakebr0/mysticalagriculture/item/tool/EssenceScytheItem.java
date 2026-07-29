@@ -1,7 +1,6 @@
 package com.blakebr0.mysticalagriculture.item.tool;
 
 import com.blakebr0.cucumber.item.tool.BaseScytheItem;
-import com.blakebr0.cucumber.util.ClientPlayerUtil;
 import com.blakebr0.mysticalagriculture.api.components.AOEAugmentOffsetComponent;
 import com.blakebr0.mysticalagriculture.api.tinkering.AugmentType;
 import com.blakebr0.mysticalagriculture.api.tinkering.ITinkerable;
@@ -144,7 +143,7 @@ public class EssenceScytheItem extends BaseScytheItem implements ITinkerable {
 
         builder.accept(ModTooltips.TOOL_AREA.args(rangeNumber).toComponent());
 
-        AugmentUtils.addAugmentListToTooltip(builder, stack, this.slots, ClientPlayerUtil.getClientPlayer());
+        AugmentUtils.addAugmentListToTooltip(builder, stack, this.slots, null);
     }
 
     @Override

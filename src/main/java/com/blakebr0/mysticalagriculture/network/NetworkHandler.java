@@ -1,7 +1,6 @@
 package com.blakebr0.mysticalagriculture.network;
 
 import com.blakebr0.mysticalagriculture.api.components.AOEAugmentOffsetComponent;
-import com.blakebr0.mysticalagriculture.api.tinkering.ITinkerable;
 import com.blakebr0.mysticalagriculture.api.util.AugmentUtils;
 import com.blakebr0.mysticalagriculture.init.ModDataComponentTypes;
 import com.blakebr0.mysticalagriculture.network.payloads.ExperienceCapsulePickupPayload;
@@ -41,20 +40,12 @@ public final class NetworkHandler {
     }
 
     static boolean applyAOEOffset(ServerPlayer player, UpdateAOEAugmentOffsetPayload payload) {
-        if (!payload.hasOnlySingleStepChanges()) {
-            return false;
-        }
-
         var stack = player.getMainHandItem();
-        if (stack.isEmpty() || !(stack.getItem() instanceof ITinkerable)) {
+        if (!AOEUpdateValidator.isValid(stack, payload, AugmentUtils::getMaxAOEAugmentRange)) {
             return false;
         }
 
         var range = AugmentUtils.getMaxAOEAugmentRange(stack);
-        if (range <= 0) {
-            return false;
-        }
-
         var offset = stack.getOrDefault(
                 ModDataComponentTypes.AOE_AUGMENT_OFFSET,
                 AOEAugmentOffsetComponent.DEFAULT

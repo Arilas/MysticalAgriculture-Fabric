@@ -6,7 +6,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.state.BlockState;
 
 public class WitherproofBlock extends BaseBlock {
     public WitherproofBlock(Identifier id) {
@@ -18,7 +17,7 @@ public class WitherproofBlock extends BaseBlock {
     }
 
     @Override
-    public void onBlockExploded(BlockState state, ServerLevel level, BlockPos pos, Explosion explosion) { }
+    public void wasExploded(ServerLevel level, BlockPos pos, Explosion explosion) { }
 
     @Override
     public boolean dropFromExplosion(Explosion explosion) {

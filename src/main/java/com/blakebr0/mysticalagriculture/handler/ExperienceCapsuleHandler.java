@@ -3,39 +3,35 @@ package com.blakebr0.mysticalagriculture.handler;
 import com.blakebr0.mysticalagriculture.api.util.ExperienceCapsuleUtils;
 import com.blakebr0.mysticalagriculture.item.ExperienceCapsuleItem;
 import com.blakebr0.mysticalagriculture.network.payloads.ExperienceCapsulePickupPayload;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerXpEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class ExperienceCapsuleHandler {
-    @SubscribeEvent
-    public void onPlayerPickupXp(PlayerXpEvent.PickupXp event) {
-        var orb = event.getOrb();
-        var player = event.getEntity();
+    private ExperienceCapsuleHandler() {
+    }
+
+    public static void register() {
+        // ExperienceOrbMixin supplies the missing Fabric callback at the pickup transaction.
+    }
+
+    public static int absorbExperience(ServerPlayer player, int experience) {
+        var remaining = experience;
         var capsules = getExperienceCapsules(player);
 
-        if (!capsules.isEmpty()) {
-            for (var stack : capsules) {
-                int remaining = ExperienceCapsuleUtils.addExperienceToCapsule(stack, orb.getValue());
-
-                orb.setValue(remaining);
-
-                if (remaining == 0) {
-                    orb.discard();
-
-                    PacketDistributor.sendToPlayer((ServerPlayer) player, new ExperienceCapsulePickupPayload());
-
-                    event.setCanceled(true);
-                    return;
-                }
+        for (var stack : capsules) {
+            remaining = ExperienceCapsuleUtils.addExperienceToCapsule(stack, remaining);
+            if (remaining == 0) {
+                ServerPlayNetworking.send(player, new ExperienceCapsulePickupPayload());
+                break;
             }
         }
+
+        return remaining;
     }
 
     private static List<ItemStack> getExperienceCapsules(Player player) {

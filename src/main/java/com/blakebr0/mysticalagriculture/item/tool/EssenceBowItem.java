@@ -1,7 +1,6 @@
 package com.blakebr0.mysticalagriculture.item.tool;
 
 import com.blakebr0.cucumber.item.tool.BaseBowItem;
-import com.blakebr0.cucumber.util.ClientPlayerUtil;
 import com.blakebr0.mysticalagriculture.api.tinkering.AugmentType;
 import com.blakebr0.mysticalagriculture.api.tinkering.ITinkerable;
 import com.blakebr0.mysticalagriculture.api.util.AugmentUtils;
@@ -137,7 +136,7 @@ public class EssenceBowItem extends BaseBowItem implements ITinkerable {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
         builder.accept(ModTooltips.getTooltipForTier(this.tinkerableTier));
-        AugmentUtils.addAugmentListToTooltip(builder, stack, this.slots, ClientPlayerUtil.getClientPlayer());
+        AugmentUtils.addAugmentListToTooltip(builder, stack, this.slots, null);
     }
 
     @Override

@@ -19,7 +19,6 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.DispenserBlock;
-import net.neoforged.neoforge.event.EventHooks;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
@@ -58,11 +57,6 @@ public class FertilizedEssenceItem extends BaseItem {
 
     public static boolean applyFertilizer(ItemStack stack, Level level, BlockPos pos, @Nullable Player player) {
         var state = level.getBlockState(pos);
-
-        var event = EventHooks.fireBonemealEvent(player, level, pos, state, stack);
-        if (event.isCanceled()) {
-            return event.isSuccessful();
-        }
 
         var block = state.getBlock();
 

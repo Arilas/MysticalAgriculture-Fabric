@@ -238,7 +238,7 @@ public class AugmentUtils {
             var augment = i < augments.size() ? augments.get(i) : null;
             var name = augment != null ? augment.getDisplayName() : Component.translatable("tooltip.mysticalagriculture.empty");
 
-            if (augment != null && augment.hasSetBonus() && TinkerableUtils.hasArmorSetMinimumTier(player, augment.getTier())) {
+            if (player != null && augment != null && augment.hasSetBonus() && TinkerableUtils.hasArmorSetMinimumTier(player, augment.getTier())) {
                 name.withStyle(ChatFormatting.GREEN);
             }
 

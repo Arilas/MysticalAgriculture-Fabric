@@ -13,7 +13,6 @@ import com.blakebr0.mysticalagriculture.api.machine.IUpgradeableMachine;
 import com.blakebr0.mysticalagriculture.api.machine.MachineUpgradeItemStackHandler;
 import com.blakebr0.mysticalagriculture.api.machine.MachineUpgradeTier;
 import com.blakebr0.mysticalagriculture.block.SouliumSpawnerBlock;
-import com.blakebr0.mysticalagriculture.client.handler.ClientRecipeHandler;
 import com.blakebr0.mysticalagriculture.container.SouliumSpawnerContainer;
 import com.blakebr0.mysticalagriculture.handler.MachineItemStorage;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
@@ -50,10 +49,13 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.UUID;
 import java.util.function.Supplier;
 
 public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements ExtendedMenuProvider<BlockPos>, IUpgradeableMachine {
+    public static final Map<Identifier, ISouliumSpawnerRecipe> CLIENT_RECIPE_MAP = new LinkedHashMap<>();
     private static final int INPUT_SLOT = 0;
     private static final int FUEL_SLOT = 1;
 
@@ -454,7 +456,7 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
             return;
 
         if (this.recipeId != null) {
-            var recipe = ClientRecipeHandler.SOULIUM_SPAWNER_RECIPE_MAP.get(this.recipeId);
+            var recipe = CLIENT_RECIPE_MAP.get(this.recipeId);
 
             if (recipe == null) {
                 this.displayEntities = null;

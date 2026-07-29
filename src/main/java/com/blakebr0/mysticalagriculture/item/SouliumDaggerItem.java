@@ -76,7 +76,7 @@ public class SouliumDaggerItem extends BaseSwordItem implements ISoulSiphoningIt
         }
 
         private static boolean isPassive(LivingEntity entity) {
-            return entity.getClassification(false).isFriendly();
+            return entity.getType().getCategory().isFriendly();
         }
     }
 }

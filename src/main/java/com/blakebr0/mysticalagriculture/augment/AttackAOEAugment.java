@@ -26,11 +26,12 @@ public class AttackAOEAugment extends Augment {
             if (!player.getCooldowns().isOnCooldown(stack)) {
                 var level = player.level();
                 var entities = level.getEntitiesOfClass(LivingEntity.class, target.getBoundingBox().inflate(1.5D * this.amplifier, 0.25D * this.amplifier, 1.5D * this.amplifier));
+                var source = level.damageSources().playerAttack(player);
 
                 for (var aoeEntity : entities) {
-                    if (aoeEntity != player && aoeEntity != target && !player.isAlliedTo(target)) {
-                        aoeEntity.knockback(0.4F, Mth.sin(player.getYRot() * 0.017453292F), -Mth.cos(player.getYRot() * 0.017453292F));
-                        aoeEntity.hurt(level.damageSources().playerAttack(player), 5.0F + (5.0F * this.amplifier));
+                    if (aoeEntity != player && aoeEntity != target && !player.isAlliedTo(aoeEntity)) {
+                        aoeEntity.knockback(0.4F, Mth.sin(player.getYRot() * 0.017453292F), -Mth.cos(player.getYRot() * 0.017453292F), source, 1.0F);
+                        aoeEntity.hurt(source, 5.0F + (5.0F * this.amplifier));
                     }
                 }
 

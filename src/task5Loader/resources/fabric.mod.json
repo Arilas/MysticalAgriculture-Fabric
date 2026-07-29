@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "mysticalagriculture-task5-tests",
+  "version": "1.0.0",
+  "name": "Mystical Agriculture Task 5 Tests",
+  "environment": "*",
+  "mixins": [
+    "mysticalagriculture.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "*",
+    "minecraft": "26.2",
+    "fabric-api": "*"
+  }
+}

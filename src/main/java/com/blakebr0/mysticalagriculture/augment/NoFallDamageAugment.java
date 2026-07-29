@@ -3,8 +3,7 @@ package com.blakebr0.mysticalagriculture.augment;
 import com.blakebr0.mysticalagriculture.api.tinkering.Augment;
 import com.blakebr0.mysticalagriculture.api.tinkering.AugmentType;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.EnumSet;
 
@@ -14,7 +13,7 @@ public class NoFallDamageAugment extends Augment {
     }
 
     @Override
-    public boolean onPlayerFall(Level level, Player player, float fallDistance) {
+    public boolean onPlayerFall(ServerPlayer player, float fallDistance) {
         return true;
     }
 }

@@ -7,10 +7,9 @@ import com.blakebr0.mysticalagriculture.api.tinkering.Augment;
 import com.blakebr0.mysticalagriculture.api.tinkering.AugmentType;
 import com.blakebr0.mysticalagriculture.registry.AugmentRegistry;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 
 import java.util.EnumSet;
 
@@ -24,7 +23,7 @@ public class HealthBoostAugment extends Augment {
     }
 
     @Override
-    public void onPlayerTick(Level level, Player player, AbilityCache cache) {
+    public void onPlayerTick(ServerPlayer player, AbilityCache cache) {
         if (!cache.isCached(this, player)) {
             var health = player.getAttribute(Attributes.MAX_HEALTH);
             if (health == null)

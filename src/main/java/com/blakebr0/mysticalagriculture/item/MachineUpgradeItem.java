@@ -52,7 +52,7 @@ public class MachineUpgradeItem extends BaseItem implements IMachineUpgrade {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
-        if (flag.hasShiftDown()) {
+        if (flag.isAdvanced()) {
             var speed = Formatting.number(1 / this.tier.getOperationTimeMultiplier()).withStyle(this.tier.getTextColor());
             var fuelRate = Formatting.number(this.tier.getFuelUsageMultiplier()).withStyle(this.tier.getTextColor());
             var fuelCapacity = Formatting.number(this.tier.getFuelCapacityMultiplier()).withStyle(this.tier.getTextColor());

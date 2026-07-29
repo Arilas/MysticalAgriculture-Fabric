@@ -52,7 +52,19 @@ public class AbilityCache {
      */
     public void remove(String augment, Player player) {
         var key = getPlayerKey(player);
-        this.cache.getOrDefault(augment, EMPTY_MAP).remove(key).run();
+        var callbacks = this.cache.get(augment);
+        if (callbacks == null) {
+            return;
+        }
+
+        var callback = callbacks.remove(key);
+        if (callback != null) {
+            callback.run();
+        }
+
+        if (callbacks.isEmpty()) {
+            this.cache.remove(augment, callbacks);
+        }
     }
 
     /**
@@ -71,7 +83,13 @@ public class AbilityCache {
      */
     public void removeQuietly(String augment, Player player) {
         String key = getPlayerKey(player);
-        this.cache.getOrDefault(augment, EMPTY_MAP).remove(key);
+        var callbacks = this.cache.get(augment);
+        if (callbacks != null) {
+            callbacks.remove(key);
+            if (callbacks.isEmpty()) {
+                this.cache.remove(augment, callbacks);
+            }
+        }
     }
 
     /**
@@ -109,7 +127,13 @@ public class AbilityCache {
                 .collect(Collectors.toSet());
     }
 
+    public void removeAll(Player player) {
+        for (var augment : Set.copyOf(this.getCachedAbilities(player))) {
+            this.remove(augment, player);
+        }
+    }
+
     private static String getPlayerKey(Player player) {
-        return player.getGameProfile().name() + ":" + player.level().isClientSide();
+        return player.getUUID().toString();
     }
 }

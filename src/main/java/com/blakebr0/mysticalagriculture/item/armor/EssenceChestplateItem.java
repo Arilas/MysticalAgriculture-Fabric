@@ -1,7 +1,6 @@
 package com.blakebr0.mysticalagriculture.item.armor;
 
 import com.blakebr0.cucumber.item.BaseArmorItem;
-import com.blakebr0.cucumber.util.ClientPlayerUtil;
 import com.blakebr0.cucumber.util.Utils;
 import com.blakebr0.mysticalagriculture.api.tinkering.AugmentType;
 import com.blakebr0.mysticalagriculture.api.tinkering.ITinkerable;
@@ -79,7 +78,7 @@ public class EssenceChestplateItem extends BaseArmorItem implements ITinkerable 
             builder.accept(ModTooltips.SET_BONUS.args(ModTooltips.AWAKENED_SUPREMIUM_SET_BONUS.toComponent()).toComponent());
         }
 
-        AugmentUtils.addAugmentListToTooltip(builder, stack, this.slots, ClientPlayerUtil.getClientPlayer());
+        AugmentUtils.addAugmentListToTooltip(builder, stack, this.slots, null);
     }
 
     @Override
@@ -97,7 +96,7 @@ public class EssenceChestplateItem extends BaseArmorItem implements ITinkerable 
         return this.tinkerableTier;
     }
 
-    private static boolean hasAwakenedSupremiumSet(Player player) {
+    public static boolean hasAwakenedSupremiumSet(Player player) {
         var helmet = player.getItemBySlot(EquipmentSlot.HEAD).is(ModItems.AWAKENED_SUPREMIUM_HELMET);
         var chestplate = player.getItemBySlot(EquipmentSlot.CHEST).is(ModItems.AWAKENED_SUPREMIUM_CHESTPLATE);
         var leggings = player.getItemBySlot(EquipmentSlot.LEGS).is(ModItems.AWAKENED_SUPREMIUM_LEGGINGS);

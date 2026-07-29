@@ -8,6 +8,7 @@ import com.blakebr0.mysticalagriculture.api.crafting.IReprocessorRecipe;
 import com.blakebr0.mysticalagriculture.api.crafting.ISoulExtractionRecipe;
 import com.blakebr0.mysticalagriculture.api.crafting.ISouliumSpawnerRecipe;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
+import com.blakebr0.mysticalagriculture.tileentity.SouliumSpawnerTileEntity;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -31,7 +32,7 @@ public final class ClientRecipeHandler {
 
     public static final Map<Identifier, IAwakeningRecipe> AWAKENING_RECIPE_MAP = new LinkedHashMap<>();
     public static final Map<Identifier, IInfusionRecipe> INFUSION_RECIPE_MAP = new LinkedHashMap<>();
-    public static final Map<Identifier, ISouliumSpawnerRecipe> SOULIUM_SPAWNER_RECIPE_MAP = new LinkedHashMap<>();
+    public static final Map<Identifier, ISouliumSpawnerRecipe> SOULIUM_SPAWNER_RECIPE_MAP = SouliumSpawnerTileEntity.CLIENT_RECIPE_MAP;
 
     @SubscribeEvent
     public void onRecipesReceived(RecipesReceivedEvent event) {

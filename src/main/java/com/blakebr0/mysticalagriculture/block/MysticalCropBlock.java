@@ -148,8 +148,10 @@ public class MysticalCropBlock extends CropBlock implements ICropProvider {
         var biomes = this.crop.getRequiredBiomes();
 
         if (!biomes.isEmpty()) {
-            var biome = level.getBiome(pos).getKey();
-            return biome != null && biomes.contains(biome.identifier());
+            return level.getBiome(pos)
+                    .unwrapKey()
+                    .map(key -> biomes.contains(key.identifier()))
+                    .orElse(false);
         }
 
         return true;

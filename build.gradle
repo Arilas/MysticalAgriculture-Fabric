@@ -147,6 +147,10 @@ def task4MainOutput = layout.buildDirectory.dir("classes/java/task4Main")
 def task4LoaderTestOutput = layout.buildDirectory.dir("classes/java/task4LoaderTest")
 def task4LoaderMainOutput = layout.buildDirectory.dir("classes/java/task4LoaderMain")
 def task4LoaderModOutput = layout.buildDirectory.dir("task4LoaderMod")
+def task5TestOutput = layout.buildDirectory.dir("classes/java/task5Test")
+def task5GameTestOutput = layout.buildDirectory.dir("classes/java/task5GameTest")
+def task5MainOutput = layout.buildDirectory.dir("classes/java/task5Main")
+def task5LoaderModOutput = layout.buildDirectory.dir("task5LoaderMod")
 
 tasks.register('compileTask2TestJava', JavaCompile) {
     source file("src/test/java/com/blakebr0/mysticalagriculture/registry/PluginRegistryTest.java")
@@ -374,6 +378,83 @@ tasks.register('compileTask4Java', JavaCompile) {
     javaCompiler = javaToolchains.compilerFor {
         languageVersion = JavaLanguageVersion.of(25)
     }
+}
+
+tasks.register('compileTask5TestJava', JavaCompile) {
+    dependsOn tasks.named('compileTask5Java')
+    source file("src/test/java/com/blakebr0/mysticalagriculture/network/AOEUpdateValidatorTest.java")
+    source file("src/test/java/com/blakebr0/mysticalagriculture/handler/GameplayMixinApplicationTest.java")
+    classpath = configurations.testCompileClasspath + files(task5MainOutput)
+    destinationDirectory = task5TestOutput
+    options.sourcepath = files("src/main/java", "src/test/java")
+    options.compilerArgs += ["-implicit:class"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('task5Test', Test) {
+    dependsOn tasks.named('prepareTask5LoaderTestMod')
+    dependsOn tasks.named('compileTask5TestJava')
+    testClassesDirs = files(task5TestOutput)
+    classpath = files(
+            configurations.task3LoaderRuntime,
+            task5LoaderModOutput,
+            task5TestOutput
+    )
+    include "**/AOEUpdateValidatorTest.class"
+    include "**/GameplayMixinApplicationTest.class"
+    systemProperty "fabric.addMods", task5LoaderModOutput.get().asFile.absolutePath
+    useJUnitPlatform()
+}
+
+tasks.register('compileTask5GameTestJava', JavaCompile) {
+    dependsOn tasks.named('compileTask5Java')
+    source file("src/gametest/java/com/blakebr0/mysticalagriculture/gametest/GameplayGameTests.java")
+    classpath = configurations.compileClasspath + files(task5MainOutput)
+    destinationDirectory = task5GameTestOutput
+    options.sourcepath = files("src/gametest/java")
+    options.compilerArgs += ["-implicit:class"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('compileTask5Java', JavaCompile) {
+    source file("src/main/java/com/blakebr0/mysticalagriculture/MysticalAgriculture.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/handler/AugmentHandler.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/handler/ExperienceCapsuleHandler.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/handler/MobDropHandler.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/handler/MobSoulHandler.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/handler/TinkerableHandler.java")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/augment")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/block/InferiumCropBlock.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/block/MysticalCropBlock.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/block/InfusedFarmlandBlock.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/block/GrowthAcceleratorBlock.java")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/item")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/api/tinkering")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/api/lib/AbilityCache.java")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/mixin")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/network/AOEUpdateValidator.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/network/payloads/UpdateAOEAugmentOffsetPayload.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/api/tinkering/ITinkerable.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/api/tinkering/AugmentType.java")
+    classpath = configurations.compileClasspath
+    destinationDirectory = task5MainOutput
+    options.sourcepath = files("src/main/java")
+    options.compilerArgs += ["-implicit:class"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('prepareTask5LoaderTestMod', Sync) {
+    dependsOn tasks.named('compileTask5Java')
+    from(task5MainOutput)
+    from "src/task5Loader/resources"
+    from "src/main/resources/mysticalagriculture.mixins.json"
+    into task5LoaderModOutput
 }
 
 artifacts {

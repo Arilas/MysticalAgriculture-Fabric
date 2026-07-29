@@ -12,26 +12,30 @@ import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.gamerules.GameRules;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
+import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 
 public final class MobDropHandler {
-    @SubscribeEvent
-    public void onLivingDrops(LivingDropsEvent event) {
-        var entity = event.getEntity();
-        var level = (ServerLevel) entity.level();
+    private MobDropHandler() {
+    }
+
+    public static void register() {
+        ServerLivingEntityEvents.AFTER_DEATH.register(MobDropHandler::onLivingDeath);
+    }
+
+    private static void onLivingDeath(net.minecraft.world.entity.LivingEntity entity, net.minecraft.world.damagesource.DamageSource source) {
+        if (!(entity.level() instanceof ServerLevel level)) {
+            return;
+        }
 
         if (!level.getGameRules().get(GameRules.MOB_DROPS))
             return;
 
-        var drops = event.getDrops();
-        var attacker = event.getSource().getEntity();
+        var attacker = source.getEntity();
         double inferiumDropChance = ModConfigs.INFERIUM_DROP_CHANCE.get();
 
         if (entity instanceof PathfinderMob && Math.random() < inferiumDropChance) {
-            drops.add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), new ItemStack(ModItems.INFERIUM_ESSENCE)));
+            spawnDrop(level, entity, new ItemStack(ModItems.INFERIUM_ESSENCE));
         }
 
         if (attacker instanceof Player player) {
@@ -45,7 +49,7 @@ public final class MobDropHandler {
                     var stack = getEssenceForTinkerable(tinkerable, 1, 3);
 
                     if (!stack.isEmpty()) {
-                        drops.add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), stack));
+                        spawnDrop(level, entity, stack);
                     }
                 }
 
@@ -55,11 +59,14 @@ public final class MobDropHandler {
                     var stack = getEssenceForTinkerable(tinkerable, 2, 4);
 
                     if (!stack.isEmpty()) {
-                        drops.add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), stack));
+                        spawnDrop(level, entity, stack);
                     }
                 }
 
-                var enlightenmentLevel = EnchantmentHelper.getTagEnchantmentLevel(ModEnchantments.MYSTICAL_ENLIGHTENMENT, held);
+                var enlightenmentLevel = ModEnchantments.getLevel(
+                        ModEnchantments.MYSTICAL_ENLIGHTENMENT,
+                        held,
+                        level.registryAccess());
 
                 if (enlightenmentLevel > 0) {
                     boolean witherDropsCognizant = ModConfigs.WITHER_DROPS_COGNIZANT.get();
@@ -67,7 +74,7 @@ public final class MobDropHandler {
                     if (witherDropsCognizant && entity instanceof WitherBoss) {
                         var stack = new ItemStack(ModItems.COGNIZANT_DUST, 4 + (enlightenmentLevel - 1));
 
-                        drops.add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), stack));
+                        spawnDrop(level, entity, stack);
                     }
 
                     boolean dragonDropsCognizant = ModConfigs.DRAGON_DROPS_COGNIZANT.get();
@@ -75,11 +82,15 @@ public final class MobDropHandler {
                     if (dragonDropsCognizant && entity instanceof EnderDragon) {
                         var stack = new ItemStack(ModItems.COGNIZANT_DUST, 4 + (enlightenmentLevel * 2));
 
-                        drops.add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), stack));
+                        spawnDrop(level, entity, stack);
                     }
                 }
             }
         }
+    }
+
+    private static void spawnDrop(ServerLevel level, net.minecraft.world.entity.LivingEntity entity, ItemStack stack) {
+        level.addFreshEntity(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), stack));
     }
 
     private static ItemStack getEssenceForTinkerable(ITinkerable tinkerable, int min, int max) {

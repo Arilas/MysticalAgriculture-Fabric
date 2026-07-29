@@ -8,10 +8,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
-import net.neoforged.neoforge.common.ItemAbilities;
 
 import java.util.EnumSet;
 
@@ -61,20 +63,26 @@ public class TillingAOEAugment extends AOEAugment {
     private static boolean till(UseOnContext context, BlockPos pos) {
         var level = context.getLevel();
         var direction = context.getClickedFace();
+        var player = context.getPlayer();
+        var stack = context.getItemInHand();
 
-        if (direction != Direction.DOWN && level.isEmptyBlock(pos.above())) {
-            var modifiedState = level.getBlockState(pos).getToolModifiedState(context, ItemAbilities.HOE_TILL, false);
+        if (direction != Direction.DOWN
+                && level.isEmptyBlock(pos.above())
+                && player != null
+                && level.mayInteract(player, pos)
+                && player.mayUseItemAt(pos.relative(direction), direction, stack)) {
+            var state = level.getBlockState(pos);
+            var modifiedState = getTilledState(state);
             if (modifiedState != null) {
                 if (!level.isClientSide()) {
-                    var stack = context.getItemInHand();
-                    var player = context.getPlayer();
-
                     level.setBlock(pos, modifiedState, 11);
                     level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, modifiedState));
 
-                    if (player != null) {
-                        stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
+                    if (state.is(Blocks.ROOTED_DIRT)) {
+                        Block.popResourceFromFace(level, pos, direction, new net.minecraft.world.item.ItemStack(Items.HANGING_ROOTS));
                     }
+
+                    stack.hurtAndBreak(1, player, context.getHand().asEquipmentSlot());
                 }
 
                 return true;
@@ -82,6 +90,17 @@ public class TillingAOEAugment extends AOEAugment {
         }
 
         return false;
+    }
+
+    private static BlockState getTilledState(BlockState state) {
+        var block = state.getBlock();
+        if (block == Blocks.GRASS_BLOCK || block == Blocks.DIRT_PATH || block == Blocks.DIRT) {
+            return Blocks.FARMLAND.defaultBlockState();
+        }
+        if (block == Blocks.COARSE_DIRT || block == Blocks.ROOTED_DIRT) {
+            return Blocks.DIRT.defaultBlockState();
+        }
+        return null;
     }
 
     private static int getColor(int color, int tier) {

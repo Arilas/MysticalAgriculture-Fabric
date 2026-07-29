@@ -20,7 +20,6 @@ import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.SaplingBlock;
-import net.neoforged.neoforge.event.EventHooks;
 
 import java.util.function.Consumer;
 
@@ -57,13 +56,6 @@ public class MysticalFertilizerItem extends BaseItem {
     public static boolean applyFertilizer(ItemStack stack, Level level, BlockPos pos, Player player) {
         var state = level.getBlockState(pos);
 
-        {
-            var event = EventHooks.fireBonemealEvent(player, level, pos, state, stack);
-            if (event.isCanceled()) {
-                return event.isSuccessful();
-            }
-        }
-
         var block = state.getBlock();
 
         if (block instanceof BonemealableBlock growable && growable.isValidBonemealTarget(level, pos, state)) {
@@ -76,10 +68,6 @@ public class MysticalFertilizerItem extends BaseItem {
                     if (growable instanceof CropBlock crop) {
                         level.setBlock(pos, crop.getStateForAge(crop.getMaxAge()), 2);
                     } else if (growable instanceof SaplingBlock sapling) {
-                        var event = EventHooks.fireBlockGrowFeature(level, rand, pos, null);
-                        if (event.isCanceled())
-                            return false;
-
                         var chunkGenerator = serverWorld.getChunkSource().getGenerator();
 
                         sapling.treeGrower.growTree(serverWorld, chunkGenerator, pos, state, rand);

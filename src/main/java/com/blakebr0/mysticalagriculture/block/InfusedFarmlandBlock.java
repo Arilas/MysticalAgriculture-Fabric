@@ -43,7 +43,6 @@ public class InfusedFarmlandBlock extends FarmlandBlock implements IColored, IEs
         entity.causeFallDamage(fallDistance, 1.0F, level.damageSources().fall());
     }
 
-    @Override
     public boolean isFertile(BlockState state, BlockGetter level, BlockPos pos) {
         return state.getValue(MOISTURE) > 0;
     }

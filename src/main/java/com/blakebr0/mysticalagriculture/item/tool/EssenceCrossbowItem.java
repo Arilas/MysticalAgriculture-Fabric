@@ -1,7 +1,6 @@
 package com.blakebr0.mysticalagriculture.item.tool;
 
 import com.blakebr0.cucumber.item.tool.BaseCrossbowItem;
-import com.blakebr0.cucumber.util.ClientPlayerUtil;
 import com.blakebr0.mysticalagriculture.api.tinkering.AugmentType;
 import com.blakebr0.mysticalagriculture.api.tinkering.ITinkerable;
 import com.blakebr0.mysticalagriculture.api.util.AugmentUtils;
@@ -139,7 +138,7 @@ public class EssenceCrossbowItem extends BaseCrossbowItem implements ITinkerable
         super.appendHoverText(stack, context, display, builder, flag);
 
         builder.accept(ModTooltips.getTooltipForTier(this.tinkerableTier));
-        AugmentUtils.addAugmentListToTooltip(builder, stack, this.slots, ClientPlayerUtil.getClientPlayer());
+        AugmentUtils.addAugmentListToTooltip(builder, stack, this.slots, null);
     }
 
     @Override
