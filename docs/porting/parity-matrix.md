@@ -97,5 +97,8 @@ Generator cache manifests are ignored and excluded from artifacts.
   `dd2da86f6c5d9c383aa50bc3c5016c3611d68e7c4ce61418e12584bdd640a007`.
   Sources SHA-256:
   `c4bb0bdf4cc3132ed8c16231c74c12b001a88b1df8336534d9707916797147e1`.
-- Remote sibling-clone CI run `30485870564` passed from the pushed Cucumber and
-  Mystical Agriculture Fabric branches.
+- Remote sibling-clone CI run `30488753759` passed from the final pushed
+  Cucumber and Mystical Agriculture Fabric branches. After the first attempt
+  encountered a transient Maven Central HTTP 429, unchanged rerun job
+  `90701283131` completed the full build, server/client GameTests, and artifact
+  upload successfully.
