@@ -7,20 +7,19 @@ import com.blakebr0.mysticalagriculture.lib.ModCrops;
 import com.blakebr0.mysticalagriculture.registry.AugmentRegistry;
 import com.blakebr0.mysticalagriculture.registry.CropRegistry;
 import com.blakebr0.mysticalagriculture.registry.MobSoulTypeRegistry;
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class ModCreativeModeTabs {
-    public static final DeferredRegister<CreativeModeTab> REGISTRY = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MysticalAgriculture.MOD_ID);
-
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> CREATIVE_TAB = REGISTRY.register("creative_tab", () -> CreativeModeTab.builder()
-            .title(Component.translatable("itemGroup.mysticalagriculture"))
-            .icon(() -> new ItemStack(ModItems.INFERIUM_ESSENCE.get()))
-            .displayItems(FeatureFlagDisplayItemGenerator.create((_, output) -> {
+    private static final CreativeModeTab.DisplayItemsGenerator CONTENT =
+            FeatureFlagDisplayItemGenerator.create((_, output) -> {
                 output.accept(ModBlocks.PROSPERITY_BLOCK);
                 output.accept(ModBlocks.INFERIUM_BLOCK);
                 output.accept(ModBlocks.PRUDENTIUM_BLOCK);
@@ -165,7 +164,7 @@ public final class ModCreativeModeTabs {
 
                 for (var type : MobSoulTypeRegistry.getInstance().getMobSoulTypes()) {
                     if (type.isEnabled()) {
-                        output.accept(MobSoulUtils.getFilledSoulJar(type, ModItems.SOUL_JAR.get()));
+                        output.accept(MobSoulUtils.getFilledSoulJar(type, ModItems.SOUL_JAR));
                     }
                 }
 
@@ -321,6 +320,18 @@ public final class ModCreativeModeTabs {
                         output.accept(augment.getItem());
                     }
                 }
-            }))
-            .build());
+            });
+
+    public static final ResourceKey<CreativeModeTab> CREATIVE_TAB_KEY =
+            ResourceKey.create(Registries.CREATIVE_MODE_TAB, MysticalAgriculture.resource("creative_tab"));
+    public static final CreativeModeTab CREATIVE_TAB = FabricCreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.mysticalagriculture"))
+            .icon(() -> new ItemStack(ModItems.INFERIUM_ESSENCE))
+            .build();
+
+    public static void register() {
+        Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, CREATIVE_TAB_KEY, CREATIVE_TAB);
+        CreativeModeTabEvents.modifyOutputEvent(CREATIVE_TAB_KEY)
+                .register(output -> CONTENT.accept(output.getContext(), output));
+    }
 }

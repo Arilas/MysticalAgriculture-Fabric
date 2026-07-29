@@ -20,7 +20,7 @@ public class TinkeringTableTileEntity extends BaseInventoryTileEntity implements
     private final CItemStacksHandler inventory;
 
     public TinkeringTableTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntities.TINKERING_TABLE.get(), pos, state);
+        super(ModTileEntities.TINKERING_TABLE, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.setChangedAndDispatch());
     }
 

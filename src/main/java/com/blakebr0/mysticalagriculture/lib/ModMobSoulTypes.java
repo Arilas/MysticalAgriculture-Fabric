@@ -4,8 +4,8 @@ import com.blakebr0.mysticalagriculture.MysticalAgriculture;
 import com.blakebr0.mysticalagriculture.api.registry.IMobSoulTypeRegistry;
 import com.blakebr0.mysticalagriculture.api.soul.MobSoulType;
 import com.google.common.collect.Sets;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.Identifier;
-import net.neoforged.fml.ModList;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -75,7 +75,7 @@ public final class ModMobSoulTypes {
     private static MobSoulType withRequiredMods(MobSoulType type, String... mods) {
         if (DEBUG) return type;
 
-        boolean enabled = Arrays.stream(mods).anyMatch(ModList.get()::isLoaded);
+        boolean enabled = Arrays.stream(mods).anyMatch(FabricLoader.getInstance()::isModLoaded);
         return type.setEnabled(enabled);
     }
 }

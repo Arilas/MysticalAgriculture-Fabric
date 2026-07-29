@@ -19,21 +19,33 @@ public final class MobSoulTypeRegistry implements IMobSoulTypeRegistry {
 
     private final Map<Identifier, MobSoulType> mobSoulTypes = new LinkedHashMap<>();
     private final Set<Identifier> usedEntityIds = new HashSet<>();
+    private String currentSourceMod;
+    private boolean finalized;
+
+    MobSoulTypeRegistry() {
+    }
 
     @Override
     public void register(MobSoulType mobSoulType) {
-        if (this.mobSoulTypes.values().stream().noneMatch(m -> m.getId().equals(mobSoulType.getId()))) {
-            var duplicates = mobSoulType.getEntityIds().stream().filter(this.usedEntityIds::contains).collect(Collectors.toSet());
-
-            if (duplicates.isEmpty()) {
-                this.mobSoulTypes.put(mobSoulType.getId(), mobSoulType);
-                this.usedEntityIds.addAll(mobSoulType.getEntityIds());
-            } else {
-                MysticalAgriculture.LOGGER.info("{} tried to register a mob soul type for entity ids {}, but they already have one registered, skipping", mobSoulType.getModId(), duplicates);
-            }
-        } else {
-            MysticalAgriculture.LOGGER.info("{} tried to register a duplicate mob soul type with id {}, skipping", mobSoulType.getModId(), mobSoulType.getId());
+        this.requireMutable("register mob soul type " + mobSoulType.getId());
+        if (this.currentSourceMod == null) {
+            throw new IllegalStateException("Cannot register mob soul type outside a plug-in registration callback");
         }
+        if (this.mobSoulTypes.containsKey(mobSoulType.getId())) {
+            throw duplicate(mobSoulType.getId(), this.currentSourceMod);
+        }
+
+        var duplicateEntities = mobSoulType.getEntityIds().stream()
+                .filter(this.usedEntityIds::contains)
+                .collect(Collectors.toSet());
+        if (!duplicateEntities.isEmpty()) {
+            throw new IllegalStateException(
+                    "Duplicate mob soul entity ids %s contributed by mod %s".formatted(duplicateEntities, this.currentSourceMod)
+            );
+        }
+
+        this.mobSoulTypes.put(mobSoulType.getId(), mobSoulType);
+        this.usedEntityIds.addAll(mobSoulType.getEntityIds());
     }
 
     @Override
@@ -58,27 +70,21 @@ public final class MobSoulTypeRegistry implements IMobSoulTypeRegistry {
 
     @Override
     public boolean addEntityTo(MobSoulType type, Identifier entity) {
-        if (!this.usedEntityIds.contains(entity)) {
-            this.usedEntityIds.add(entity);
-
+        this.requireMutable("add a mob soul entity");
+        if (this.usedEntityIds.add(entity)) {
             type.getEntityIds().add(entity);
-
             return true;
         }
-
         return false;
     }
 
     @Override
     public boolean removeEntityFrom(MobSoulType type, Identifier entity) {
-        if (type.getEntityIds().contains(entity)) {
-            type.getEntityIds().remove(entity);
-
+        this.requireMutable("remove a mob soul entity");
+        if (type.getEntityIds().remove(entity)) {
             this.usedEntityIds.remove(entity);
-
             return true;
         }
-
         return false;
     }
 
@@ -88,5 +94,30 @@ public final class MobSoulTypeRegistry implements IMobSoulTypeRegistry {
 
     public void onCommonSetup() {
         MysticalAgriculture.LOGGER.info("Loaded {} mob soul types", this.mobSoulTypes.size());
+    }
+
+    void beginRegistration(String sourceMod) {
+        this.requireMutable("begin registration");
+        this.currentSourceMod = sourceMod;
+    }
+
+    void endRegistration() {
+        this.currentSourceMod = null;
+    }
+
+    void finalizeRegistration() {
+        this.requireMutable("finalize registration");
+        this.finalized = true;
+        this.onCommonSetup();
+    }
+
+    private void requireMutable(String action) {
+        if (this.finalized) {
+            throw new IllegalStateException("Cannot %s after the mob soul registry was finalized".formatted(action));
+        }
+    }
+
+    private static IllegalStateException duplicate(Identifier id, String sourceMod) {
+        return new IllegalStateException("Duplicate mob soul id %s contributed by mod %s".formatted(id, sourceMod));
     }
 }

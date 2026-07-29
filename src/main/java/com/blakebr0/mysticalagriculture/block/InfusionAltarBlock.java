@@ -120,6 +120,6 @@ public class InfusionAltarBlock extends BaseTileEntityBlock implements IHoverTex
 
     @Override
     protected <T extends BlockEntity> BlockEntityTicker<T> getServerTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return createTicker(type, ModTileEntities.INFUSION_ALTAR.get(), InfusionAltarTileEntity::tick);
+        return createTicker(type, ModTileEntities.INFUSION_ALTAR, InfusionAltarTileEntity::tick);
     }
 }

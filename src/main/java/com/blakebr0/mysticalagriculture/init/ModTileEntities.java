@@ -14,33 +14,46 @@ import com.blakebr0.mysticalagriculture.tileentity.ReprocessorTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.SoulExtractorTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.SouliumSpawnerTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.TinkeringTableTileEntity;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
 
-import java.util.function.Supplier;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 public final class ModTileEntities {
-    public static final DeferredRegister<BlockEntityType<?>> REGISTRY = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MysticalAgriculture.MOD_ID);
+    private static final Map<Identifier, BlockEntityType<?>> ENTRIES = new LinkedHashMap<>();
 
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<InfusionPedestalTileEntity>> INFUSION_PEDESTAL = register("infusion_pedestal", InfusionPedestalTileEntity::new, () -> new Block[] { ModBlocks.INFUSION_PEDESTAL.get() });
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<InfusionAltarTileEntity>> INFUSION_ALTAR = register("infusion_altar", InfusionAltarTileEntity::new, () -> new Block[] { ModBlocks.INFUSION_ALTAR.get() });
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AwakeningPedestalTileEntity>> AWAKENING_PEDESTAL = register("awakening_pedestal", AwakeningPedestalTileEntity::new, () -> new Block[] { ModBlocks.AWAKENING_PEDESTAL.get() });
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AwakeningAltarTileEntity>> AWAKENING_ALTAR = register("awakening_altar", AwakeningAltarTileEntity::new, () -> new Block[] { ModBlocks.AWAKENING_ALTAR.get() });
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EssenceVesselTileEntity>> ESSENCE_VESSEL = register("essence_vessel", EssenceVesselTileEntity::new, () -> new Block[] { ModBlocks.ESSENCE_VESSEL.get() });
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TinkeringTableTileEntity>> TINKERING_TABLE = register("tinkering_table", TinkeringTableTileEntity::new, () -> new Block[] { ModBlocks.TINKERING_TABLE.get() });
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EnchanterTileEntity>> ENCHANTER = register("enchanter", EnchanterTileEntity::new, () -> new Block[] { ModBlocks.ENCHANTER.get() });
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EssenceFurnaceTileEntity>> FURNACE = register("furnace", EssenceFurnaceTileEntity::new, () -> new Block[] { ModBlocks.FURNACE.get() });
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ReprocessorTileEntity>> REPROCESSOR = register("seed_reprocessor", ReprocessorTileEntity::new, () -> new Block[] { ModBlocks.REPROCESSOR.get() });
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SoulExtractorTileEntity>> SOUL_EXTRACTOR = register("soul_extractor", SoulExtractorTileEntity::new, () -> new Block[] { ModBlocks.SOUL_EXTRACTOR.get() });
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<HarvesterTileEntity>> HARVESTER = register("harvester", HarvesterTileEntity::new, () -> new Block[] { ModBlocks.HARVESTER.get() });
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SouliumSpawnerTileEntity>> SOULIUM_SPAWNER = register("soulium_spawner", SouliumSpawnerTileEntity::new, () -> new Block[] { ModBlocks.SOULIUM_SPAWNER.get() });
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<OreInfuserTileEntity>> ORE_INFUSER = register("ore_infuser", OreInfuserTileEntity::new, () -> new Block[] { ModBlocks.ORE_INFUSER.get() });
+    public static final BlockEntityType<InfusionPedestalTileEntity> INFUSION_PEDESTAL = register("infusion_pedestal", InfusionPedestalTileEntity::new, ModBlocks.INFUSION_PEDESTAL);
+    public static final BlockEntityType<InfusionAltarTileEntity> INFUSION_ALTAR = register("infusion_altar", InfusionAltarTileEntity::new, ModBlocks.INFUSION_ALTAR);
+    public static final BlockEntityType<AwakeningPedestalTileEntity> AWAKENING_PEDESTAL = register("awakening_pedestal", AwakeningPedestalTileEntity::new, ModBlocks.AWAKENING_PEDESTAL);
+    public static final BlockEntityType<AwakeningAltarTileEntity> AWAKENING_ALTAR = register("awakening_altar", AwakeningAltarTileEntity::new, ModBlocks.AWAKENING_ALTAR);
+    public static final BlockEntityType<EssenceVesselTileEntity> ESSENCE_VESSEL = register("essence_vessel", EssenceVesselTileEntity::new, ModBlocks.ESSENCE_VESSEL);
+    public static final BlockEntityType<TinkeringTableTileEntity> TINKERING_TABLE = register("tinkering_table", TinkeringTableTileEntity::new, ModBlocks.TINKERING_TABLE);
+    public static final BlockEntityType<EnchanterTileEntity> ENCHANTER = register("enchanter", EnchanterTileEntity::new, ModBlocks.ENCHANTER);
+    public static final BlockEntityType<EssenceFurnaceTileEntity> FURNACE = register("furnace", EssenceFurnaceTileEntity::new, ModBlocks.FURNACE);
+    public static final BlockEntityType<ReprocessorTileEntity> REPROCESSOR = register("seed_reprocessor", ReprocessorTileEntity::new, ModBlocks.REPROCESSOR);
+    public static final BlockEntityType<SoulExtractorTileEntity> SOUL_EXTRACTOR = register("soul_extractor", SoulExtractorTileEntity::new, ModBlocks.SOUL_EXTRACTOR);
+    public static final BlockEntityType<HarvesterTileEntity> HARVESTER = register("harvester", HarvesterTileEntity::new, ModBlocks.HARVESTER);
+    public static final BlockEntityType<SouliumSpawnerTileEntity> SOULIUM_SPAWNER = register("soulium_spawner", SouliumSpawnerTileEntity::new, ModBlocks.SOULIUM_SPAWNER);
+    public static final BlockEntityType<OreInfuserTileEntity> ORE_INFUSER = register("ore_infuser", OreInfuserTileEntity::new, ModBlocks.ORE_INFUSER);
 
-    private static <T extends BlockEntity> DeferredHolder<BlockEntityType<?>, BlockEntityType<T>> register(String name, BlockEntityType.BlockEntitySupplier<T> tile, Supplier<Block[]> blocks) {
-        return REGISTRY.register(name, () -> new BlockEntityType<>(tile, blocks.get()));
+    public static void register() {
+        ENTRIES.forEach((id, type) -> Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, id, type));
+    }
+
+    private static <T extends BlockEntity> BlockEntityType<T> register(
+            String name,
+            BlockEntityType.BlockEntitySupplier<T> factory,
+            Block... blocks
+    ) {
+        var id = MysticalAgriculture.resource(name);
+        var type = new BlockEntityType<>(factory, Set.of(blocks));
+        ENTRIES.put(id, type);
+        return type;
     }
 }

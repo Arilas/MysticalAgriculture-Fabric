@@ -5,6 +5,20 @@ import com.blakebr0.mysticalagriculture.api.registry.IAugmentRegistry;
 import com.blakebr0.mysticalagriculture.api.registry.ICropRegistry;
 import com.blakebr0.mysticalagriculture.api.registry.IMobSoulTypeRegistry;
 
+/**
+ * Fabric entrypoint for Mystical Agriculture add-ons.
+ *
+ * <p>Add-ons declare their implementation in {@code fabric.mod.json}:</p>
+ * <pre>{@code
+ * {
+ *   "entrypoints": {
+ *     "mysticalagriculture:plugin": [
+ *       "example.addon.ExampleMysticalAgriculturePlugin"
+ *     ]
+ *   }
+ * }
+ * }</pre>
+ */
 public interface IMysticalAgriculturePlugin {
     /**
      * Override this method to configure plugin wide settings

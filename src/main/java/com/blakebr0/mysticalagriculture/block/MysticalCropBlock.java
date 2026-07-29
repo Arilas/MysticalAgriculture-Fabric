@@ -94,7 +94,7 @@ public class MysticalCropBlock extends CropBlock implements ICropProvider {
         drops.add(new ItemStack(this.getBaseSeedId(), seed));
 
         if (fertilizer > 0)
-            drops.add(new ItemStack(ModItems.FERTILIZED_ESSENCE.get()));
+            drops.add(new ItemStack(ModItems.FERTILIZED_ESSENCE));
 
         return drops;
     }

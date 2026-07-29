@@ -137,7 +137,7 @@ public class SoulExtractionRecipe implements ISoulExtractionRecipe {
 
         public ItemStack stack() {
             if (stack == null) {
-                this.stack = MobSoulUtils.getSoulJar(MobSoulTypeRegistry.getInstance().getMobSoulTypeById(type), souls, ModItems.SOUL_JAR.get());
+                this.stack = MobSoulUtils.getSoulJar(MobSoulTypeRegistry.getInstance().getMobSoulTypeById(type), souls, ModItems.SOUL_JAR);
             }
 
             return this.stack;

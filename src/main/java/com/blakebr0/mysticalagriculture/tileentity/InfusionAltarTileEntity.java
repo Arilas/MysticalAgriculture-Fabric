@@ -40,7 +40,7 @@ public class InfusionAltarTileEntity extends BaseInventoryTileEntity implements 
     private @Nullable Identifier recipeId;
 
     public InfusionAltarTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntities.INFUSION_ALTAR.get(), pos, state);
+        super(ModTileEntities.INFUSION_ALTAR, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.setChanged());
         this.recipeInventory = CItemStacksHandler.create(9);
         this.recipe = new CachedRecipe<>(ModRecipeTypes.INFUSION.get());

@@ -31,7 +31,7 @@ public class SoulExtractorCategory implements IRecipeCategory<RecipeHolder<ISoul
 
     public SoulExtractorCategory(IGuiHelper helper) {
         this.background = helper.createDrawable(TEXTURE, 0, 0, 82, 26);
-        this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(ModBlocks.SOUL_EXTRACTOR.get()));
+        this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(ModBlocks.SOUL_EXTRACTOR));
 
         var arrow = helper.createDrawable(TEXTURE, 85, 0, 24, 17);
 

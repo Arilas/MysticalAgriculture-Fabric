@@ -28,7 +28,7 @@ public class SoulExtractorContainer extends BaseContainerMenu {
     }
 
     public SoulExtractorContainer(int id, Inventory playerInventory, CItemStacksHandler inventory, MachineUpgradeItemStackHandler upgradeInventory, ContainerData data, BlockPos pos) {
-        super(ModMenuTypes.SOUL_EXTRACTOR.get(), id, pos);
+        super(ModMenuTypes.SOUL_EXTRACTOR, id, pos);
         this.data = data;
 
         this.addSlot(new ResourceHandlerSlot(upgradeInventory, upgradeInventory::set, 0, 152, 9));
@@ -63,7 +63,7 @@ public class SoulExtractorContainer extends BaseContainerMenu {
                     if (!this.moveItemStackTo(itemstack1, 0, 1, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (itemstack1.getItem() == ModItems.SOUL_JAR.get()) {
+                } else if (itemstack1.getItem() == ModItems.SOUL_JAR) {
                     if (!this.moveItemStackTo(itemstack1, 3, 4, false)) {
                         return ItemStack.EMPTY;
                     }

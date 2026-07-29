@@ -25,7 +25,7 @@ public class HarvesterContainer extends BaseContainerMenu {
     }
 
     public HarvesterContainer(int id, Inventory playerInventory, CItemStacksHandler inventory, MachineUpgradeItemStackHandler upgradeInventory, ContainerData data, BlockPos pos) {
-        super(ModMenuTypes.HARVESTER.get(), id, pos);
+        super(ModMenuTypes.HARVESTER, id, pos);
         this.data = data;
 
         this.addSlot(new ResourceHandlerSlot(upgradeInventory, upgradeInventory::set, 0, 152, 9));

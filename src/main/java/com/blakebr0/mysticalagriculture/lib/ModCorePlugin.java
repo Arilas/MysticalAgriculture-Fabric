@@ -38,17 +38,17 @@ public final class ModCorePlugin implements IMysticalAgriculturePlugin {
 
     @Override
     public void onPostRegisterCrops(ICropRegistry registry) {
-        CropTier.ELEMENTAL.setFarmlandBlock(ModBlocks.INFERIUM_FARMLAND).setEssenceItem(ModItems.INFERIUM_ESSENCE);
-        CropTier.ONE.setFarmlandBlock(ModBlocks.INFERIUM_FARMLAND).setEssenceItem(ModItems.INFERIUM_ESSENCE);
-        CropTier.TWO.setFarmlandBlock(ModBlocks.PRUDENTIUM_FARMLAND).setEssenceItem(ModItems.PRUDENTIUM_ESSENCE);
-        CropTier.THREE.setFarmlandBlock(ModBlocks.TERTIUM_FARMLAND).setEssenceItem(ModItems.TERTIUM_ESSENCE);
-        CropTier.FOUR.setFarmlandBlock(ModBlocks.IMPERIUM_FARMLAND).setEssenceItem(ModItems.IMPERIUM_ESSENCE);
-        CropTier.FIVE.setFarmlandBlock(ModBlocks.SUPREMIUM_FARMLAND).setEssenceItem(ModItems.SUPREMIUM_ESSENCE);
+        CropTier.ELEMENTAL.setFarmlandBlock(() -> ModBlocks.INFERIUM_FARMLAND).setEssenceItem(() -> ModItems.INFERIUM_ESSENCE);
+        CropTier.ONE.setFarmlandBlock(() -> ModBlocks.INFERIUM_FARMLAND).setEssenceItem(() -> ModItems.INFERIUM_ESSENCE);
+        CropTier.TWO.setFarmlandBlock(() -> ModBlocks.PRUDENTIUM_FARMLAND).setEssenceItem(() -> ModItems.PRUDENTIUM_ESSENCE);
+        CropTier.THREE.setFarmlandBlock(() -> ModBlocks.TERTIUM_FARMLAND).setEssenceItem(() -> ModItems.TERTIUM_ESSENCE);
+        CropTier.FOUR.setFarmlandBlock(() -> ModBlocks.IMPERIUM_FARMLAND).setEssenceItem(() -> ModItems.IMPERIUM_ESSENCE);
+        CropTier.FIVE.setFarmlandBlock(() -> ModBlocks.SUPREMIUM_FARMLAND).setEssenceItem(() -> ModItems.SUPREMIUM_ESSENCE);
 
-        CropType.RESOURCE.setCraftingSeedItem(ModItems.PROSPERITY_SEED_BASE);
-        CropType.MOB.setCraftingSeedItem(ModItems.SOULIUM_SEED_BASE);
+        CropType.RESOURCE.setCraftingSeedItem(() -> ModItems.PROSPERITY_SEED_BASE);
+        CropType.MOB.setCraftingSeedItem(() -> ModItems.SOULIUM_SEED_BASE);
 
-        AWAKENED_SUPREMIUM_TIER.setFarmlandBlock(ModBlocks.AWAKENED_SUPREMIUM_FARMLAND).setEssenceItem(ModItems.AWAKENED_SUPREMIUM_ESSENCE);
+        AWAKENED_SUPREMIUM_TIER.setFarmlandBlock(() -> ModBlocks.AWAKENED_SUPREMIUM_FARMLAND).setEssenceItem(() -> ModItems.AWAKENED_SUPREMIUM_ESSENCE);
     }
 
     @Override

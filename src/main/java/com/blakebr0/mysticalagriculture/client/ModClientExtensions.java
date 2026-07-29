@@ -9,9 +9,9 @@ public final class ModClientExtensions {
     @SubscribeEvent
     public void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
         event.registerItem(WateringCanClientItemExtensions.INSTANCE,
-                ModItems.WATERING_CAN.get(), ModItems.INFERIUM_WATERING_CAN.get(), ModItems.PRUDENTIUM_WATERING_CAN.get(),
-                ModItems.TERTIUM_WATERING_CAN.get(), ModItems.IMPERIUM_WATERING_CAN.get(), ModItems.SUPREMIUM_WATERING_CAN.get(),
-                ModItems.AWAKENED_SUPREMIUM_WATERING_CAN.get()
+                ModItems.WATERING_CAN, ModItems.INFERIUM_WATERING_CAN, ModItems.PRUDENTIUM_WATERING_CAN,
+                ModItems.TERTIUM_WATERING_CAN, ModItems.IMPERIUM_WATERING_CAN, ModItems.SUPREMIUM_WATERING_CAN,
+                ModItems.AWAKENED_SUPREMIUM_WATERING_CAN
         );
     }
 }

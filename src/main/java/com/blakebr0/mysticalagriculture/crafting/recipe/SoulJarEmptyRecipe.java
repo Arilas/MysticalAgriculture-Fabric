@@ -26,7 +26,7 @@ import java.util.List;
 
 public class SoulJarEmptyRecipe implements CraftingRecipe {
     public static final MapCodec<SoulJarEmptyRecipe> MAP_CODEC = MapCodec.unit(() -> new SoulJarEmptyRecipe(
-            new ItemStackTemplate(ModItems.SOUL_JAR.get()),
+            new ItemStackTemplate(ModItems.SOUL_JAR),
             NonNullList.withSize(1, FilledSoulJarIngredient.of())
     ));
     public static final StreamCodec<RegistryFriendlyByteBuf, SoulJarEmptyRecipe> STREAM_CODEC = StreamCodec.of(
@@ -113,7 +113,7 @@ public class SoulJarEmptyRecipe implements CraftingRecipe {
     }
 
     private static SoulJarEmptyRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
-        return new SoulJarEmptyRecipe(new ItemStackTemplate(ModItems.SOUL_JAR.get()), NonNullList.withSize(1, FilledSoulJarIngredient.of()));
+        return new SoulJarEmptyRecipe(new ItemStackTemplate(ModItems.SOUL_JAR), NonNullList.withSize(1, FilledSoulJarIngredient.of()));
     }
 
     private static void toNetwork(RegistryFriendlyByteBuf buffer, SoulJarEmptyRecipe recipe) { }

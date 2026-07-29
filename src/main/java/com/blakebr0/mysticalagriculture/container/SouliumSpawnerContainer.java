@@ -26,7 +26,7 @@ public class SouliumSpawnerContainer extends BaseContainerMenu {
     }
 
     public SouliumSpawnerContainer(int id, Inventory playerInventory, CItemStacksHandler inventory, MachineUpgradeItemStackHandler upgradeInventory, ContainerData data, BlockPos pos) {
-        super(ModMenuTypes.SOULIUM_SPAWNER.get(), id, pos);
+        super(ModMenuTypes.SOULIUM_SPAWNER, id, pos);
         this.data = data;
 
         this.addSlot(new ResourceHandlerSlot(upgradeInventory, upgradeInventory::set, 0, 152, 9));

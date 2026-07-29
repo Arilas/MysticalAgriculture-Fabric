@@ -9,57 +9,51 @@ import com.blakebr0.mysticalagriculture.api.registry.ICropRegistry;
 import com.blakebr0.mysticalagriculture.block.MysticalCropBlock;
 import com.blakebr0.mysticalagriculture.item.MysticalEssenceItem;
 import com.blakebr0.mysticalagriculture.item.MysticalSeedsItem;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.neoforge.registries.RegisterEvent;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class CropRegistry implements ICropRegistry {
     private static final CropRegistry INSTANCE = new CropRegistry();
 
     private Map<Identifier, Crop> crops = new LinkedHashMap<>();
-    private Map<Identifier, CropTier> tiers = new LinkedHashMap<>();
-    private Map<Identifier, CropType> types = new LinkedHashMap<>();
-    private boolean allowRegistration = false;
-    private PluginConfig currentPluginConfig = null;
+    private final Map<Identifier, CropTier> tiers = new LinkedHashMap<>();
+    private final Map<Identifier, CropType> types = new LinkedHashMap<>();
+    private final Map<Identifier, String> cropSources = new LinkedHashMap<>();
+    private String currentSourceMod;
+    private PluginConfig currentPluginConfig;
+    private boolean finalized;
+
+    CropRegistry() {
+    }
 
     @Override
     public void register(Crop crop) {
-        if (this.allowRegistration) {
-            if (this.crops.values().stream().noneMatch(c -> c.getName().equals(crop.getName()))) {
-                this.crops.put(crop.getId(), crop);
-
-                this.loadRecipeConfig(crop);
-            } else {
-                MysticalAgriculture.LOGGER.info("{} tried to register a duplicate crop with name {}, skipping", crop.getModId(), crop.getName());
-            }
-        } else {
-            MysticalAgriculture.LOGGER.error("{} tried to register crop {} outside of onRegisterCrops, skipping", crop.getModId(), crop.getName());
-        }
+        this.requireRegistration("crop", crop.getId());
+        this.putUnique(this.crops, crop.getId(), crop, "crop");
+        this.cropSources.put(crop.getId(), this.currentSourceMod);
+        this.loadRecipeConfig(crop);
     }
 
     @Override
     public void registerTier(CropTier tier) {
-        if (!this.tiers.containsKey(tier.getId())) {
-            this.tiers.put(tier.getId(), tier);
-        } else {
-            MysticalAgriculture.LOGGER.info("{} tried to register a duplicate crop tier with id {}, skipping", tier.getModId(), tier.getId());
-        }
+        this.requireRegistration("crop tier", tier.getId());
+        this.putUnique(this.tiers, tier.getId(), tier, "crop tier");
     }
 
     @Override
     public void registerType(CropType type) {
-        if (!this.types.containsKey(type.getId())) {
-            this.types.put(type.getId(), type);
-        } else {
-            MysticalAgriculture.LOGGER.info("{} tried to register a duplicate crop type with id {}, skipping", type.getModId(), type.getId());
-        }
+        this.requireRegistration("crop type", type.getId());
+        this.putUnique(this.types, type.getId(), type, "crop type");
     }
 
     @Override
@@ -97,6 +91,65 @@ public final class CropRegistry implements ICropRegistry {
         return this.types.get(id);
     }
 
+    public void registerBlocks(Registrar<Block> registrar) {
+        var claimed = new HashSet<Identifier>();
+        var crops = this.crops.values();
+
+        for (var crop : crops) {
+            if (!crop.shouldRegisterCropBlock()) {
+                continue;
+            }
+
+            var id = MysticalAgriculture.resource(crop.getNameWithSuffix("crop"));
+            this.claimId(id, this.sourceOf(crop), "block", claimed, BuiltInRegistries.BLOCK.containsKey(id));
+
+            var block = crop.getCropBlock();
+            if (block == null) {
+                var defaultCrop = new MysticalCropBlock(id, crop);
+                block = defaultCrop;
+                crop.setCropBlock(() -> defaultCrop, true);
+            }
+
+            registrar.register(id, block);
+        }
+
+        this.crops = getSortedCropsMap(crops);
+    }
+
+    public void registerItems(Registrar<Item> registrar) {
+        var claimed = new HashSet<Identifier>();
+
+        for (var crop : this.crops.values()) {
+            if (crop.shouldRegisterEssenceItem()) {
+                var id = MysticalAgriculture.resource(crop.getNameWithSuffix("essence"));
+                this.claimId(id, this.sourceOf(crop), "item", claimed, BuiltInRegistries.ITEM.containsKey(id));
+
+                var item = crop.getEssenceItem();
+                if (item == null) {
+                    var defaultEssence = new MysticalEssenceItem(id, crop);
+                    item = defaultEssence;
+                    crop.setEssenceItem(() -> defaultEssence, true);
+                }
+
+                registrar.register(id, item);
+            }
+
+            if (crop.shouldRegisterSeedsItem()) {
+                var id = MysticalAgriculture.resource(crop.getNameWithSuffix("seeds"));
+                this.claimId(id, this.sourceOf(crop), "item", claimed, BuiltInRegistries.ITEM.containsKey(id));
+
+                var item = crop.getSeedsItem();
+                if (item == null) {
+                    var defaultSeeds = new MysticalSeedsItem(id, crop);
+                    item = defaultSeeds;
+                    crop.setSeedsItem(() -> defaultSeeds, true);
+                }
+
+                registrar.register(id, item);
+            }
+        }
+    }
+
     public static CropRegistry getInstance() {
         return INSTANCE;
     }
@@ -107,68 +160,61 @@ public final class CropRegistry implements ICropRegistry {
         MysticalAgriculture.LOGGER.info("Loaded {} crop types", this.types.size());
     }
 
-    public void setAllowRegistration(boolean allowed) {
-        this.allowRegistration = allowed;
+    void beginRegistration(String sourceMod, PluginConfig config) {
+        if (this.finalized) {
+            throw new IllegalStateException("The crop registry is finalized");
+        }
+        this.currentSourceMod = sourceMod;
+        this.currentPluginConfig = config;
     }
 
-    public void onRegisterBlocks(RegisterEvent.RegisterHelper<Block> registry) {
-        PluginRegistry.getInstance().forEach((plugin, config) -> {
-            this.currentPluginConfig = config;
-
-            plugin.onRegisterCrops(this);
-        });
-
-        var crops = this.crops.values();
-
-        crops.stream().filter(Crop::shouldRegisterCropBlock).forEach(c -> {
-            var crop = c.getCropBlock();
-            var id = MysticalAgriculture.resource(c.getNameWithSuffix("crop"));
-
-            if (crop == null) {
-                var defaultCrop = new MysticalCropBlock(id, c);
-                crop = defaultCrop;
-                c.setCropBlock(() -> defaultCrop, true);
-            }
-
-
-            registry.register(id, crop);
-        });
-
-        this.crops = getSortedCropsMap(crops);
-    }
-
-    public void onRegisterItems(RegisterEvent.RegisterHelper<Item> registry) {
-        var crops = this.crops.values();
-
-        crops.stream().filter(Crop::shouldRegisterEssenceItem).forEach(c -> {
-            var essence = c.getEssenceItem();
-            var id = MysticalAgriculture.resource(c.getNameWithSuffix("essence"));
-
-            if (essence == null) {
-                var defaultEssence = new MysticalEssenceItem(id, c);
-                essence = defaultEssence;
-                c.setEssenceItem(() -> defaultEssence, true);
-            }
-
-            registry.register(id, essence);
-        });
-
-        crops.stream().filter(Crop::shouldRegisterSeedsItem).forEach(c -> {
-            var seeds = c.getSeedsItem();
-            var id = MysticalAgriculture.resource(c.getNameWithSuffix("seeds"));
-
-            if (seeds == null) {
-                var defaultSeeds = new MysticalSeedsItem(id, c);
-                seeds = defaultSeeds;
-                c.setSeedsItem(() -> defaultSeeds, true);
-            }
-
-            registry.register(id, seeds);
-        });
-
-        PluginRegistry.getInstance().forEach((plugin, _) -> plugin.onPostRegisterCrops(this));
-
+    void endRegistration() {
+        this.currentSourceMod = null;
         this.currentPluginConfig = null;
+    }
+
+    void finalizeRegistration() {
+        if (this.finalized) {
+            throw new IllegalStateException("The crop registry is already finalized");
+        }
+        this.finalized = true;
+        this.onCommonSetup();
+    }
+
+    private void requireRegistration(String kind, Identifier id) {
+        if (this.finalized) {
+            throw new IllegalStateException("Cannot register %s %s after the crop registry was finalized".formatted(kind, id));
+        }
+        if (this.currentSourceMod == null) {
+            throw new IllegalStateException("Cannot register %s %s outside a plug-in registration callback".formatted(kind, id));
+        }
+    }
+
+    private <T> void putUnique(Map<Identifier, T> values, Identifier id, T value, String kind) {
+        if (values.containsKey(id)) {
+            throw duplicate(kind, id, this.currentSourceMod);
+        }
+        values.put(id, value);
+    }
+
+    private void claimId(
+            Identifier id,
+            String sourceMod,
+            String kind,
+            Set<Identifier> claimed,
+            boolean alreadyRegistered
+    ) {
+        if (alreadyRegistered || !claimed.add(id)) {
+            throw duplicate(kind, id, sourceMod);
+        }
+    }
+
+    private String sourceOf(Crop crop) {
+        return this.cropSources.getOrDefault(crop.getId(), crop.getModId());
+    }
+
+    private static IllegalStateException duplicate(String kind, Identifier id, String sourceMod) {
+        return new IllegalStateException("Duplicate %s id %s contributed by mod %s".formatted(kind, id, sourceMod));
     }
 
     private void loadRecipeConfig(Crop crop) {
@@ -186,15 +232,16 @@ public final class CropRegistry implements ICropRegistry {
         );
     }
 
-    private Map<Identifier, Crop> getSortedCropsMap(Collection<Crop> crops) {
+    private static Map<Identifier, Crop> getSortedCropsMap(Collection<Crop> crops) {
         var sorted = new LinkedHashMap<Identifier, Crop>();
-
         crops.stream()
                 .sorted(Comparator.comparingInt(c -> c.getTier().getValue()))
-                .forEach(c -> {
-                    sorted.put(c.getId(), c);
-                });
-
+                .forEach(c -> sorted.put(c.getId(), c));
         return sorted;
+    }
+
+    @FunctionalInterface
+    public interface Registrar<T> {
+        void register(Identifier id, T value);
     }
 }

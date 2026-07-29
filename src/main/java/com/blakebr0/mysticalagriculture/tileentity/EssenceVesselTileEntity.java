@@ -13,7 +13,7 @@ public class EssenceVesselTileEntity extends BaseInventoryTileEntity {
     private final CItemStacksHandler inventory;
 
     public EssenceVesselTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntities.ESSENCE_VESSEL.get(), pos, state);
+        super(ModTileEntities.ESSENCE_VESSEL, pos, state);
         this.inventory = CItemStacksHandler.create(1, (_, _) -> this.setChangedAndDispatch(), handler -> {
             handler.setDefaultSlotLimit(MAX_STACK_SIZE);
             handler.setCanInsert((_, resource) -> canInsertStack(resource));

@@ -34,7 +34,7 @@ public class OreInfuserCategory implements IRecipeCategory<RecipeHolder<IOreInfu
 
     public OreInfuserCategory(IGuiHelper helper) {
         this.background = helper.createDrawable(TEXTURE, 0, 0, 102, 26);
-        this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(ModBlocks.ORE_INFUSER.get()));
+        this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(ModBlocks.ORE_INFUSER));
 
         var arrow = helper.createDrawable(TEXTURE, 105, 0, 24, 17);
 

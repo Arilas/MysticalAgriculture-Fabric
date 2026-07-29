@@ -15,13 +15,13 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 public final class ModMenuScreens {
     @SubscribeEvent
     public void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
-        event.register(ModMenuTypes.TINKERING_TABLE.get(), TinkeringTableScreen::new);
-        event.register(ModMenuTypes.ENCHANTER.get(), EnchanterScreen::new);
-        event.register(ModMenuTypes.FURNACE.get(), EssenceFurnaceScreen::new);
-        event.register(ModMenuTypes.REPROCESSOR.get(), ReprocessorScreen::new);
-        event.register(ModMenuTypes.SOUL_EXTRACTOR.get(), SoulExtractorScreen::new);
-        event.register(ModMenuTypes.HARVESTER.get(), HarvesterScreen::new);
-        event.register(ModMenuTypes.SOULIUM_SPAWNER.get(), SouliumSpawnerScreen::new);
-        event.register(ModMenuTypes.ORE_INFUSER.get(), OreInfuserScreen::new);
+        event.register(ModMenuTypes.TINKERING_TABLE, TinkeringTableScreen::new);
+        event.register(ModMenuTypes.ENCHANTER, EnchanterScreen::new);
+        event.register(ModMenuTypes.FURNACE, EssenceFurnaceScreen::new);
+        event.register(ModMenuTypes.REPROCESSOR, ReprocessorScreen::new);
+        event.register(ModMenuTypes.SOUL_EXTRACTOR, SoulExtractorScreen::new);
+        event.register(ModMenuTypes.HARVESTER, HarvesterScreen::new);
+        event.register(ModMenuTypes.SOULIUM_SPAWNER, SouliumSpawnerScreen::new);
+        event.register(ModMenuTypes.ORE_INFUSER, OreInfuserScreen::new);
     }
 }

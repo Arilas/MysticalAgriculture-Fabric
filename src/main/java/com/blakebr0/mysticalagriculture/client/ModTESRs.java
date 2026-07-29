@@ -15,13 +15,13 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 public final class ModTESRs {
     @SubscribeEvent
     public void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(ModTileEntities.INFUSION_PEDESTAL.get(), InfusionPedestalRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.INFUSION_ALTAR.get(), InfusionAltarRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.TINKERING_TABLE.get(), TinkeringTableRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.ENCHANTER.get(), EnchanterRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.AWAKENING_PEDESTAL.get(), AwakeningPedestalRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.AWAKENING_ALTAR.get(), AwakeningAltarRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.ESSENCE_VESSEL.get(), EssenceVesselRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.SOULIUM_SPAWNER.get(), SouliumSpawnerRenderer::new);
+        event.registerBlockEntityRenderer(ModTileEntities.INFUSION_PEDESTAL, InfusionPedestalRenderer::new);
+        event.registerBlockEntityRenderer(ModTileEntities.INFUSION_ALTAR, InfusionAltarRenderer::new);
+        event.registerBlockEntityRenderer(ModTileEntities.TINKERING_TABLE, TinkeringTableRenderer::new);
+        event.registerBlockEntityRenderer(ModTileEntities.ENCHANTER, EnchanterRenderer::new);
+        event.registerBlockEntityRenderer(ModTileEntities.AWAKENING_PEDESTAL, AwakeningPedestalRenderer::new);
+        event.registerBlockEntityRenderer(ModTileEntities.AWAKENING_ALTAR, AwakeningAltarRenderer::new);
+        event.registerBlockEntityRenderer(ModTileEntities.ESSENCE_VESSEL, EssenceVesselRenderer::new);
+        event.registerBlockEntityRenderer(ModTileEntities.SOULIUM_SPAWNER, SouliumSpawnerRenderer::new);
     }
 }

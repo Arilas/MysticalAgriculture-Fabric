@@ -5,7 +5,6 @@ import com.blakebr0.mysticalagriculture.api.tinkering.AugmentType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 
 import java.util.EnumSet;
 
@@ -15,7 +14,7 @@ public class NoFallDamageAugment extends Augment {
     }
 
     @Override
-    public void onPlayerFall(Level level, Player player, LivingFallEvent event) {
-        event.setDamageMultiplier(0);
+    public boolean onPlayerFall(Level level, Player player, float fallDistance) {
+        return true;
     }
 }

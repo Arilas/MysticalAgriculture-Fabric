@@ -25,7 +25,7 @@ public class TinkeringTableContainer extends BaseContainerMenu {
     }
 
     public TinkeringTableContainer(int id, Inventory playerInventory, CItemStacksHandler inventory, BlockPos pos) {
-        super(ModMenuTypes.TINKERING_TABLE.get(), id, pos);
+        super(ModMenuTypes.TINKERING_TABLE, id, pos);
         this.inventory = inventory;
 
         this.addSlot(new TinkerableSlot(this, inventory, 0, 80, 49));

@@ -66,7 +66,7 @@ public class OreInfuserTileEntity extends BaseInventoryTileEntity implements Men
     private boolean isRunning;
 
     public OreInfuserTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntities.ORE_INFUSER.get(), pos, state);
+        super(ModTileEntities.ORE_INFUSER, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.setChanged(), this::getLevel);
         this.upgradeInventory = new MachineUpgradeItemStackHandler();
         this.energy = new CEnergyStorage(FUEL_CAPACITY, _ -> this.setChangedFast());

@@ -31,7 +31,7 @@ public final class MobDropHandler {
         double inferiumDropChance = ModConfigs.INFERIUM_DROP_CHANCE.get();
 
         if (entity instanceof PathfinderMob && Math.random() < inferiumDropChance) {
-            drops.add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), new ItemStack(ModItems.INFERIUM_ESSENCE.get())));
+            drops.add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), new ItemStack(ModItems.INFERIUM_ESSENCE)));
         }
 
         if (attacker instanceof Player player) {
@@ -65,7 +65,7 @@ public final class MobDropHandler {
                     boolean witherDropsCognizant = ModConfigs.WITHER_DROPS_COGNIZANT.get();
 
                     if (witherDropsCognizant && entity instanceof WitherBoss) {
-                        var stack = new ItemStack(ModItems.COGNIZANT_DUST.get(), 4 + (enlightenmentLevel - 1));
+                        var stack = new ItemStack(ModItems.COGNIZANT_DUST, 4 + (enlightenmentLevel - 1));
 
                         drops.add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), stack));
                     }
@@ -73,7 +73,7 @@ public final class MobDropHandler {
                     boolean dragonDropsCognizant = ModConfigs.DRAGON_DROPS_COGNIZANT.get();
 
                     if (dragonDropsCognizant && entity instanceof EnderDragon) {
-                        var stack = new ItemStack(ModItems.COGNIZANT_DUST.get(), 4 + (enlightenmentLevel * 2));
+                        var stack = new ItemStack(ModItems.COGNIZANT_DUST, 4 + (enlightenmentLevel * 2));
 
                         drops.add(new ItemEntity(level, entity.getX(), entity.getY(), entity.getZ(), stack));
                     }
@@ -84,11 +84,11 @@ public final class MobDropHandler {
 
     private static ItemStack getEssenceForTinkerable(ITinkerable tinkerable, int min, int max) {
         return switch (tinkerable.getTinkerableTier()) {
-            case 1 -> new ItemStack(ModItems.INFERIUM_ESSENCE.get(), Utils.randInt(min, max));
-            case 2 -> new ItemStack(ModItems.PRUDENTIUM_ESSENCE.get(), Utils.randInt(min, max));
-            case 3 -> new ItemStack(ModItems.TERTIUM_ESSENCE.get(), Utils.randInt(min, max));
-            case 4 -> new ItemStack(ModItems.IMPERIUM_ESSENCE.get(), Utils.randInt(min, max));
-            case 5 -> new ItemStack(ModItems.SUPREMIUM_ESSENCE.get(), Utils.randInt(min, max));
+            case 1 -> new ItemStack(ModItems.INFERIUM_ESSENCE, Utils.randInt(min, max));
+            case 2 -> new ItemStack(ModItems.PRUDENTIUM_ESSENCE, Utils.randInt(min, max));
+            case 3 -> new ItemStack(ModItems.TERTIUM_ESSENCE, Utils.randInt(min, max));
+            case 4 -> new ItemStack(ModItems.IMPERIUM_ESSENCE, Utils.randInt(min, max));
+            case 5 -> new ItemStack(ModItems.SUPREMIUM_ESSENCE, Utils.randInt(min, max));
             default -> ItemStack.EMPTY;
         };
     }

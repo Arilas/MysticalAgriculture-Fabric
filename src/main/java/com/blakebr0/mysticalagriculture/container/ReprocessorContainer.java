@@ -27,7 +27,7 @@ public class ReprocessorContainer extends BaseContainerMenu {
     }
 
     public ReprocessorContainer(int id, Inventory playerInventory, CItemStacksHandler inventory, MachineUpgradeItemStackHandler upgradeInventory, ContainerData data, BlockPos pos) {
-        super(ModMenuTypes.REPROCESSOR.get(), id, pos);
+        super(ModMenuTypes.REPROCESSOR, id, pos);
         this.data = data;
 
         this.addSlot(new ResourceHandlerSlot(upgradeInventory, upgradeInventory::set, 0, 152, 9));

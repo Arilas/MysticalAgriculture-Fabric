@@ -10,14 +10,13 @@ import com.blakebr0.mysticalagriculture.api.util.ExperienceCapsuleUtils;
 import com.blakebr0.mysticalagriculture.api.util.MobSoulUtils;
 import com.blakebr0.mysticalagriculture.init.ModBlocks;
 import com.blakebr0.mysticalagriculture.init.ModItems;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.world.level.block.CropBlock;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.loading.FMLEnvironment;
 
 import java.util.Arrays;
 
 public final class ModCrops {
-    private static final boolean DEBUG = !FMLEnvironment.isProduction();
+    private static final boolean DEBUG = FabricLoader.getInstance().isDevelopmentEnvironment();
 
     public static final Crop AIR = new Crop(MysticalAgriculture.resource("air"), CropTier.ELEMENTAL, CropType.RESOURCE, LazyIngredient.item("mysticalagriculture:air_agglomeratio"));
     public static final Crop EARTH = new Crop(MysticalAgriculture.resource("earth"), CropTier.ELEMENTAL, CropType.RESOURCE, LazyIngredient.item("mysticalagriculture:earth_agglomeratio"));
@@ -204,8 +203,8 @@ public final class ModCrops {
     public static void onRegisterCrops(ICropRegistry registry) {
         INFERIUM.getModels().setEssenceModel(MysticalAgriculture.resource("item/inferium_essence"));
         INFERIUM.getRecipeConfig().setSeedCraftingRecipeEnabled(false).setSeedInfusionRecipeEnabled(false);
-        INFERIUM.setCropBlock(() -> (CropBlock) ModBlocks.INFERIUM_CROP.get())
-                .setEssenceItem(ModItems.INFERIUM_ESSENCE);
+        INFERIUM.setCropBlock(() -> (CropBlock) ModBlocks.INFERIUM_CROP)
+                .setEssenceItem(() -> ModItems.INFERIUM_ESSENCE);
 
         registry.register(AIR);
         registry.register(EARTH);
@@ -392,7 +391,7 @@ public final class ModCrops {
     private static Crop withRequiredMods(Crop crop, String... mods) {
         if (DEBUG) return crop;
         
-        boolean enabled = Arrays.stream(mods).anyMatch(ModList.get()::isLoaded);
+        boolean enabled = Arrays.stream(mods).anyMatch(FabricLoader.getInstance()::isModLoaded);
         return crop.setEnabled(enabled);
     }
 }

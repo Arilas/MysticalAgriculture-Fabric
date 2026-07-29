@@ -56,8 +56,8 @@ public class AwakeningAltarRenderer implements BlockEntityRenderer<AwakeningAlta
             var aoePos = state.pedestalPositions.get(i);
             if (level != null && level.isEmptyBlock(aoePos)) {
                 var block = i % 2 == 0
-                        ? ModBlocks.AWAKENING_PEDESTAL.get().defaultBlockState()
-                        : ModBlocks.ESSENCE_VESSEL.get().defaultBlockState();
+                        ? ModBlocks.AWAKENING_PEDESTAL.defaultBlockState()
+                        : ModBlocks.ESSENCE_VESSEL.defaultBlockState();
 
                 this.blockModelResolver.update(state.blockModelRenderStates[i], block, BlockDisplayContext.create());
             }

@@ -41,6 +41,17 @@ sourceSets.main.resources {
     exclude ".cache"
 }
 
+sourceSets {
+    apiCompatibility {
+        java.srcDir "src/apiCompatibility/java"
+        compileClasspath += sourceSets.main.output + configurations.compileClasspath
+    }
+}
+
+configurations {
+    apiCompatibilityImplementation.extendsFrom implementation
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
 
@@ -83,6 +94,10 @@ tasks.withType(ProcessResources).configureEach {
 
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('compileApiCompatibilityJava')
 }
 
 tasks.withType(JavaCompile).configureEach {

@@ -29,7 +29,7 @@ public class EnchanterContainer extends BaseContainerMenu {
     }
 
     public EnchanterContainer(int id, Inventory playerInventory, CItemStacksHandler inventory, BlockPos pos) {
-        super(ModMenuTypes.ENCHANTER.get(), id, pos);
+        super(ModMenuTypes.ENCHANTER, id, pos);
         this.level = playerInventory.player.level();
         this.inventory = inventory;
         this.result = new ResultContainer();

@@ -11,7 +11,7 @@ public class InfusionPedestalTileEntity extends BaseInventoryTileEntity {
     private final CItemStacksHandler inventory;
 
     public InfusionPedestalTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntities.INFUSION_PEDESTAL.get(), pos, state);
+        super(ModTileEntities.INFUSION_PEDESTAL, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.setChangedAndDispatch());
     }
 

@@ -118,6 +118,6 @@ public class HarvesterBlock extends BaseTileEntityBlock implements IHoverTextPro
 
     @Override
     protected <T extends BlockEntity> BlockEntityTicker<T> getServerTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return createTicker(type, ModTileEntities.HARVESTER.get(), HarvesterTileEntity::tick);
+        return createTicker(type, ModTileEntities.HARVESTER, HarvesterTileEntity::tick);
     }
 }

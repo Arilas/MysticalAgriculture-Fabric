@@ -112,6 +112,6 @@ public class OreInfuserBlock extends BaseTileEntityBlock implements IHoverTextPr
 
     @Override
     protected <T extends BlockEntity> BlockEntityTicker<T> getServerTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return createTicker(type, ModTileEntities.ORE_INFUSER.get(), OreInfuserTileEntity::tick);
+        return createTicker(type, ModTileEntities.ORE_INFUSER, OreInfuserTileEntity::tick);
     }
 }

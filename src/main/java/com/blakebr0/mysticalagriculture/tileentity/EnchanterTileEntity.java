@@ -20,7 +20,7 @@ public class EnchanterTileEntity extends BaseInventoryTileEntity implements Menu
     private final CItemStacksHandler inventory;
 
     public EnchanterTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntities.ENCHANTER.get(), pos, state);
+        super(ModTileEntities.ENCHANTER, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.setChangedAndDispatch());
     }
 

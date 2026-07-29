@@ -34,7 +34,7 @@ public class EnchanterCategory implements IRecipeCategory<RecipeHolder<IEnchante
 
     public EnchanterCategory(IGuiHelper helper) {
         this.background = helper.createDrawable(TEXTURE, 0, 0, 144, 26);
-        this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(ModBlocks.ENCHANTER.get()));
+        this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(ModBlocks.ENCHANTER));
     }
 
     @Override

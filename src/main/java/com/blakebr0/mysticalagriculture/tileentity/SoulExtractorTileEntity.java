@@ -66,7 +66,7 @@ public class SoulExtractorTileEntity extends BaseInventoryTileEntity implements 
     private boolean isRunning;
 
     public SoulExtractorTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntities.SOUL_EXTRACTOR.get(), pos, state);
+        super(ModTileEntities.SOUL_EXTRACTOR, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.setChanged(), this::getLevel);
         this.upgradeInventory = new MachineUpgradeItemStackHandler();
         this.energy = new CEnergyStorage(FUEL_CAPACITY, _ -> this.setChangedFast());

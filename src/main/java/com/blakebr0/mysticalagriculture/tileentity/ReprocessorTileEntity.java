@@ -65,7 +65,7 @@ public class ReprocessorTileEntity extends BaseInventoryTileEntity implements Me
     private boolean isRunning;
 
     public ReprocessorTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntities.REPROCESSOR.get(), pos, state);
+        super(ModTileEntities.REPROCESSOR, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.setChanged(), this::getLevel);
         this.upgradeInventory = new MachineUpgradeItemStackHandler();
         this.energy = new CEnergyStorage(FUEL_CAPACITY, _ -> this.setChangedFast());

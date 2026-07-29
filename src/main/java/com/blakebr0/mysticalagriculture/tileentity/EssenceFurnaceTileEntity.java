@@ -64,7 +64,7 @@ public class EssenceFurnaceTileEntity extends BaseInventoryTileEntity implements
     private boolean isRunning;
 
     public EssenceFurnaceTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntities.FURNACE.get(), pos, state);
+        super(ModTileEntities.FURNACE, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.setChanged(), this::getLevel);
         this.upgradeInventory = new MachineUpgradeItemStackHandler();
         this.energy = new CEnergyStorage(FUEL_CAPACITY, _ -> this.setChangedFast());

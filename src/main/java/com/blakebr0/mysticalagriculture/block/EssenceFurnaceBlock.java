@@ -116,6 +116,6 @@ public class EssenceFurnaceBlock extends BaseTileEntityBlock implements IHoverTe
 
     @Override
     protected <T extends BlockEntity> BlockEntityTicker<T> getServerTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return createTicker(type, ModTileEntities.FURNACE.get(), EssenceFurnaceTileEntity::tick);
+        return createTicker(type, ModTileEntities.FURNACE, EssenceFurnaceTileEntity::tick);
     }
 }

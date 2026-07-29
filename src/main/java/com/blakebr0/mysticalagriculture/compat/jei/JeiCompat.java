@@ -59,17 +59,17 @@ public final class JeiCompat implements IModPlugin {
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-        registration.addCraftingStation(InfusionCategory.RECIPE_TYPE, new ItemStack(ModBlocks.INFUSION_ALTAR.get()));
-        registration.addCraftingStation(InfusionCategory.RECIPE_TYPE, new ItemStack(ModBlocks.INFUSION_PEDESTAL.get()));
-        registration.addCraftingStation(AwakeningCategory.RECIPE_TYPE, new ItemStack(ModBlocks.AWAKENING_ALTAR.get()));
-        registration.addCraftingStation(AwakeningCategory.RECIPE_TYPE, new ItemStack(ModBlocks.AWAKENING_PEDESTAL.get()));
-        registration.addCraftingStation(AwakeningCategory.RECIPE_TYPE, new ItemStack(ModBlocks.ESSENCE_VESSEL.get()));
-        registration.addCraftingStation(EnchanterCategory.RECIPE_TYPE, new ItemStack(ModBlocks.ENCHANTER.get()));
-        registration.addCraftingStation(mezz.jei.api.constants.RecipeTypes.SMELTING, new ItemStack(ModBlocks.FURNACE.get()));
-        registration.addCraftingStation(ReprocessorCategory.RECIPE_TYPE, new ItemStack(ModBlocks.REPROCESSOR.get()));
-        registration.addCraftingStation(SoulExtractorCategory.RECIPE_TYPE, new ItemStack(ModBlocks.SOUL_EXTRACTOR.get()));
-        registration.addCraftingStation(SouliumSpawnerCategory.RECIPE_TYPE, new ItemStack(ModBlocks.SOULIUM_SPAWNER.get()));
-        registration.addCraftingStation(OreInfuserCategory.RECIPE_TYPE, new ItemStack(ModBlocks.ORE_INFUSER.get()));
+        registration.addCraftingStation(InfusionCategory.RECIPE_TYPE, new ItemStack(ModBlocks.INFUSION_ALTAR));
+        registration.addCraftingStation(InfusionCategory.RECIPE_TYPE, new ItemStack(ModBlocks.INFUSION_PEDESTAL));
+        registration.addCraftingStation(AwakeningCategory.RECIPE_TYPE, new ItemStack(ModBlocks.AWAKENING_ALTAR));
+        registration.addCraftingStation(AwakeningCategory.RECIPE_TYPE, new ItemStack(ModBlocks.AWAKENING_PEDESTAL));
+        registration.addCraftingStation(AwakeningCategory.RECIPE_TYPE, new ItemStack(ModBlocks.ESSENCE_VESSEL));
+        registration.addCraftingStation(EnchanterCategory.RECIPE_TYPE, new ItemStack(ModBlocks.ENCHANTER));
+        registration.addCraftingStation(mezz.jei.api.constants.RecipeTypes.SMELTING, new ItemStack(ModBlocks.FURNACE));
+        registration.addCraftingStation(ReprocessorCategory.RECIPE_TYPE, new ItemStack(ModBlocks.REPROCESSOR));
+        registration.addCraftingStation(SoulExtractorCategory.RECIPE_TYPE, new ItemStack(ModBlocks.SOUL_EXTRACTOR));
+        registration.addCraftingStation(SouliumSpawnerCategory.RECIPE_TYPE, new ItemStack(ModBlocks.SOULIUM_SPAWNER));
+        registration.addCraftingStation(OreInfuserCategory.RECIPE_TYPE, new ItemStack(ModBlocks.ORE_INFUSER));
     }
 
     @Override
@@ -85,7 +85,7 @@ public final class JeiCompat implements IModPlugin {
         registration.addRecipes(CruxCategory.RECIPE_TYPE, CruxRecipe.createAll());
 
         registration.addIngredientInfo(
-                new ItemStack(ModItems.COGNIZANT_DUST.get()),
+                new ItemStack(ModItems.COGNIZANT_DUST),
                 VanillaTypes.ITEM_STACK,
                 Component.translatable("jei.desc.mysticalagriculture.cognizant_dust")
         );
@@ -103,7 +103,7 @@ public final class JeiCompat implements IModPlugin {
 
     @Override
     public void registerItemSubtypes(ISubtypeRegistration registration) {
-        registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, ModItems.SOUL_JAR.get(), (stack, _) -> {
+        registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, ModItems.SOUL_JAR, (stack, _) -> {
             var type = MobSoulUtils.getType(stack);
             return type != null ? type.getEntityIds().toString() : "";
         });

@@ -112,6 +112,6 @@ public class ReprocessorBlock extends BaseTileEntityBlock implements IHoverTextP
 
     @Override
     protected <T extends BlockEntity> BlockEntityTicker<T> getServerTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return createTicker(type, ModTileEntities.REPROCESSOR.get(), ReprocessorTileEntity::tick);
+        return createTicker(type, ModTileEntities.REPROCESSOR, ReprocessorTileEntity::tick);
     }
 }

@@ -38,7 +38,7 @@ public class FilledSoulJarIngredient implements ICustomIngredient {
             var values = new ArrayList<Holder<Item>>();
 
             for (var type : MobSoulTypeRegistry.getInstance().getMobSoulTypes()) {
-                values.add(MobSoulUtils.getFilledSoulJar(type, ModItems.SOUL_JAR.get()).typeHolder());
+                values.add(MobSoulUtils.getFilledSoulJar(type, ModItems.SOUL_JAR).typeHolder());
             }
 
             this.values = HolderSet.direct(values);

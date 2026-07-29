@@ -29,7 +29,7 @@ public class OreInfuserContainer extends BaseContainerMenu {
     }
 
     public OreInfuserContainer(int id, Inventory playerInventory, CItemStacksHandler inventory, MachineUpgradeItemStackHandler upgradeInventory, ContainerData data, BlockPos pos) {
-        super(ModMenuTypes.ORE_INFUSER.get(), id, pos);
+        super(ModMenuTypes.ORE_INFUSER, id, pos);
         this.data = data;
         this.mover = new QuickMover(this::moveItemStackTo);
 

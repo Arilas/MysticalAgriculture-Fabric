@@ -4,8 +4,9 @@ import com.blakebr0.mysticalagriculture.api.registry.IAugmentRegistry;
 import com.blakebr0.mysticalagriculture.api.registry.ICropRegistry;
 import com.blakebr0.mysticalagriculture.api.registry.IMobSoulTypeRegistry;
 import net.minecraft.resources.Identifier;
+import org.jetbrains.annotations.ApiStatus;
 
-public class MysticalAgricultureAPI {
+public final class MysticalAgricultureAPI {
     public static final String MOD_ID = "mysticalagriculture";
 
     private static ICropRegistry cropRegistry;
@@ -13,6 +14,25 @@ public class MysticalAgricultureAPI {
     private static IMobSoulTypeRegistry soulTypeRegistry;
 
     private static MysticalAgricultureConfigValues configValues;
+    private static boolean initialized;
+
+    @ApiStatus.Internal
+    public static void bootstrap(
+            ICropRegistry cropRegistry,
+            IAugmentRegistry augmentRegistry,
+            IMobSoulTypeRegistry soulTypeRegistry,
+            MysticalAgricultureConfigValues configValues
+    ) {
+        if (initialized) {
+            throw new IllegalStateException("The Mystical Agriculture API has already been initialized");
+        }
+
+        MysticalAgricultureAPI.cropRegistry = cropRegistry;
+        MysticalAgricultureAPI.augmentRegistry = augmentRegistry;
+        MysticalAgricultureAPI.soulTypeRegistry = soulTypeRegistry;
+        MysticalAgricultureAPI.configValues = configValues;
+        initialized = true;
+    }
 
     /**
      * The registry in which all crops, crop tiers, and crop types are stored

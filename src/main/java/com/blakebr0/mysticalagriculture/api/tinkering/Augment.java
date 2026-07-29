@@ -4,10 +4,12 @@ import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.api.lib.AbilityCache;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.InteractionHand;
@@ -21,9 +23,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
-import net.neoforged.neoforge.event.tick.PlayerTickEvent;
-import net.neoforged.neoforge.registries.DeferredHolder;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -35,7 +34,7 @@ import java.util.List;
  */
 public class Augment {
     private final Identifier id;
-    private final DeferredHolder<Item, Item> item;
+    private final ResourceKey<Item> item;
     private final int tier;
     private final EnumSet<AugmentType> types;
     private int primaryColor;
@@ -44,7 +43,10 @@ public class Augment {
 
     public Augment(Identifier id, int tier, EnumSet<AugmentType> types, int primaryColor, int secondaryColor) {
         this.id = id;
-        this.item = DeferredHolder.create(Registries.ITEM, Identifier.fromNamespaceAndPath(MysticalAgricultureAPI.MOD_ID, id.getPath() + "_augment"));
+        this.item = ResourceKey.create(
+                Registries.ITEM,
+                Identifier.fromNamespaceAndPath(MysticalAgricultureAPI.MOD_ID, id.getPath() + "_augment")
+        );
         this.tier = tier;
         this.types = types;
         this.primaryColor = ARGB.color(255, primaryColor);
@@ -124,7 +126,7 @@ public class Augment {
      * @return the augment item
      */
     public Item getItem() {
-        return this.item.get();
+        return BuiltInRegistries.ITEM.getValueOrThrow(this.item);
     }
 
     /**
@@ -260,7 +262,7 @@ public class Augment {
     public void onArmorTick(ItemStack stack, ServerLevel level, Player player) { }
 
     /**
-     * Called every tick for equipped armor, meant for player ability changes, {@link PlayerTickEvent.Pre}
+     * Called every tick for equipped armor, meant for player ability changes.
      * @param level the level
      * @param player the player
      * @param cache the ability to cache
@@ -268,12 +270,15 @@ public class Augment {
     public void onPlayerTick(Level level, Player player, AbilityCache cache) { }
 
     /**
-     * Called when the player hits the ground, {@link LivingFallEvent}
+     * Called when the player hits the ground.
      * @param level the level
      * @param player the player
-     * @param event the fall event
+     * @param fallDistance the distance the player fell
+     * @return {@code true} when the registered server damage callback should cancel fall damage
      */
-    public void onPlayerFall(Level level, Player player, LivingFallEvent event) { }
+    public boolean onPlayerFall(Level level, Player player, float fallDistance) {
+        return false;
+    }
 
     /**
      * The list of {@link AttributeModifier}s that will be automatically applied when equipping this augment

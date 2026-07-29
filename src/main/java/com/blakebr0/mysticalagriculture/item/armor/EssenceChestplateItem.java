@@ -75,7 +75,7 @@ public class EssenceChestplateItem extends BaseArmorItem implements ITinkerable 
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
         builder.accept(ModTooltips.getTooltipForTier(this.tinkerableTier));
 
-        if (ModConfigs.AWAKENED_SUPREMIUM_SET_BONUS.get() && stack.is(ModItems.AWAKENED_SUPREMIUM_CHESTPLATE.get())) {
+        if (ModConfigs.AWAKENED_SUPREMIUM_SET_BONUS.get() && stack.is(ModItems.AWAKENED_SUPREMIUM_CHESTPLATE)) {
             builder.accept(ModTooltips.SET_BONUS.args(ModTooltips.AWAKENED_SUPREMIUM_SET_BONUS.toComponent()).toComponent());
         }
 
@@ -98,10 +98,10 @@ public class EssenceChestplateItem extends BaseArmorItem implements ITinkerable 
     }
 
     private static boolean hasAwakenedSupremiumSet(Player player) {
-        var helmet = player.getItemBySlot(EquipmentSlot.HEAD).is(ModItems.AWAKENED_SUPREMIUM_HELMET.get());
-        var chestplate = player.getItemBySlot(EquipmentSlot.CHEST).is(ModItems.AWAKENED_SUPREMIUM_CHESTPLATE.get());
-        var leggings = player.getItemBySlot(EquipmentSlot.LEGS).is(ModItems.AWAKENED_SUPREMIUM_LEGGINGS.get());
-        var boots = player.getItemBySlot(EquipmentSlot.FEET).is(ModItems.AWAKENED_SUPREMIUM_BOOTS.get());
+        var helmet = player.getItemBySlot(EquipmentSlot.HEAD).is(ModItems.AWAKENED_SUPREMIUM_HELMET);
+        var chestplate = player.getItemBySlot(EquipmentSlot.CHEST).is(ModItems.AWAKENED_SUPREMIUM_CHESTPLATE);
+        var leggings = player.getItemBySlot(EquipmentSlot.LEGS).is(ModItems.AWAKENED_SUPREMIUM_LEGGINGS);
+        var boots = player.getItemBySlot(EquipmentSlot.FEET).is(ModItems.AWAKENED_SUPREMIUM_BOOTS);
 
         return helmet && chestplate && leggings && boots;
     }

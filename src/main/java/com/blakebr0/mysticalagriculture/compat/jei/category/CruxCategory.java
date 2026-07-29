@@ -26,7 +26,7 @@ public class CruxCategory implements IRecipeCategory<CruxRecipe> {
 
     public CruxCategory(IGuiHelper helper) {
         this.background = helper.createDrawable(TEXTURE, 0, 0, 80, 54);
-        this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(ModItems.PROSPERITY_SEED_BASE.get()));
+        this.icon = helper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(ModItems.PROSPERITY_SEED_BASE));
     }
 
     @Override

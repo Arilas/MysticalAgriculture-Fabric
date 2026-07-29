@@ -55,7 +55,7 @@ public class InfusionAltarRenderer implements BlockEntityRenderer<InfusionAltarT
         for (int i = 0; i < state.pedestalPositions.size(); i++) {
             var aoePos = state.pedestalPositions.get(i);
             if (level != null && level.isEmptyBlock(aoePos)) {
-                this.blockModelResolver.update(state.blockModelRenderStates[i], ModBlocks.INFUSION_PEDESTAL.get().defaultBlockState(), BlockDisplayContext.create());
+                this.blockModelResolver.update(state.blockModelRenderStates[i], ModBlocks.INFUSION_PEDESTAL.defaultBlockState(), BlockDisplayContext.create());
             }
         }
     }

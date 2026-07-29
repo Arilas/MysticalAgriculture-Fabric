@@ -112,6 +112,6 @@ public class SoulExtractorBlock extends BaseTileEntityBlock implements IHoverTex
 
     @Override
     protected <T extends BlockEntity> BlockEntityTicker<T> getServerTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return createTicker(type, ModTileEntities.SOUL_EXTRACTOR.get(), SoulExtractorTileEntity::tick);
+        return createTicker(type, ModTileEntities.SOUL_EXTRACTOR, SoulExtractorTileEntity::tick);
     }
 }

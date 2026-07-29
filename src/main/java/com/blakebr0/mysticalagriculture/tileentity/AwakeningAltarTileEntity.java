@@ -41,7 +41,7 @@ public class AwakeningAltarTileEntity extends BaseInventoryTileEntity implements
     private @Nullable Identifier recipeId;
 
     public AwakeningAltarTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntities.AWAKENING_ALTAR.get(), pos, state);
+        super(ModTileEntities.AWAKENING_ALTAR, pos, state);
         this.inventory = CItemStacksHandler.create(2, (_, _) -> this.setChanged(), handler -> {
             handler.setDefaultSlotLimit(1);
             handler.setCanInsert((_, _) -> handler.getResource(1).isEmpty());

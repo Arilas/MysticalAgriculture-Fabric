@@ -3,6 +3,12 @@ package com.blakebr0.mysticalagriculture;
 import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.api.MysticalAgricultureConfigValues;
 import com.blakebr0.mysticalagriculture.config.ModConfigs;
+import com.blakebr0.mysticalagriculture.init.ModBlocks;
+import com.blakebr0.mysticalagriculture.init.ModCreativeModeTabs;
+import com.blakebr0.mysticalagriculture.init.ModDataComponentTypes;
+import com.blakebr0.mysticalagriculture.init.ModItems;
+import com.blakebr0.mysticalagriculture.init.ModMenuTypes;
+import com.blakebr0.mysticalagriculture.init.ModTileEntities;
 import com.blakebr0.mysticalagriculture.registry.AugmentRegistry;
 import com.blakebr0.mysticalagriculture.registry.CropRegistry;
 import com.blakebr0.mysticalagriculture.registry.MobSoulTypeRegistry;
@@ -26,11 +32,24 @@ public final class MysticalAgriculture implements ModInitializer {
         initAPI();
 
         // 3. Built-in and external plug-in discovery
-        PluginRegistry.getInstance().loadPlugins();
+        var plugins = PluginRegistry.getInstance();
+        plugins.loadPlugins();
 
-        // 4. Content collection and vanilla registration are installed by Task 2.
+        // 4. Content collection and vanilla registration
+        plugins.collectContent();
+        ModBlocks.register();
+        ModBlocks.registerBlockItems();
+        ModItems.register();
+        ModDataComponentTypes.register();
+        ModTileEntities.register();
+        ModMenuTypes.register();
+        ModCreativeModeTabs.register();
+
         // 5. Recipe, world, network, and storage registration are installed by Tasks 3 and 4.
-        // 6. Dynamic registry finalization is installed after the direct registries exist.
+
+        // 6. Dynamic registry finalization
+        plugins.finalizeContent();
+
         // 7. Callbacks and reload listeners are installed by the gameplay and lifecycle tasks.
     }
 
@@ -39,33 +58,18 @@ public final class MysticalAgriculture implements ModInitializer {
     }
 
     private static void initAPI() {
-        try {
-            var api = MysticalAgricultureAPI.class;
-
-            var cropRegistry = api.getDeclaredField("cropRegistry");
-            var augmentRegistry = api.getDeclaredField("augmentRegistry");
-            var soulTypeRegistry = api.getDeclaredField("soulTypeRegistry");
-
-            cropRegistry.setAccessible(true);
-            cropRegistry.set(null, CropRegistry.getInstance());
-            augmentRegistry.setAccessible(true);
-            augmentRegistry.set(null, AugmentRegistry.getInstance());
-            soulTypeRegistry.setAccessible(true);
-            soulTypeRegistry.set(null, MobSoulTypeRegistry.getInstance());
-
-            var configValues = api.getDeclaredField("configValues");
-
-            configValues.setAccessible(true);
-            configValues.set(null, new MysticalAgricultureConfigValues(
-                    ModConfigs.INFERIUM_DROP_CHANCE::get,
-                    ModConfigs.FERTILIZED_ESSENCE_DROP_CHANCE::get,
-                    ModConfigs.SECONDARY_SEED_DROPS::get,
-                    ModConfigs.REQUIRES_EFFECTIVE_FARMLAND::get,
-                    ModConfigs.UNBREAKABLE_SUPREMIUM_ARMOR::get,
-                    ModConfigs.FAKE_PLAYER_WATERING::get
-            ));
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Could not initialize the Mystical Agriculture API", e);
-        }
+        MysticalAgricultureAPI.bootstrap(
+                CropRegistry.getInstance(),
+                AugmentRegistry.getInstance(),
+                MobSoulTypeRegistry.getInstance(),
+                new MysticalAgricultureConfigValues(
+                        ModConfigs.INFERIUM_DROP_CHANCE::get,
+                        ModConfigs.FERTILIZED_ESSENCE_DROP_CHANCE::get,
+                        ModConfigs.SECONDARY_SEED_DROPS::get,
+                        ModConfigs.REQUIRES_EFFECTIVE_FARMLAND::get,
+                        ModConfigs.UNBREAKABLE_SUPREMIUM_ARMOR::get,
+                        ModConfigs.FAKE_PLAYER_WATERING::get
+                )
+        );
     }
 }

@@ -79,7 +79,7 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
     private @Nullable Identifier recipeId;
 
     public SouliumSpawnerTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntities.SOULIUM_SPAWNER.get(), pos, state);
+        super(ModTileEntities.SOULIUM_SPAWNER, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.onInventoryChanged(), this::getLevel);
         this.upgradeInventory = new MachineUpgradeItemStackHandler();
         this.energy = new CEnergyStorage(FUEL_CAPACITY, _ -> this.setChangedFast());

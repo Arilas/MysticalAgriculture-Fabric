@@ -62,7 +62,7 @@ public class HarvesterTileEntity extends BaseInventoryTileEntity implements Menu
     private boolean isRunning;
 
     public HarvesterTileEntity(BlockPos pos, BlockState state) {
-        super(ModTileEntities.HARVESTER.get(), pos, state);
+        super(ModTileEntities.HARVESTER, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.setChanged(), this::getLevel);
         this.upgradeInventory = new MachineUpgradeItemStackHandler();
         this.energy = new CEnergyStorage(FUEL_CAPACITY, _ -> this.setChangedFast());
