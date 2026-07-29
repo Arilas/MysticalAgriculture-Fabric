@@ -73,4 +73,25 @@ class RecipeIngredientMatcherTest {
         assertEquals(9, diamond.getCount());
         assertEquals(8, emerald.getCount());
     }
+
+    @Test
+    void enchanterConsumesTheSameUnorderedAssignmentUsedForItsMultiplier() {
+        var protection = Task3TestRegistries.lookup()
+                .lookupOrThrow(Registries.ENCHANTMENT)
+                .getOrThrow(Enchantments.PROTECTION);
+        var recipe = new EnchanterRecipe(List.of(
+                new IngredientWithCount(Ingredient.of(Items.DIAMOND, Items.EMERALD), 2),
+                new IngredientWithCount(Ingredient.of(Items.DIAMOND), 3)
+        ), protection);
+        var input = CraftingInput.of(3, 1, List.of(
+                new ItemStack(Items.DIAMOND, 9),
+                new ItemStack(Items.EMERALD, 8),
+                new ItemStack(Items.BOOK)
+        ));
+
+        var remaining = recipe.getRemainingItems(input, 3);
+
+        assertTrue(remaining.get(0).isEmpty(), "the diamond-specific input must consume all nine diamonds");
+        assertEquals(2, remaining.get(1).getCount(), "the broad input must consume six emeralds");
+    }
 }

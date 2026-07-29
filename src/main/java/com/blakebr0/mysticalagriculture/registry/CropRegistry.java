@@ -139,7 +139,9 @@ public final class CropRegistry implements ICropRegistry {
 
                 registrar.register(id, item, source);
             }
+        }
 
+        for (var crop : this.crops.values()) {
             if (crop.shouldRegisterSeedsItem()) {
                 var id = MysticalAgricultureAPI.resource(crop.getNameWithSuffix("seeds"));
                 var source = this.sourceOf(crop);

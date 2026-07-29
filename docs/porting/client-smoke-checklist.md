@@ -7,7 +7,7 @@ the behavior was observed in a real client or exercised by an executable test;
 registration or compilation alone is not treated as a completed UI interaction.
 
 - [x] Title screen starts without Mystical Agriculture errors.
-- [ ] A local world can be created or joined.
+- [x] A local world can be created or joined.
 - [ ] Tinkering Table screen opens and its slots/widgets render.
 - [ ] Enchanter screen opens and its slots/widgets render.
 - [ ] Essence Furnace screen opens and its energy, fuel, and progress widgets render.
@@ -38,7 +38,7 @@ registration or compilation alone is not treated as a completed UI interaction.
 - [ ] Holding control and newly pressing an arrow sends one AOE offset payload.
 - [x] Holding an arrow does not repeatedly send AOE offset payloads.
 - [ ] Holding control shows the AOE block outline.
-- [ ] Recipe lists/maps populate after recipe synchronization.
+- [x] Recipe lists/maps populate after recipe synchronization.
 - [ ] Ingredient-cache and essence-color payloads update client state.
 - [ ] Resource reload preserves functional models, tints, and overlays.
 - [x] Disconnect clears recipe/cache/color client state.
@@ -68,12 +68,19 @@ registration or compilation alone is not treated as a completed UI interaction.
   argument-file side effect across `clean` and configuration-cache reuse.
 - The focused runtime intentionally contained neither JEI nor Jade. No missing
   compatibility entrypoint or optional-mod exception occurred.
+- The standard `clean runClient` initially reproduced Loom's deleted-argfile
+  failure. After all standard run tasks were moved to Loom's bare classpath,
+  two clean launches (the second reusing configuration cache) loaded all core
+  registries and completed resource reload.
+- Task 7's four optional-mod matrices each joined a real disposable local
+  world. JEI-only and combined runs received nonzero synchronized recipe
+  collections, proving the client recipe maps populated after login.
 - The first runtime pass exposed a missing `particle` reference in the
   `supremium_staff` model. A failing resource contract reproduced it; after the
   one-field resource fix, a second full client reload emitted no missing-model
   or missing-texture warning for that asset.
 - The development account's expected Realms/authentication 401 messages and
   macOS OpenGL shader-driver warnings were unrelated to Mystical Agriculture.
-- No local world was joined: `run/saves` was empty, and manual desktop input was
-  deliberately not automated. Consequently every world/UI/render interaction
-  above remains unchecked until a human smoke pass.
+- World joins were automated through quick-play, but the GLFW window remained
+  unavailable to desktop inspection. Consequently the unchecked UI/render
+  interactions above still require a human smoke pass.

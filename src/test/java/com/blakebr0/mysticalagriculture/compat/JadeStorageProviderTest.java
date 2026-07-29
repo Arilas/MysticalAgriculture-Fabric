@@ -222,12 +222,12 @@ class JadeStorageProviderTest {
             if (method.getName().equals("registerItemStorage")) {
                 items.add(new ProviderRegistration<>(
                         castProvider(args[0]),
-                        (Class<? extends BlockEntity>) args[1]
+                        castBlockEntityType(args[1])
                 ));
             } else if (method.getName().equals("registerEnergyStorage")) {
                 energy.add(new ProviderRegistration<>(
                         castProvider(args[0]),
-                        (Class<? extends BlockEntity>) args[1]
+                        castBlockEntityType(args[1])
                 ));
             }
             return null;
@@ -281,6 +281,11 @@ class JadeStorageProviderTest {
     @SuppressWarnings("unchecked")
     private static <T> IServerExtensionProvider<T> castProvider(Object provider) {
         return (IServerExtensionProvider<T>) provider;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Class<? extends BlockEntity> castBlockEntityType(Object type) {
+        return (Class<? extends BlockEntity>) type;
     }
 
     private static <T> T proxy(Class<T> type, Invocation invocation) {

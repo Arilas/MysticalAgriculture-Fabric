@@ -73,8 +73,12 @@ fabricApi {
     }
 }
 
-tasks.named('runGameTest') {
-    useArgFile.set(false)
+['runClient', 'runServer', 'runGameTest', 'runDatagen'].each { runTaskName ->
+    tasks.named(runTaskName) {
+        // Loom's generated argfile lives under build/, so a clean task in the
+        // same graph can delete it after launch configuration has run.
+        useArgFile.set(false)
+    }
 }
 
 sourceSets.main.resources {

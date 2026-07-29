@@ -26,6 +26,7 @@ import net.minecraft.world.level.Level;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class EnchanterRecipe implements IEnchanterRecipe {
     public static final MapCodec<EnchanterRecipe> MAP_CODEC = RecordCodecBuilder.mapCodec(builder ->
@@ -140,17 +141,28 @@ public class EnchanterRecipe implements IEnchanterRecipe {
     @Override
     public NonNullList<ItemStack> getRemainingItems(CraftingInput inventory, int level) {
         var remaining = NonNullList.withSize(inventory.size(), ItemStack.EMPTY);
+        var inputSlots = IntStream.range(0, inventory.size() - 1)
+                .filter(index -> !inventory.getItem(index).isEmpty())
+                .boxed()
+                .toList();
+        var stacks = inputSlots.stream()
+                .map(inventory::getItem)
+                .toList();
+        var assignment = RecipeIngredientMatcher.findAssignment(stacks, this.inputs, level);
 
-        for (int i = 0; i < 2; i++) {
-            var stack = inventory.getItem(i);
-            var count = this.inputs.get(i).count() * level;
+        if (assignment != null) {
+            for (var ingredientIndex = 0; ingredientIndex < assignment.length; ingredientIndex++) {
+                var slot = inputSlots.get(assignment[ingredientIndex]);
+                var stack = inventory.getItem(slot);
+                var count = this.inputs.get(ingredientIndex).count() * level;
 
-            remaining.set(i, stack.copyWithCount(stack.getCount() - count));
+                remaining.set(slot, stack.copyWithCount(stack.getCount() - count));
+            }
         }
 
-        var stack = inventory.getItem(2);
+        var stack = inventory.getItem(inventory.size() - 1);
         if (stack.getCount() > 1) {
-            remaining.set(2, stack.copyWithCount(stack.getCount() - 1));
+            remaining.set(inventory.size() - 1, stack.copyWithCount(stack.getCount() - 1));
         }
 
         return remaining;
@@ -158,7 +170,7 @@ public class EnchanterRecipe implements IEnchanterRecipe {
 
     @Override
     public int getMaxResultEnchantmentLevel(RecipeInput inventory) {
-        var stacks = java.util.stream.IntStream.range(0, this.inputs.size())
+        var stacks = IntStream.range(0, inventory.size() - 1)
                 .mapToObj(inventory::getItem)
                 .filter(stack -> !stack.isEmpty())
                 .toList();

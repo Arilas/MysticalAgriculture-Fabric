@@ -25,3 +25,4 @@ classes
 logs
 runs
 run-data
+src/generated/resources/.cache/

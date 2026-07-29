@@ -143,7 +143,7 @@ public final class PluginRegistry {
                     candidate.definition(),
                     candidate.sourceMod()
             );
-        } catch (Throwable e) {
+        } catch (RuntimeException e) {
             this.state = State.FAILED;
             throw entrypointFailure(candidate.sourceMod(), candidate.definition(), e);
         }
@@ -152,7 +152,7 @@ public final class PluginRegistry {
     private void invoke(LoadedPlugin plugin, Runnable action) {
         try {
             action.run();
-        } catch (Throwable e) {
+        } catch (RuntimeException e) {
             this.state = State.FAILED;
             throw entrypointFailure(plugin.sourceMod(), plugin.definition(), e);
         }

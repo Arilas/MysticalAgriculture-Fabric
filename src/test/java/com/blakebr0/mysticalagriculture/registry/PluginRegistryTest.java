@@ -36,6 +36,7 @@ import javax.tools.ToolProvider;
 import java.net.URI;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -163,6 +164,34 @@ class PluginRegistryTest {
     }
 
     @Test
+    void dynamicCropItemsPreserveUpstreamEssenceThenSeedOrder() {
+        var registry = registryWith(candidate("example", "example.Plugin", () -> new IMysticalAgriculturePlugin() {
+            @Override
+            public void onRegisterCrops(ICropRegistry crops) {
+                crops.register(crop(id("first")));
+                crops.register(crop(id("second")));
+            }
+        }));
+        registry.loadPlugins();
+        registry.collectContent();
+        MappedRegistry<Item> items = registry("ordered_crop_items");
+
+        registry.getCropRegistry().registerItems(
+                (id, _) -> id.getPath().startsWith("first") ? Items.STONE : Items.DIRT,
+                (id, _) -> id.getPath().startsWith("first") ? Items.WHEAT_SEEDS : Items.BEETROOT_SEEDS,
+                new DirectRegistryRegistrar<>(items, "item")
+        );
+        items.freeze();
+
+        assertEquals(List.of(
+                MysticalAgricultureAPI.resource("first_essence"),
+                MysticalAgricultureAPI.resource("second_essence"),
+                MysticalAgricultureAPI.resource("first_seeds"),
+                MysticalAgricultureAPI.resource("second_seeds")
+        ), IntStream.range(0, items.size()).mapToObj(items::byId).map(items::getKey).toList());
+    }
+
+    @Test
     void entrypointFailureNamesModAndDefinitionAndDoesNotFinalize() {
         var registry = registryWith(candidate("broken", "broken.Plugin", () -> {
             throw new IllegalArgumentException("boom");
@@ -175,6 +204,17 @@ class PluginRegistryTest {
         assertFalse(registry.isFinalized());
         assertTrue(registry.isFailed());
         assertThrows(IllegalStateException.class, registry::collectContent);
+    }
+
+    @Test
+    void fatalVmErrorsEscapePluginLoadingUnwrapped() {
+        var fatal = new OutOfMemoryError("fatal");
+        var registry = registryWith(candidate("broken", "broken.Plugin", () -> {
+            throw fatal;
+        }));
+
+        assertSame(fatal, assertThrows(OutOfMemoryError.class, registry::loadPlugins));
+        assertFalse(registry.isFailed(), "an unrecoverable VM error must not be converted into registry state");
     }
 
     @Test

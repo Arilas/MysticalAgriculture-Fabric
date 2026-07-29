@@ -4,6 +4,7 @@ import com.blakebr0.mysticalagriculture.api.crafting.IngredientWithCount;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
+import java.util.Arrays;
 import java.util.List;
 
 public final class RecipeIngredientMatcher {
@@ -30,6 +31,22 @@ public final class RecipeIngredientMatcher {
         }
 
         return maxMultiplier(stacks, ingredients, new boolean[stacks.size()], 0, limit);
+    }
+
+    public static int[] findAssignment(
+            List<ItemStack> stacks,
+            List<IngredientWithCount> ingredients,
+            int multiplier
+    ) {
+        if (stacks.size() != ingredients.size() || multiplier < 1) {
+            return null;
+        }
+
+        var assignment = new int[ingredients.size()];
+        Arrays.fill(assignment, -1);
+        return assignNext(stacks, ingredients, new boolean[stacks.size()], assignment, 0, multiplier)
+                ? assignment
+                : null;
     }
 
     private static boolean matchNext(
@@ -83,6 +100,36 @@ public final class RecipeIngredientMatcher {
             }
         }
         return best;
+    }
+
+    private static boolean assignNext(
+            List<ItemStack> stacks,
+            List<IngredientWithCount> ingredients,
+            boolean[] used,
+            int[] assignment,
+            int ingredientIndex,
+            int multiplier
+    ) {
+        if (ingredientIndex == ingredients.size()) {
+            return true;
+        }
+
+        var ingredient = ingredients.get(ingredientIndex);
+        for (var stackIndex = 0; stackIndex < stacks.size(); stackIndex++) {
+            var stack = stacks.get(stackIndex);
+            if (!used[stackIndex]
+                    && ingredient.ingredient().test(stack)
+                    && stack.getCount() >= ingredient.count() * multiplier) {
+                used[stackIndex] = true;
+                assignment[ingredientIndex] = stackIndex;
+                if (assignNext(stacks, ingredients, used, assignment, ingredientIndex + 1, multiplier)) {
+                    return true;
+                }
+                assignment[ingredientIndex] = -1;
+                used[stackIndex] = false;
+            }
+        }
+        return false;
     }
 
     private RecipeIngredientMatcher() {

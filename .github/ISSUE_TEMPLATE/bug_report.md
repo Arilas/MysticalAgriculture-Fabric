@@ -21,7 +21,16 @@ Please add your logs and scripts (if applicable).
 
 **Versions (please complete the following information):**
  - Minecraft:
- - Forge:
- - Cucumber:
+ - Fabric Loader:
+ - Fabric API:
+ - Cucumber-Fabric:
  - Mystical Agriculture:
+ - Java:
+ - JEI (if installed):
+ - Jade (if installed):
  - Singleplayer or Multiplayer:
+
+**Environment**
+Please state whether this occurs with only Fabric API, Cucumber-Fabric, and
+Mystical Agriculture installed. Attach `latest.log` and the crash report; do not
+paste access tokens or private server credentials.
