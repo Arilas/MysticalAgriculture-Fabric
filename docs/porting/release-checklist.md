@@ -44,7 +44,7 @@ Release publication was approved on 2026-07-30.
     `83379d10f9ea998467d80da08109d97ef2dc6fa7f46900c3af96999a5ae8b24d`
 
 The inspected release JAR has 4,360 entries and contains one declared embedded
-dependency, Team Reborn Energy 5.0.0. The sources JAR has 4,313
+dependency, Team Reborn Energy 5.0.0. The GitHub Actions sources JAR has 4,311
 entries. JEI and Jade integration classes/resources are part of Mystical
 Agriculture, but their API implementation packages are not bundled.
 
