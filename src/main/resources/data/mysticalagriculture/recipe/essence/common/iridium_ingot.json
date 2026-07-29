@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:iridium"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ingots/iridium"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ingots/iridium"
+      ]
     }
   ],
   "pattern": [

@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:zinc"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ingots/zinc"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ingots/zinc"
+      ]
     }
   ],
   "pattern": [

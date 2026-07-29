@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:electrum"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ingots/electrum"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ingots/electrum"
+      ]
     }
   ],
   "pattern": [

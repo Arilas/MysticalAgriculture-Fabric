@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:ruby"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ores/ruby"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ores/ruby"
+      ]
     }
   ],
   "ingredients": [

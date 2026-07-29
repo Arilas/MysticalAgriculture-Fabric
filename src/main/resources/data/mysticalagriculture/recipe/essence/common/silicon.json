@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:silicon"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:silicon"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:silicon"
+      ]
     }
   ],
   "pattern": [

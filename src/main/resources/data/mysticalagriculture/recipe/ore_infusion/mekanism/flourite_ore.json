@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:fluorite"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ores/fluorite"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ores/fluorite"
+      ]
     }
   ],
   "ingredients": [

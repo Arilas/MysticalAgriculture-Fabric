@@ -70,6 +70,11 @@ sourceSets {
 configurations {
     apiSurfaceImplementation.extendsFrom implementation
     apiCompatibilityImplementation.extendsFrom implementation
+    task3LoaderRuntime {
+        canBeConsumed = false
+        canBeResolved = true
+        extendsFrom testRuntimeClasspath
+    }
 }
 
 sourceSets.apiSurface.compileClasspath = configurations.compileClasspath
@@ -87,6 +92,7 @@ dependencies {
     testImplementation platform("org.junit:junit-bom:5.12.2")
     testImplementation "org.junit.jupiter:junit-jupiter"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    task3LoaderRuntime "net.fabricmc:fabric-loader-junit:${fabric_loader_version}"
 }
 
 java.withSourcesJar()
@@ -106,7 +112,10 @@ tasks.named('compileApiCompatibilityJava') {
 
 def task2TestOutput = layout.buildDirectory.dir("classes/java/task2Test")
 def task3TestOutput = layout.buildDirectory.dir("classes/java/task3Test")
+def task3LoaderTestOutput = layout.buildDirectory.dir("classes/java/task3LoaderTest")
 def task3MainOutput = layout.buildDirectory.dir("classes/java/task3Main")
+def task3LoaderMainOutput = layout.buildDirectory.dir("classes/java/task3LoaderMain")
+def task3LoaderModOutput = layout.buildDirectory.dir("task3LoaderMod")
 
 tasks.register('compileTask2TestJava', JavaCompile) {
     source file("src/test/java/com/blakebr0/mysticalagriculture/registry/PluginRegistryTest.java")
@@ -145,10 +154,50 @@ tasks.register('task3Test', Test) {
     testClassesDirs = files(task3TestOutput)
     classpath = configurations.testRuntimeClasspath + files(task3TestOutput)
     include "**/*Test.class"
+    exclude "**/Task3DataGeneratorTest.class"
+    exclude "**/Task3LoaderIngredientTest.class"
+    useJUnitPlatform()
+}
+
+tasks.register('prepareTask3LoaderTestMod', Sync) {
+    dependsOn tasks.named('compileTask3LoaderJava')
+    from(task3LoaderMainOutput) {
+        exclude "fabric.mod.json"
+    }
+    from "src/task3Loader/resources"
+    into task3LoaderModOutput
+}
+
+tasks.register('compileTask3LoaderTestJava', JavaCompile) {
+    dependsOn tasks.named('compileTask3LoaderJava')
+    source file("src/test/java/com/blakebr0/mysticalagriculture/crafting/Task3DataGeneratorTest.java")
+    source file("src/test/java/com/blakebr0/mysticalagriculture/crafting/Task3LoaderIngredientTest.java")
+    classpath = configurations.testCompileClasspath + files(task3LoaderMainOutput)
+    destinationDirectory = task3LoaderTestOutput
+    options.sourcepath = files("src/main/java", "src/test/java")
+    options.compilerArgs += ["-implicit:class"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('task3LoaderTest', Test) {
+    dependsOn tasks.named('prepareTask3LoaderTestMod')
+    dependsOn tasks.named('compileTask3LoaderTestJava')
+    testClassesDirs = files(task3LoaderTestOutput)
+    classpath = files(
+            configurations.task3LoaderRuntime,
+            task3LoaderModOutput,
+            task3LoaderTestOutput
+    )
+    include "**/Task3DataGeneratorTest.class"
+    include "**/Task3LoaderIngredientTest.class"
+    systemProperty "fabric.addMods", task3LoaderModOutput.get().asFile.absolutePath
     useJUnitPlatform()
 }
 
 tasks.register('compileTask3Java', JavaCompile) {
+    source file("src/main/java/com/blakebr0/mysticalagriculture/MysticalAgriculture.java")
     source fileTree("src/main/java/com/blakebr0/mysticalagriculture/api/crafting")
     source file("src/main/java/com/blakebr0/mysticalagriculture/api/lib/LazyIngredient.java")
     source fileTree("src/main/java/com/blakebr0/mysticalagriculture/crafting/condition")
@@ -166,6 +215,31 @@ tasks.register('compileTask3Java', JavaCompile) {
     source fileTree("src/main/java/com/blakebr0/mysticalagriculture/world")
     classpath = configurations.compileClasspath
     destinationDirectory = task3MainOutput
+    options.sourcepath = files("src/main/java")
+    options.compilerArgs += ["-implicit:class"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('compileTask3LoaderJava', JavaCompile) {
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/api/crafting")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/api/lib/LazyIngredient.java")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/crafting/condition")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/crafting/ingredient")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/crafting/recipe")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/crafting/DynamicRecipeManager.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/crafting/EssenceVesselColorManager.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/util/RecipeIngredientCache.java")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/data")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/init/ModConditionSerializers.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/init/ModIngredientTypes.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/init/ModRecipeSerializers.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/init/ModRecipeTypes.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/init/ModWorldFeatures.java")
+    source fileTree("src/main/java/com/blakebr0/mysticalagriculture/world")
+    classpath = configurations.compileClasspath
+    destinationDirectory = task3LoaderMainOutput
     options.sourcepath = files("src/main/java")
     options.compilerArgs += ["-implicit:class"]
     javaCompiler = javaToolchains.compilerFor {

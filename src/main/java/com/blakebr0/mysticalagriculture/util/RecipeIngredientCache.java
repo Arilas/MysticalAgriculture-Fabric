@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeInput;
-import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.item.crafting.RecipeType;
 import org.jspecify.annotations.NonNull;
 
@@ -44,20 +44,21 @@ public class RecipeIngredientCache {
     public void onRecipeManagerLoaded(RecipeManagerLoadedEvent event) {
         var stopwatch = Stopwatch.createStarted();
         var manager = event.getRecipeManager();
+        var recipes = RecipeMap.create(manager.getRecipes());
 
         this.caches.clear();
 
-        cache(manager, RecipeType.SMELTING, recipe -> List.of(recipe.input()));
-        cache(manager, ModRecipeTypes.REPROCESSOR, recipe -> List.of(recipe.getIngredient()));
-        cache(manager, ModRecipeTypes.SOUL_EXTRACTION, recipe -> List.of(recipe.getIngredient()));
-        cache(manager, ModRecipeTypes.SOULIUM_SPAWNER, recipe -> List.of(recipe.getIngredient().ingredient()));
-        cache(manager, ModRecipeTypes.ORE_INFUSION, recipe -> recipe.getIngredients().stream()
+        cache(recipes, RecipeType.SMELTING, recipe -> List.of(recipe.input()));
+        cache(recipes, ModRecipeTypes.REPROCESSOR, recipe -> List.of(recipe.getIngredient()));
+        cache(recipes, ModRecipeTypes.SOUL_EXTRACTION, recipe -> List.of(recipe.getIngredient()));
+        cache(recipes, ModRecipeTypes.SOULIUM_SPAWNER, recipe -> List.of(recipe.getIngredient().ingredient()));
+        cache(recipes, ModRecipeTypes.ORE_INFUSION, recipe -> recipe.getIngredients().stream()
                 .map(com.blakebr0.mysticalagriculture.api.crafting.IngredientWithCount::ingredient)
                 .toList());
 
         this.validVesselItems.clear();
 
-        cacheVesselItems(manager);
+        cacheVesselItems(recipes);
 
         LOGGER.info("Recipe ingredient caching done in {} ms", stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
     }
@@ -88,17 +89,11 @@ public class RecipeIngredientCache {
         return this.validVesselItems.contains(stack.getItem());
     }
 
-    private static <C extends RecipeInput, T extends @NonNull Recipe<C>> void cache(RecipeManager manager, RecipeType<T> type, Function<T, List<Ingredient>> ingredients) {
+    private static <C extends RecipeInput, T extends @NonNull Recipe<C>> void cache(RecipeMap recipes, RecipeType<T> type, Function<T, List<Ingredient>> ingredients) {
         INSTANCE.caches.put(type, new HashMap<>());
 
-        for (var holder : manager.getRecipes()) {
-            if (holder.value().getType() != type) {
-                continue;
-            }
-
-            @SuppressWarnings("unchecked")
-            var recipe = (T) holder.value();
-            for (var ingredient : ingredients.apply(recipe)) {
+        for (var holder : recipes.byType(type)) {
+            for (var ingredient : ingredients.apply(holder.value())) {
                 var items = new HashSet<>();
                 for (var stack : ingredient.items().toList()) {
                     var item = stack.value();
@@ -114,13 +109,9 @@ public class RecipeIngredientCache {
         }
     }
 
-    private static void cacheVesselItems(RecipeManager manager) {
-        for (var holder : manager.getRecipes()) {
-            if (holder.value().getType() != ModRecipeTypes.AWAKENING) {
-                continue;
-            }
-
-            var recipe = (com.blakebr0.mysticalagriculture.api.crafting.IAwakeningRecipe) holder.value();
+    private static void cacheVesselItems(RecipeMap recipes) {
+        for (var holder : recipes.byType(ModRecipeTypes.AWAKENING)) {
+            var recipe = holder.value();
             for (var essence : recipe.getEssenceIngredients()) {
                 INSTANCE.validVesselItems.addAll(
                         essence.ingredient().items().map(Holder::value).toList()

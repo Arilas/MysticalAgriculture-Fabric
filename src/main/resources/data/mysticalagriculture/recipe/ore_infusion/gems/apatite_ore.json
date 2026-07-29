@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:apatite"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ores/apatite"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ores/apatite"
+      ]
     }
   ],
   "ingredients": [

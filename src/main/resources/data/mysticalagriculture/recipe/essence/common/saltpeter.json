@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:saltpeter"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:dusts/saltpeter"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:dusts/saltpeter"
+      ]
     }
   ],
   "pattern": [

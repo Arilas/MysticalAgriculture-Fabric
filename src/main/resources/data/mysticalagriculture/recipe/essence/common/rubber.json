@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:rubber"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:rubbers"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:rubbers"
+      ]
     }
   ],
   "pattern": [

@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:enderium"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ingots/enderium"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ingots/enderium"
+      ]
     }
   ],
   "pattern": [

@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:sapphire"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:gems/sapphire"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:gems/sapphire"
+      ]
     }
   ],
   "pattern": [

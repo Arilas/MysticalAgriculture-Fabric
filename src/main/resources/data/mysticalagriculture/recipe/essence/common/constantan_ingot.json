@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:constantan"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ingots/constantan"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ingots/constantan"
+      ]
     }
   ],
   "pattern": [

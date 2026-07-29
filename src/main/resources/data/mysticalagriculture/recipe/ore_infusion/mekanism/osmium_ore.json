@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:osmium"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ores/osmium"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ores/osmium"
+      ]
     }
   ],
   "ingredients": [

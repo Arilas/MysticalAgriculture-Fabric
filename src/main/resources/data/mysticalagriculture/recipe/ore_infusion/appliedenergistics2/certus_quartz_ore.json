@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:certus_quartz"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ores/certus_quartz"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ores/certus_quartz"
+      ]
     }
   ],
   "ingredients": [

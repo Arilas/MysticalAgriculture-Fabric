@@ -69,7 +69,7 @@ public class InfusionRecipeBuilder implements RecipeBuilder {
 
         if (ingredient.isTag()) {
             var tag = TagKey.create(Registries.ITEM, Identifier.parse(ingredient.getId()));
-            builder.addCondition(ResourceConditions.not(ResourceConditions.tagsPopulated(tag)));
+            builder.addCondition(ResourceConditions.tagsPopulated(tag));
         }
 
         return builder;

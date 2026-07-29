@@ -1,6 +1,7 @@
 package com.blakebr0.mysticalagriculture.crafting;
 
 import com.blakebr0.mysticalagriculture.config.ModConfigs;
+import com.blakebr0.mysticalagriculture.crafting.condition.CropHasMaterialCondition;
 import com.blakebr0.mysticalagriculture.registry.Task3TestRegistries;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
@@ -77,29 +78,11 @@ class ResourceConditionTest {
 
     @Test
     void fabricTagPopulatedAndNegatedConditionsRoundTripAndEvaluate() {
-        var itemRegistry = new MappedRegistry<Item>(
-                net.minecraft.core.registries.Registries.ITEM,
-                Lifecycle.stable()
-        );
-        var diamondKey = ResourceKey.create(
-                net.minecraft.core.registries.Registries.ITEM,
-                Identifier.parse("testing:diamond")
-        );
-        Holder.Reference<Item> diamond = itemRegistry.register(
-                diamondKey,
-                Items.DIAMOND,
-                RegistrationInfo.BUILT_IN
-        );
         var tag = TagKey.create(
                 net.minecraft.core.registries.Registries.ITEM,
                 Identifier.parse("c:gems/diamond")
         );
-        itemRegistry.bindTags(Map.of(tag, List.of(diamond)));
-        itemRegistry.freeze();
-
-        var lookup = registryInfo(new net.minecraft.core.RegistryAccess.ImmutableRegistryAccess(
-                List.of(itemRegistry)
-        ).freeze());
+        var lookup = taggedItemLookup(tag);
         var populated = ResourceConditions.tagsPopulated(tag);
         var negated = ResourceConditions.not(populated);
         var expected = JsonParser.parseString("""
@@ -119,6 +102,37 @@ class ResourceConditionTest {
         assertEquals(expected, encoded);
         assertFalse(decoded.test(lookup));
         assertTrue(populated.test(lookup));
+    }
+
+    @Test
+    void migratedTagRecipeLoadsWhenItsTagIsPopulatedAndNotWhenMissing() throws IOException {
+        var recipe = JsonParser.parseString(Files.readString(Path.of(
+                "src/main/resources/data/mysticalagriculture/recipe/essence/gems/ruby.json"
+        ))).getAsJsonObject();
+        var serializedCondition = recipe.getAsJsonArray("fabric:load_conditions").get(1);
+        var condition = ResourceCondition.CODEC.parse(JsonOps.INSTANCE, serializedCondition).getOrThrow();
+        var ruby = TagKey.create(
+                net.minecraft.core.registries.Registries.ITEM,
+                Identifier.parse("c:gems/ruby")
+        );
+
+        assertTrue(condition.test(taggedItemLookup(ruby)));
+        assertFalse(condition.test(emptyItemLookup()));
+    }
+
+    @Test
+    void cropMaterialAndPopulatedTagConditionsAgreeForTagBackedCrops() {
+        var tag = TagKey.create(
+                net.minecraft.core.registries.Registries.ITEM,
+                Identifier.parse("c:gems/diamond")
+        );
+        var condition = ResourceConditions.and(
+                new CropHasMaterialCondition(Task3TestRegistries.TAG_CROP_ID),
+                ResourceConditions.tagsPopulated(tag)
+        );
+
+        assertTrue(condition.test(taggedItemLookup(tag)));
+        assertFalse(condition.test(emptyItemLookup()));
     }
 
     private static void assertCondition(String json, boolean expected) {
@@ -151,5 +165,37 @@ class ResourceConditionTest {
                 return provider.lookup(registryKey).map(RegistryOps.RegistryInfo::fromRegistryLookup);
             }
         };
+    }
+
+    private static RegistryOps.RegistryInfoLookup taggedItemLookup(TagKey<Item> tag) {
+        var itemRegistry = new MappedRegistry<Item>(
+                net.minecraft.core.registries.Registries.ITEM,
+                Lifecycle.stable()
+        );
+        var diamondKey = ResourceKey.create(
+                net.minecraft.core.registries.Registries.ITEM,
+                Identifier.parse("testing:diamond")
+        );
+        Holder.Reference<Item> diamond = itemRegistry.register(
+                diamondKey,
+                Items.DIAMOND,
+                RegistrationInfo.BUILT_IN
+        );
+        itemRegistry.bindTags(Map.of(tag, List.of(diamond)));
+        itemRegistry.freeze();
+        return registryInfo(new net.minecraft.core.RegistryAccess.ImmutableRegistryAccess(
+                List.of(itemRegistry)
+        ).freeze());
+    }
+
+    private static RegistryOps.RegistryInfoLookup emptyItemLookup() {
+        var itemRegistry = new MappedRegistry<Item>(
+                net.minecraft.core.registries.Registries.ITEM,
+                Lifecycle.stable()
+        );
+        itemRegistry.freeze();
+        return registryInfo(new net.minecraft.core.RegistryAccess.ImmutableRegistryAccess(
+                List.of(itemRegistry)
+        ).freeze());
     }
 }

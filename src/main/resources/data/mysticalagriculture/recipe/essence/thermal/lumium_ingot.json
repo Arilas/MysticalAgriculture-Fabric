@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:lumium"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ingots/lumium"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ingots/lumium"
+      ]
     }
   ],
   "pattern": [

@@ -14,11 +14,14 @@ import com.blakebr0.mysticalagriculture.api.registry.IMobSoulTypeRegistry;
 import com.blakebr0.mysticalagriculture.api.soul.MobSoulType;
 import com.blakebr0.mysticalagriculture.api.tinkering.Augment;
 import com.blakebr0.mysticalagriculture.api.tinkering.AugmentType;
-import com.blakebr0.mysticalagriculture.init.ModConditionSerializers;
+import com.blakebr0.mysticalagriculture.crafting.condition.AugmentEnabledCondition;
+import com.blakebr0.mysticalagriculture.crafting.condition.CropEnabledCondition;
+import com.blakebr0.mysticalagriculture.crafting.condition.CropHasMaterialCondition;
+import com.blakebr0.mysticalagriculture.crafting.condition.SeedCraftingRecipesEnabledCondition;
 import com.blakebr0.mysticalagriculture.init.ModRecipeSerializers;
 import com.mojang.serialization.Lifecycle;
+import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditionType;
 import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditions;
-import net.fabricmc.fabric.impl.resource.conditions.DefaultResourceConditionTypes;
 import net.minecraft.SharedConstants;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.MappedRegistry;
@@ -39,13 +42,15 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.block.Blocks;
 
 import java.util.EnumSet;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.LinkedHashMap;
 
 public final class Task3TestRegistries {
     public static final Identifier CROP_ID = Identifier.fromNamespaceAndPath("testing", "component_crop");
+    public static final Identifier TAG_CROP_ID = Identifier.fromNamespaceAndPath("testing", "tag_crop");
     public static final Identifier AUGMENT_ID = Identifier.fromNamespaceAndPath("testing", "enabled_augment");
     public static final Identifier SOUL_ID = Identifier.fromNamespaceAndPath("testing", "test_soul");
     public static final ResourceKey<Item> SOUL_JAR = ResourceKey.create(
@@ -65,12 +70,28 @@ public final class Task3TestRegistries {
 
         SharedConstants.tryDetectVersion();
         Bootstrap.bootStrap();
+        var loaderTransformed = Boolean.getBoolean("fabric.unitTest");
+        if (loaderTransformed && !BuiltInRegistries.ITEM.containsKey(SOUL_JAR)) {
+            Registry.register(
+                    BuiltInRegistries.ITEM,
+                    SOUL_JAR,
+                    new Item(new Item.Properties().setId(SOUL_JAR))
+            );
+        }
 
         registerDefaultResourceConditions();
-        ModConditionSerializers.register();
-        recipeSerializers = new MappedRegistry<>(Registries.RECIPE_SERIALIZER, Lifecycle.stable());
-        ModRecipeSerializers.register(recipeSerializers);
-        recipeSerializers.freeze();
+        registerConditionType(CropEnabledCondition.TYPE);
+        registerConditionType(AugmentEnabledCondition.TYPE);
+        registerConditionType(CropHasMaterialCondition.TYPE);
+        registerConditionType(SeedCraftingRecipesEnabledCondition.TYPE);
+        if (loaderTransformed) {
+            ModRecipeSerializers.register();
+            recipeSerializers = BuiltInRegistries.RECIPE_SERIALIZER;
+        } else {
+            recipeSerializers = new MappedRegistry<>(Registries.RECIPE_SERIALIZER, Lifecycle.stable());
+            ModRecipeSerializers.register(recipeSerializers);
+            recipeSerializers.freeze();
+        }
         registerPluginContent();
 
         var vanilla = VanillaRegistries.createLookup();
@@ -98,20 +119,22 @@ public final class Task3TestRegistries {
     }
 
     private static void registerDefaultResourceConditions() {
-        List.of(
-                        DefaultResourceConditionTypes.TRUE,
-                        DefaultResourceConditionTypes.FALSE,
-                        DefaultResourceConditionTypes.NOT,
-                        DefaultResourceConditionTypes.OR,
-                        DefaultResourceConditionTypes.AND,
-                        DefaultResourceConditionTypes.ALL_MODS_LOADED,
-                        DefaultResourceConditionTypes.ANY_MODS_LOADED,
-                        DefaultResourceConditionTypes.TAGS_POPULATED,
-                        DefaultResourceConditionTypes.FEATURES_ENABLED,
-                        DefaultResourceConditionTypes.REGISTRY_CONTAINS
-                ).stream()
-                .filter(condition -> ResourceConditions.getConditionType(condition.id()) == null)
-                .forEach(ResourceConditions::register);
+        var tag = net.minecraft.tags.TagKey.create(
+                Registries.ITEM,
+                Identifier.parse("c:gems/diamond")
+        );
+        registerConditionType(ResourceConditions.tagsPopulated(tag).getType());
+        registerConditionType(ResourceConditions.not(ResourceConditions.tagsPopulated(tag)).getType());
+        registerConditionType(ResourceConditions.and(
+                ResourceConditions.tagsPopulated(tag),
+                ResourceConditions.tagsPopulated(tag)
+        ).getType());
+    }
+
+    private static void registerConditionType(ResourceConditionType<?> type) {
+        if (ResourceConditions.getConditionType(type.id()) == null) {
+            ResourceConditions.register(type);
+        }
     }
 
     private static void registerPluginContent() {
@@ -157,7 +180,21 @@ public final class Task3TestRegistries {
                 .forEach(entry -> registries.put(entry.key(), entry.value()));
         registries.put(Registries.ENCHANTMENT, enchantments);
 
-        return new RegistryAccess.ImmutableRegistryAccess(registries).freeze();
+        return new RegistryAccess() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <E> java.util.Optional<Registry<E>> lookup(
+                    ResourceKey<? extends Registry<? extends E>> registryKey
+            ) {
+                return java.util.Optional.ofNullable((Registry<E>) registries.get(registryKey));
+            }
+
+            @Override
+            public java.util.stream.Stream<RegistryEntry<?>> registries() {
+                return registries.entrySet().stream()
+                        .map(entry -> new RegistryEntry(entry.getKey(), entry.getValue()));
+            }
+        };
     }
 
     private static final class TestPlugin implements IMysticalAgriculturePlugin {
@@ -186,7 +223,17 @@ public final class Task3TestRegistries {
                                     .set(DataComponents.CUSTOM_NAME, Component.literal("required material"))
                                     .build()
                     )
-            ));
+            ).setCropBlock(() -> (net.minecraft.world.level.block.CropBlock) Blocks.WHEAT, true)
+                    .setEssenceItem(() -> Items.REDSTONE, true)
+                    .setSeedsItem(() -> Items.WHEAT_SEEDS, true));
+            crops.register(new Crop(
+                    TAG_CROP_ID,
+                    this.tier,
+                    this.type,
+                    LazyIngredient.tag("c:gems/diamond")
+            ).setCropBlock(() -> (net.minecraft.world.level.block.CropBlock) Blocks.BEETROOTS, true)
+                    .setEssenceItem(() -> Items.BEETROOT, true)
+                    .setSeedsItem(() -> Items.BEETROOT_SEEDS, true));
         }
 
         @Override
@@ -197,7 +244,12 @@ public final class Task3TestRegistries {
                     EnumSet.of(AugmentType.TOOL),
                     0x112233,
                     0x445566
-            ));
+            ) {
+                @Override
+                public Item getItem() {
+                    return Items.STICK;
+                }
+            });
         }
 
         @Override

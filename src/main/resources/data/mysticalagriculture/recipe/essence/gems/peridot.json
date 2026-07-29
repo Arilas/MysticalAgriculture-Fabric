@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:peridot"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:gems/peridot"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:gems/peridot"
+      ]
     }
   ],
   "pattern": [

@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:aluminum"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ingots/aluminum"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ingots/aluminum"
+      ]
     }
   ],
   "pattern": [

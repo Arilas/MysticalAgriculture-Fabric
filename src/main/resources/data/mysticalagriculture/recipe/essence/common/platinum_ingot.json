@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:platinum"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ingots/platinum"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ingots/platinum"
+      ]
     }
   ],
   "pattern": [

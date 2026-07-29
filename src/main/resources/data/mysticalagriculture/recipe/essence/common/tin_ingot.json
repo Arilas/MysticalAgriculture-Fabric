@@ -6,14 +6,11 @@
       "crop": "mysticalagriculture:tin"
     },
     {
-      "condition": "fabric:not",
-      "value": {
-        "condition": "fabric:tags_populated",
-        "registry": "minecraft:item",
-        "values": [
-          "c:ingots/tin"
-        ]
-      }
+      "condition": "fabric:tags_populated",
+      "registry": "minecraft:item",
+      "values": [
+        "c:ingots/tin"
+      ]
     }
   ],
   "pattern": [
