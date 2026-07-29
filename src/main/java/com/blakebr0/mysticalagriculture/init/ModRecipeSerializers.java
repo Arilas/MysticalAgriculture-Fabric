@@ -10,6 +10,7 @@ import com.blakebr0.mysticalagriculture.crafting.recipe.ReprocessorRecipe;
 import com.blakebr0.mysticalagriculture.crafting.recipe.SoulExtractionRecipe;
 import com.blakebr0.mysticalagriculture.crafting.recipe.SoulJarEmptyRecipe;
 import com.blakebr0.mysticalagriculture.crafting.recipe.SouliumSpawnerRecipe;
+import net.fabricmc.fabric.api.recipe.v1.sync.RecipeSynchronization;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -27,6 +28,15 @@ public final class ModRecipeSerializers {
 
     public static void register() {
         register(BuiltInRegistries.RECIPE_SERIALIZER);
+        synchronize(CRAFTING_FARMLAND_TILL);
+        synchronize(INFUSION);
+        synchronize(AWAKENING);
+        synchronize(ENCHANTER);
+        synchronize(REPROCESSOR);
+        synchronize(SOUL_EXTRACTION);
+        synchronize(SOULIUM_SPAWNER);
+        synchronize(ORE_INFUSION);
+        synchronize(CRAFTING_SOUL_JAR_EMPTY);
     }
 
     public static void register(Registry<RecipeSerializer<?>> registry) {
@@ -51,6 +61,10 @@ public final class ModRecipeSerializers {
                 MysticalAgricultureAPI.resource(name),
                 serializer
         );
+    }
+
+    private static void synchronize(RecipeSerializer<?> serializer) {
+        RecipeSynchronization.synchronizeRecipeSerializer(serializer);
     }
 
     private ModRecipeSerializers() {

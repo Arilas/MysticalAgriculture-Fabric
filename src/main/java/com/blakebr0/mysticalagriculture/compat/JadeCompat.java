@@ -6,11 +6,17 @@ import com.blakebr0.mysticalagriculture.api.farmland.IEssenceFarmland;
 import com.blakebr0.mysticalagriculture.block.InferiumCropBlock;
 import com.blakebr0.mysticalagriculture.block.InfusedFarmlandBlock;
 import com.blakebr0.mysticalagriculture.block.MysticalCropBlock;
+import com.blakebr0.cucumber.inventory.CItemStacksHandler;
 import com.blakebr0.mysticalagriculture.config.ModConfigs;
 import com.blakebr0.mysticalagriculture.lib.ModCrops;
 import com.blakebr0.mysticalagriculture.lib.ModTooltips;
+import com.blakebr0.mysticalagriculture.tileentity.AwakeningAltarTileEntity;
+import com.blakebr0.mysticalagriculture.tileentity.AwakeningPedestalTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.EssenceFurnaceTileEntity;
+import com.blakebr0.mysticalagriculture.tileentity.EssenceVesselTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.HarvesterTileEntity;
+import com.blakebr0.mysticalagriculture.tileentity.InfusionAltarTileEntity;
+import com.blakebr0.mysticalagriculture.tileentity.InfusionPedestalTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.OreInfuserTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.ReprocessorTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.SoulExtractorTileEntity;
@@ -27,13 +33,20 @@ import snownee.jade.api.ITooltip;
 import snownee.jade.api.IWailaClientRegistration;
 import snownee.jade.api.IWailaCommonRegistration;
 import snownee.jade.api.IWailaPlugin;
+import snownee.jade.api.JadeIds;
 import snownee.jade.api.WailaPlugin;
 import snownee.jade.api.config.IPluginConfig;
+import snownee.jade.api.view.ClientViewGroup;
+import snownee.jade.api.view.EnergyView;
+import snownee.jade.api.view.IClientExtensionProvider;
 import snownee.jade.api.view.IServerExtensionProvider;
 import snownee.jade.api.view.ProgressView;
 import snownee.jade.api.view.ViewGroup;
+import team.reborn.energy.api.EnergyStorage;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
 @WailaPlugin
@@ -45,6 +58,76 @@ public class JadeCompat implements IWailaPlugin {
 
     @Override
     public void register(IWailaCommonRegistration registration) {
+        registration.registerItemStorage(items(
+                AwakeningAltarTileEntity.class,
+                AwakeningAltarTileEntity::getInventory
+        ), AwakeningAltarTileEntity.class);
+        registration.registerItemStorage(items(
+                AwakeningPedestalTileEntity.class,
+                AwakeningPedestalTileEntity::getInventory
+        ), AwakeningPedestalTileEntity.class);
+        registration.registerItemStorage(items(
+                EssenceVesselTileEntity.class,
+                EssenceVesselTileEntity::getInventory
+        ), EssenceVesselTileEntity.class);
+        registration.registerItemStorage(items(
+                EssenceFurnaceTileEntity.class,
+                EssenceFurnaceTileEntity::getInventory
+        ), EssenceFurnaceTileEntity.class);
+        registration.registerItemStorage(items(
+                HarvesterTileEntity.class,
+                HarvesterTileEntity::getInventory
+        ), HarvesterTileEntity.class);
+        registration.registerItemStorage(items(
+                InfusionAltarTileEntity.class,
+                InfusionAltarTileEntity::getInventory
+        ), InfusionAltarTileEntity.class);
+        registration.registerItemStorage(items(
+                InfusionPedestalTileEntity.class,
+                InfusionPedestalTileEntity::getInventory
+        ), InfusionPedestalTileEntity.class);
+        registration.registerItemStorage(items(
+                ReprocessorTileEntity.class,
+                ReprocessorTileEntity::getInventory
+        ), ReprocessorTileEntity.class);
+        registration.registerItemStorage(items(
+                SoulExtractorTileEntity.class,
+                SoulExtractorTileEntity::getInventory
+        ), SoulExtractorTileEntity.class);
+        registration.registerItemStorage(items(
+                SouliumSpawnerTileEntity.class,
+                SouliumSpawnerTileEntity::getInventory
+        ), SouliumSpawnerTileEntity.class);
+        registration.registerItemStorage(items(
+                OreInfuserTileEntity.class,
+                OreInfuserTileEntity::getInventory
+        ), OreInfuserTileEntity.class);
+
+        registration.registerEnergyStorage(energy(
+                EssenceFurnaceTileEntity.class,
+                EssenceFurnaceTileEntity::getEnergy
+        ), EssenceFurnaceTileEntity.class);
+        registration.registerEnergyStorage(energy(
+                HarvesterTileEntity.class,
+                HarvesterTileEntity::getEnergy
+        ), HarvesterTileEntity.class);
+        registration.registerEnergyStorage(energy(
+                ReprocessorTileEntity.class,
+                ReprocessorTileEntity::getEnergy
+        ), ReprocessorTileEntity.class);
+        registration.registerEnergyStorage(energy(
+                SoulExtractorTileEntity.class,
+                SoulExtractorTileEntity::getEnergy
+        ), SoulExtractorTileEntity.class);
+        registration.registerEnergyStorage(energy(
+                SouliumSpawnerTileEntity.class,
+                SouliumSpawnerTileEntity::getEnergy
+        ), SouliumSpawnerTileEntity.class);
+        registration.registerEnergyStorage(energy(
+                OreInfuserTileEntity.class,
+                OreInfuserTileEntity::getEnergy
+        ), OreInfuserTileEntity.class);
+
         registration.registerProgress(progress(
                 EssenceFurnaceTileEntity.class,
                 EssenceFurnaceTileEntity::getProgress,
@@ -76,12 +159,27 @@ public class JadeCompat implements IWailaPlugin {
                 OreInfuserTileEntity::getOperationTime
         ), OreInfuserTileEntity.class);
         MysticalAgriculture.LOGGER.info(
-                "Registered Jade progress providers for 6 machines; Jade universal storage supplies item and energy views"
+                "Registered Jade item snapshots for 11 storage owners, energy snapshots for 6 machines, and progress for 6 machines"
         );
     }
 
     @Override
     public void registerClient(IWailaClientRegistration registration) {
+        registration.registerProgressClient(new IClientExtensionProvider<>() {
+            @Override
+            public List<ClientViewGroup<ProgressView>> getClientGroups(
+                    Accessor<?> accessor,
+                    List<ViewGroup<ProgressView.Data>> groups
+            ) {
+                return ClientViewGroup.map(groups, ProgressView::read, null);
+            }
+
+            @Override
+            public Identifier getUid() {
+                return MACHINE_PROGRESS_PROVIDER;
+            }
+        });
+
         registration.registerBlockComponent(new IBlockComponentProvider() {
             @Override
             public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
@@ -173,7 +271,77 @@ public class JadeCompat implements IWailaPlugin {
                 return INFUSED_FARMLAND_PROVIDER;
             }
         }, InfusedFarmlandBlock.class);
-        MysticalAgriculture.LOGGER.info("Registered 3 Mystical Agriculture Jade block tooltip providers");
+        MysticalAgriculture.LOGGER.info(
+                "Registered 3 Mystical Agriculture Jade block tooltip providers and the machine progress renderer"
+        );
+    }
+
+    private static <T extends BlockEntity> IServerExtensionProvider<ItemStack> items(
+            Class<T> type,
+            Function<T, CItemStacksHandler> inventory
+    ) {
+        return new IServerExtensionProvider<>() {
+            @Override
+            public List<ViewGroup<ItemStack>> getGroups(Accessor<?> accessor) {
+                if (!(accessor instanceof BlockAccessor blockAccessor))
+                    return List.of();
+
+                var blockEntity = blockAccessor.getBlockEntity();
+                if (!type.isInstance(blockEntity))
+                    return List.of();
+
+                var handler = inventory.apply(type.cast(blockEntity));
+                var snapshots = new ArrayList<ItemStack>();
+                for (int slot = 0; slot < handler.getContainerSize(); slot++) {
+                    var resource = handler.getResource(slot);
+                    var amount = handler.getAmountAsInt(slot);
+                    if (!resource.isBlank() && amount > 0)
+                        snapshots.add(resource.toStack(amount));
+                }
+
+                if (snapshots.isEmpty())
+                    return List.of();
+
+                return List.of(new ViewGroup<>(List.copyOf(snapshots)));
+            }
+
+            @Override
+            public Identifier getUid() {
+                return JadeIds.UNIVERSAL_ITEM_STORAGE_DEFAULT;
+            }
+        };
+    }
+
+    private static <T extends BlockEntity> IServerExtensionProvider<EnergyView.Data> energy(
+            Class<T> type,
+            Function<T, EnergyStorage> energy
+    ) {
+        return new IServerExtensionProvider<>() {
+            @Override
+            public List<ViewGroup<EnergyView.Data>> getGroups(Accessor<?> accessor) {
+                if (!(accessor instanceof BlockAccessor blockAccessor))
+                    return List.of();
+
+                var blockEntity = blockAccessor.getBlockEntity();
+                if (!type.isInstance(blockEntity))
+                    return List.of();
+
+                var storage = energy.apply(type.cast(blockEntity));
+                var capacity = storage.getCapacity();
+                if (capacity <= 0)
+                    return List.of();
+
+                var current = Math.clamp(storage.getAmount(), 0, capacity);
+                return List.of(new ViewGroup<>(List.of(
+                        new EnergyView.Data(current, capacity)
+                )));
+            }
+
+            @Override
+            public Identifier getUid() {
+                return JadeIds.UNIVERSAL_ENERGY_STORAGE_DEFAULT;
+            }
+        };
     }
 
     private static <T extends BlockEntity> IServerExtensionProvider<ProgressView.Data> progress(

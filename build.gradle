@@ -185,6 +185,7 @@ def task5LoaderModOutput = layout.buildDirectory.dir("task5LoaderMod")
 def task6TestOutput = layout.buildDirectory.dir("classes/java/task6Test")
 def task6MainOutput = layout.buildDirectory.dir("classes/java/task6Main")
 def task7TestOutput = layout.buildDirectory.dir("classes/java/task7Test")
+def task7LoaderModOutput = layout.buildDirectory.dir("task7LoaderMod")
 
 tasks.register('compileTask2TestJava', JavaCompile) {
     source file("src/test/java/com/blakebr0/mysticalagriculture/registry/PluginRegistryTest.java")
@@ -590,6 +591,7 @@ tasks.register('compileTask7TestJava', JavaCompile) {
     dependsOn tasks.named('classes')
     source fileTree("src/test/java/com/blakebr0/mysticalagriculture/compat") {
         include "**/*Test.java"
+        include "**/Task7TestBootstrap.java"
     }
     classpath = sourceSets.main.output + configurations.compileClasspath + configurations.testCompileClasspath
     destinationDirectory = task7TestOutput
@@ -604,7 +606,31 @@ tasks.register('task7Test', Test) {
     dependsOn tasks.named('compileTask7TestJava'), tasks.named('jar')
     testClassesDirs = files(task7TestOutput)
     classpath = sourceSets.main.output + sourceSets.test.runtimeClasspath + configurations.compileClasspath + files(task7TestOutput)
+    exclude "**/JadeStorageProviderTest.class"
+    exclude "**/OptionalIntegrationApiTest.class"
+    exclude "**/Task7TestBootstrap.class"
     systemProperty "task7Artifact", tasks.named('jar', Jar).flatMap { it.archiveFile }.get().asFile.absolutePath
+    useJUnitPlatform()
+}
+
+tasks.register('prepareTask7LoaderTestMod', Sync) {
+    dependsOn tasks.named('classes')
+    from(sourceSets.main.output)
+    into task7LoaderModOutput
+}
+
+tasks.register('task7LoaderTest', Test) {
+    dependsOn tasks.named('prepareTask7LoaderTestMod')
+    dependsOn tasks.named('compileTask7TestJava')
+    testClassesDirs = files(task7TestOutput)
+    classpath = files(
+            configurations.task3LoaderRuntime,
+            task7LoaderModOutput,
+            task7TestOutput
+    )
+    include "**/JadeStorageProviderTest.class"
+    include "**/OptionalIntegrationApiTest.class"
+    systemProperty "fabric.addMods", task7LoaderModOutput.get().asFile.absolutePath
     useJUnitPlatform()
 }
 
@@ -737,7 +763,8 @@ tasks.named('check') {
             tasks.named('task4LoaderTest'),
             tasks.named('task5Test'),
             tasks.named('task6Test'),
-            tasks.named('task7Test')
+            tasks.named('task7Test'),
+            tasks.named('task7LoaderTest')
 }
 
 tasks.withType(JavaCompile).configureEach {
