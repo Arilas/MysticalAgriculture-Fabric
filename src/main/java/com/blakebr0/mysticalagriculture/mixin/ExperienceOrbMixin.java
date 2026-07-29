@@ -13,12 +13,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ExperienceOrb.class)
 public abstract class ExperienceOrbMixin {
     @Shadow
-    public abstract int getValue();
+    private int count;
 
     @Shadow
-    private void setValue(int value) {
-        throw new AssertionError();
-    }
+    public abstract int getValue();
 
     /**
      * Fabric has no callback around the orb/player pickup transaction. Injecting at the
@@ -37,10 +35,25 @@ public abstract class ExperienceOrbMixin {
             return;
         }
 
-        this.setValue(remaining);
-        if (remaining == 0) {
-            ((ExperienceOrb) (Object) this).discard();
-            callback.cancel();
+        var orb = (ExperienceOrb) (Object) this;
+        this.count--;
+        if (this.count == 0) {
+            orb.discard();
         }
+
+        if (remaining > 0) {
+            // Vanilla consumes a single denomination from a merged orb. Hand the
+            // unabsorbed part of that one unit back through vanilla, while the
+            // untouched units keep their original denomination and count.
+            var remainder = new ExperienceOrb(
+                    orb.level(),
+                    orb.position(),
+                    orb.getDeltaMovement(),
+                    remaining
+            );
+            remainder.playerTouch(player);
+        }
+
+        callback.cancel();
     }
 }

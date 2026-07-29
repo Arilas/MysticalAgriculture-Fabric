@@ -52,19 +52,19 @@ public class MachineUpgradeItem extends BaseItem implements IMachineUpgrade {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
-        if (flag.isAdvanced()) {
-            var speed = Formatting.number(1 / this.tier.getOperationTimeMultiplier()).withStyle(this.tier.getTextColor());
-            var fuelRate = Formatting.number(this.tier.getFuelUsageMultiplier()).withStyle(this.tier.getTextColor());
-            var fuelCapacity = Formatting.number(this.tier.getFuelCapacityMultiplier()).withStyle(this.tier.getTextColor());
-            var area = Formatting.number(this.tier.getAddedRange()).withStyle(this.tier.getTextColor());
+        builder.accept(Tooltips.HOLD_SHIFT_FOR_INFO.toComponent());
+    }
 
-            builder.accept(ModTooltips.UPGRADE_SPEED.args(speed).toComponent());
-            builder.accept(ModTooltips.UPGRADE_FUEL_RATE.args(fuelRate).toComponent());
-            builder.accept(ModTooltips.UPGRADE_FUEL_CAPACITY.args(fuelCapacity).toComponent());
-            builder.accept(ModTooltips.UPGRADE_AREA.args(area).toComponent());
-        } else {
-            builder.accept(Tooltips.HOLD_SHIFT_FOR_INFO.toComponent());
-        }
+    public void appendUpgradeDetails(Consumer<Component> builder) {
+        var speed = Formatting.number(1 / this.tier.getOperationTimeMultiplier()).withStyle(this.tier.getTextColor());
+        var fuelRate = Formatting.number(this.tier.getFuelUsageMultiplier()).withStyle(this.tier.getTextColor());
+        var fuelCapacity = Formatting.number(this.tier.getFuelCapacityMultiplier()).withStyle(this.tier.getTextColor());
+        var area = Formatting.number(this.tier.getAddedRange()).withStyle(this.tier.getTextColor());
+
+        builder.accept(ModTooltips.UPGRADE_SPEED.args(speed).toComponent());
+        builder.accept(ModTooltips.UPGRADE_FUEL_RATE.args(fuelRate).toComponent());
+        builder.accept(ModTooltips.UPGRADE_FUEL_CAPACITY.args(fuelCapacity).toComponent());
+        builder.accept(ModTooltips.UPGRADE_AREA.args(area).toComponent());
     }
 
     @Override

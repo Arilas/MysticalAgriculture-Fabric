@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.blakebr0.mysticalagriculture.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "ExperienceOrbMixin",
+    "ItemStackAttributeModifiersMixin"
+  ],
+  "minVersion": "0.8",
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -7,9 +7,9 @@ import com.blakebr0.mysticalagriculture.api.tinkering.AugmentType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -17,6 +17,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.EnumSet;
 
 public class MiningAOEAugment extends AOEAugment {
+    private static final ThreadLocal<Boolean> HARVESTING_AOE =
+            ThreadLocal.withInitial(() -> false);
+
     public MiningAOEAugment(Identifier id, int tier, int range) {
         super(id, tier, EnumSet.of(AugmentType.PICKAXE, AugmentType.AXE, AugmentType.SHOVEL), getColor(0xD5FFF6, tier), getColor(0x0EBABD, tier), range);
     }
@@ -29,27 +32,44 @@ public class MiningAOEAugment extends AOEAugment {
         if (entity.isShiftKeyDown())
             return false;
 
-        if (entity instanceof Player player) {
+        if (HARVESTING_AOE.get())
+            return false;
+
+        if (level instanceof ServerLevel serverLevel && entity instanceof ServerPlayer player) {
             var trace = BlockHelper.rayTraceBlocks(level, player);
             var side = trace.getDirection();
 
-            harvestAOEBlocks(stack, this.range, level, pos, side, player);
+            HARVESTING_AOE.set(true);
+            try {
+                harvestAOEBlocks(stack, this.range, serverLevel, state, pos, side, player);
+            } finally {
+                HARVESTING_AOE.remove();
+            }
         }
 
         return false;
     }
 
-    private static void harvestAOEBlocks(ItemStack stack, int radius, Level level, BlockPos pos, Direction side, Player player) {
-        var state = level.getBlockState(pos);
+    private static void harvestAOEBlocks(
+            ItemStack stack,
+            int radius,
+            ServerLevel level,
+            BlockState state,
+            BlockPos pos,
+            Direction side,
+            ServerPlayer player
+    ) {
         var hardness = state.getDestroySpeed(level, pos);
 
         if (radius > 0 && hardness >= 0.2F && canHarvestBlock(stack, state)) {
             getAOEBlocks(stack, radius, pos, side, player).forEach(aoePos -> {
-                if (aoePos != pos) {
+                if (!aoePos.equals(pos)
+                        && level.mayInteract(player, aoePos)
+                        && player.mayUseItemAt(aoePos.relative(side), side, stack)) {
                     var aoeState = level.getBlockState(aoePos);
 
                     if (canHarvestBlock(stack, aoeState) && !aoeState.hasBlockEntity() && aoeState.getDestroySpeed(level, aoePos) <= hardness + 5.0F) {
-                        BlockHelper.harvestAOEBlock(stack, level, (ServerPlayer) player, aoePos.immutable());
+                        BlockHelper.harvestAOEBlock(stack, level, player, aoePos.immutable());
                     }
                 }
             });

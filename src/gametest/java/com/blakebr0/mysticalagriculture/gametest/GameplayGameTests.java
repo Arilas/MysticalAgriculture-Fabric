@@ -1,10 +1,13 @@
 package com.blakebr0.mysticalagriculture.gametest;
 
+import com.mojang.authlib.GameProfile;
 import com.blakebr0.mysticalagriculture.MysticalAgriculture;
 import com.blakebr0.mysticalagriculture.api.lib.AbilityCache;
 import com.blakebr0.mysticalagriculture.api.util.AugmentUtils;
 import com.blakebr0.mysticalagriculture.api.util.ExperienceCapsuleUtils;
 import com.blakebr0.mysticalagriculture.augment.FlightAugment;
+import com.blakebr0.mysticalagriculture.api.util.MobSoulUtils;
+import com.blakebr0.mysticalagriculture.config.ModConfigs;
 import com.blakebr0.mysticalagriculture.handler.ExperienceCapsuleHandler;
 import com.blakebr0.mysticalagriculture.init.ModBlocks;
 import com.blakebr0.mysticalagriculture.init.ModItems;
@@ -12,20 +15,36 @@ import com.blakebr0.mysticalagriculture.item.MysticalFertilizerItem;
 import com.blakebr0.mysticalagriculture.item.WateringCanItem;
 import com.blakebr0.mysticalagriculture.item.armor.EssenceChestplateItem;
 import com.blakebr0.mysticalagriculture.lib.ModAugments;
+import com.blakebr0.mysticalagriculture.lib.ModCrops;
+import com.blakebr0.mysticalagriculture.lib.ModMobSoulTypes;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.Identifier;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.FarmlandBlock;
+import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import io.netty.channel.embedded.EmbeddedChannel;
 
+import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class GameplayGameTests {
@@ -46,6 +65,54 @@ public final class GameplayGameTests {
                 "the capsule did not retain the absorbed orb experience"
         );
         require(player.totalExperience == 0, "orb experience leaked into the player");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void mergedExperienceOrbConsumesOneUnitAndPreservesUntouchedDenominations(GameTestHelper helper) {
+        var player = helper.makeMockServerPlayerInLevel();
+        var capsule = new ItemStack(ModItems.EXPERIENCE_CAPSULE);
+        player.setItemInHand(InteractionHand.OFF_HAND, capsule);
+        var orb = mergedOrb(helper, 5, 3);
+
+        orb.playerTouch(player);
+
+        require(ExperienceCapsuleUtils.getExperience(capsule) == 5,
+                "the capsule did not consume exactly one merged-orb unit");
+        require(orb.getValue() == 5,
+                "consuming one unit changed the denomination of untouched merged units");
+        require(orbCount(helper, orb) == 2,
+                "consuming one unit did not preserve the remaining merged-unit count");
+        require(!orb.isRemoved(), "consuming one unit discarded untouched merged-orb units");
+        require(player.totalExperience == 0, "fully absorbed experience leaked into the player");
+        require(ExperienceCapsuleUtils.getExperience(capsule) + orb.getValue() * orbCount(helper, orb) == 15,
+                "full capsule absorption did not conserve total experience");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void mergedExperienceOrbPartialCapsuleRoomConservesRemainderAndUntouchedUnits(GameTestHelper helper) {
+        var player = helper.makeMockServerPlayerInLevel();
+        var capsule = ExperienceCapsuleUtils.getExperienceCapsule(
+                ExperienceCapsuleUtils.MAX_XP_POINTS - 2,
+                ModItems.EXPERIENCE_CAPSULE
+        );
+        player.setItemInHand(InteractionHand.OFF_HAND, capsule);
+        var orb = mergedOrb(helper, 5, 3);
+
+        orb.playerTouch(player);
+
+        require(ExperienceCapsuleUtils.getExperience(capsule) == ExperienceCapsuleUtils.MAX_XP_POINTS,
+                "the capsule did not fill its two remaining experience points");
+        require(orb.getValue() == 5,
+                "partial absorption changed the denomination of untouched merged units");
+        require(orbCount(helper, orb) == 2,
+                "partial absorption did not consume exactly one merged-orb unit");
+        require(!orb.isRemoved(), "partial absorption discarded untouched merged-orb units");
+        require(player.totalExperience == 3,
+                "vanilla did not receive the unabsorbed remainder of the consumed unit");
+        require(2 + player.totalExperience + orb.getValue() * orbCount(helper, orb) == 15,
+                "partial capsule absorption did not conserve total experience");
         helper.succeed();
     }
 
@@ -73,7 +140,7 @@ public final class GameplayGameTests {
 
     @GameTest
     public void flightAugmentGrantsAndRevokesOnlyItsOwnFlight(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayerInLevel();
+        var player = makePermissionPlayer(helper, _ -> true);
         var cache = new AbilityCache();
         var augment = new FlightAugment(MysticalAgriculture.resource("gametest_flight"), 5);
 
@@ -91,6 +158,26 @@ public final class GameplayGameTests {
         require(ModAugments.NO_FALL_DAMAGE.onPlayerFall(player, 100.0F),
                 "the no-fall augment did not veto server fall damage");
         helper.succeed();
+    }
+
+    @GameTest(maxTicks = 20)
+    public void registeredFlightLifecycleGrantsAndRevokesEquippedAugment(GameTestHelper helper) {
+        var player = makePermissionPlayer(helper, _ -> true);
+        var chestplate = new ItemStack(ModItems.SUPREMIUM_CHESTPLATE);
+        AugmentUtils.addAugment(chestplate, ModAugments.FLIGHT, 0);
+        player.setItemSlot(EquipmentSlot.CHEST, chestplate);
+
+        helper.startSequence()
+                .thenExecuteAfter(2, () -> helper.assertTrue(
+                        player.getAbilities().mayfly,
+                        "registered level tick did not grant equipped flight"
+                ))
+                .thenExecute(() -> player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY))
+                .thenExecuteAfter(2, () -> helper.assertTrue(
+                        !player.getAbilities().mayfly,
+                        "registered level tick did not revoke removed flight"
+                ))
+                .thenSucceed();
     }
 
     @GameTest
@@ -137,10 +224,11 @@ public final class GameplayGameTests {
         var absolute = helper.absolutePos(center);
         helper.setBlock(center, Blocks.DIRT);
         helper.setBlock(east, Blocks.DIRT);
-        var player = helper.makeMockServerPlayerInLevel();
+        var player = makePermissionPlayer(helper, _ -> true);
         player.setPos(absolute.getX() + 0.5, absolute.getY() + 1, absolute.getZ() + 0.5);
         player.setShiftKeyDown(true);
-        var stack = new ItemStack(ModItems.SUPREMIUM_HOE);
+        player.setPose(Pose.CROUCHING);
+        var stack = new ItemStack(ModItems.PRUDENTIUM_HOE);
         AugmentUtils.addAugment(stack, ModAugments.TILLING_AOE_I, 0);
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
         var initialDamage = stack.getDamageValue();
@@ -155,6 +243,62 @@ public final class GameplayGameTests {
                 "the tilling augment did not convert an eligible AOE block");
         require(stack.getDamageValue() >= initialDamage + 2,
                 "the tilling augment did not charge durability per changed block");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void miningAoeUsesOriginalMinedStateAfterOriginRemoval(GameTestHelper helper) {
+        var origin = helper.absolutePos(new BlockPos(2, 2, 2));
+        var neighbor = origin.east();
+        var originalState = Blocks.STONE.defaultBlockState();
+        helper.getLevel().setBlock(origin.below(), Blocks.BEDROCK.defaultBlockState(), 3);
+        helper.getLevel().setBlock(origin, originalState, 3);
+        helper.getLevel().setBlock(neighbor, originalState, 3);
+        var player = makePermissionPlayer(helper, _ -> true);
+        player.setPos(origin.getX() + 0.5D, origin.getY() + 2.0D, origin.getZ() + 0.5D);
+        player.setXRot(90.0F);
+        var stack = new ItemStack(ModItems.PRUDENTIUM_PICKAXE);
+        AugmentUtils.addAugment(stack, ModAugments.MINING_AOE_I, 0);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+
+        helper.getLevel().removeBlock(origin, false);
+        stack.mineBlock(helper.getLevel(), originalState, origin, player);
+
+        require(helper.getLevel().getBlockState(neighbor).isAir(),
+                "mining AOE reread the removed origin as air and left its neighbor intact");
+        require(stack.getDamageValue() == 2,
+                "mining the origin and one AOE neighbor charged "
+                        + stack.getDamageValue() + " durability instead of two");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void miningAoeLeavesDeniedNeighborAndBreaksAllowedNeighbor(GameTestHelper helper) {
+        var origin = helper.absolutePos(new BlockPos(2, 2, 2));
+        var allowed = origin.east();
+        var denied = origin.west();
+        var originalState = Blocks.STONE.defaultBlockState();
+        helper.getLevel().setBlock(origin.below(), Blocks.BEDROCK.defaultBlockState(), 3);
+        helper.getLevel().setBlock(origin, originalState, 3);
+        helper.getLevel().setBlock(allowed, originalState, 3);
+        helper.getLevel().setBlock(denied, originalState, 3);
+        var player = makePermissionPlayer(helper, position -> !position.equals(denied));
+        player.setPos(origin.getX() + 0.5D, origin.getY() + 2.0D, origin.getZ() + 0.5D);
+        player.setXRot(90.0F);
+        var stack = new ItemStack(ModItems.PRUDENTIUM_PICKAXE);
+        AugmentUtils.addAugment(stack, ModAugments.MINING_AOE_I, 0);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+
+        helper.getLevel().removeBlock(origin, false);
+        stack.mineBlock(helper.getLevel(), originalState, origin, player);
+
+        require(helper.getLevel().getBlockState(allowed).isAir(),
+                "mining AOE did not break the allowed neighbor");
+        require(helper.getLevel().getBlockState(denied).is(Blocks.STONE),
+                "mining AOE changed a neighbor denied by mayUseItemAt");
+        require(stack.getDamageValue() == 2,
+                "mining AOE charged " + stack.getDamageValue()
+                        + " durability instead of two for origin plus allowed neighbor");
         helper.succeed();
     }
 
@@ -174,11 +318,175 @@ public final class GameplayGameTests {
         helper.succeed();
     }
 
+    @GameTest(maxTicks = 40)
+    public void awakenedSupremiumInventoryTickActuallyGrowsNearbyCrops(GameTestHelper helper) {
+        var player = makePermissionPlayer(helper, _ -> true);
+        var chestplate = new ItemStack(ModItems.AWAKENED_SUPREMIUM_CHESTPLATE);
+        player.setItemSlot(EquipmentSlot.HEAD, new ItemStack(ModItems.AWAKENED_SUPREMIUM_HELMET));
+        player.setItemSlot(EquipmentSlot.CHEST, chestplate);
+        player.setItemSlot(EquipmentSlot.LEGS, new ItemStack(ModItems.AWAKENED_SUPREMIUM_LEGGINGS));
+        player.setItemSlot(EquipmentSlot.FEET, new ItemStack(ModItems.AWAKENED_SUPREMIUM_BOOTS));
+        player.setPos(
+                helper.absolutePos(new BlockPos(3, 2, 3)).getX() + 0.5D,
+                helper.absolutePos(new BlockPos(3, 2, 3)).getY(),
+                helper.absolutePos(new BlockPos(3, 2, 3)).getZ() + 0.5D
+        );
+
+        for (int x = 1; x <= 5; x++) {
+            for (int z = 1; z <= 5; z++) {
+                helper.setBlock(new BlockPos(x, 0, z), Blocks.FARMLAND);
+                helper.setBlock(new BlockPos(x, 1, z), Blocks.WHEAT);
+            }
+        }
+
+        Runnable runGrowthTicks = () -> {
+            for (int i = 0; i < 100; i++) {
+                chestplate.inventoryTick(helper.getLevel(), player, EquipmentSlot.CHEST);
+            }
+
+            var grew = false;
+            for (int x = 1; x <= 5 && !grew; x++) {
+                for (int z = 1; z <= 5; z++) {
+                    var state = helper.getBlockState(new BlockPos(x, 1, z));
+                    if (state.is(Blocks.WHEAT) && state.getValue(CropBlock.AGE) > 0) {
+                        grew = true;
+                        break;
+                    }
+                }
+            }
+            require(grew, "actual awakened chestplate inventory ticks did not grow any nearby crop");
+            helper.succeed();
+        };
+
+        var remainder = helper.getLevel().getGameTime() % 20L;
+        if (remainder == 0L) {
+            runGrowthTicks.run();
+        } else {
+            helper.runAfterDelay(20L - remainder, runGrowthTicks);
+        }
+    }
+
     @GameTest
-    public void fakePlayerWateringPolicyFollowsServerConfig(GameTestHelper helper) {
-        var wateringCan = new TestWateringCan();
-        require(wateringCan.allowsFakePlayerWatering(),
-                "the default Fabric server config unexpectedly disabled fake-player watering");
+    public void effectiveFarmlandConfigGatesActualMysticalCropGrowth(GameTestHelper helper) {
+        var ineffective = helper.absolutePos(new BlockPos(1, 1, 1));
+        var effective = helper.absolutePos(new BlockPos(3, 1, 1));
+        var crop = ModCrops.NATURE.getCropBlock();
+        helper.getLevel().setBlock(ineffective.below(), Blocks.FARMLAND.defaultBlockState(), 3);
+        helper.getLevel().setBlock(
+                effective.below(),
+                ModBlocks.PRUDENTIUM_FARMLAND.defaultBlockState(),
+                3
+        );
+        helper.getLevel().setBlock(ineffective, crop.defaultBlockState(), 3);
+        helper.getLevel().setBlock(effective, crop.defaultBlockState(), 3);
+
+        setConfigValue(ModConfigs.REQUIRES_EFFECTIVE_FARMLAND, true);
+        try {
+            crop.performBonemeal(
+                    helper.getLevel(),
+                    helper.getLevel().getRandom(),
+                    ineffective,
+                    helper.getLevel().getBlockState(ineffective)
+            );
+            crop.performBonemeal(
+                    helper.getLevel(),
+                    helper.getLevel().getRandom(),
+                    effective,
+                    helper.getLevel().getBlockState(effective)
+            );
+        } finally {
+            setConfigValue(ModConfigs.REQUIRES_EFFECTIVE_FARMLAND, false);
+        }
+
+        require(helper.getLevel().getBlockState(ineffective).getValue(CropBlock.AGE) == 0,
+                "a tier-two crop grew on ineffective vanilla farmland");
+        require(helper.getLevel().getBlockState(effective).getValue(CropBlock.AGE) > 0,
+                "a tier-two crop did not grow on prudentium farmland");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void registeredMobSoulCallbackFillsJarFromActualDeath(GameTestHelper helper) {
+        var player = makePermissionPlayer(helper, _ -> true);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.SOULIUM_DAGGER));
+        player.getInventory().add(new ItemStack(ModItems.SOUL_JAR));
+        var jar = player.getInventory().getNonEquipmentItems()
+                .stream()
+                .filter(stack -> stack.is(ModItems.SOUL_JAR))
+                .findFirst()
+                .orElseThrow();
+        var zombie = helper.spawn(EntityTypes.ZOMBIE, new BlockPos(2, 1, 2));
+        zombie.setHealth(1.0F);
+
+        require(zombie.hurtServer(
+                        helper.getLevel(),
+                        helper.getLevel().damageSources().playerAttack(player),
+                        20.0F
+                ),
+                "the zombie rejected lethal player damage");
+        require(MobSoulUtils.getType(jar) == ModMobSoulTypes.ZOMBIE,
+                "registered death callback put the wrong soul type in the jar");
+        require(MobSoulUtils.getSouls(jar) == 1.0D,
+                "registered death callback did not siphon exactly one zombie soul");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void registeredMobDropCallbackSpawnsTieredWitherEssence(GameTestHelper helper) {
+        var player = makePermissionPlayer(helper, _ -> true);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(ModItems.PRUDENTIUM_SWORD));
+        var wither = helper.spawn(EntityTypes.WITHER, new BlockPos(2, 2, 2));
+        wither.setInvulnerableTicks(0);
+        wither.setHealth(1.0F);
+
+        require(wither.hurtServer(
+                        helper.getLevel(),
+                        helper.getLevel().damageSources().playerAttack(player),
+                        20.0F
+                ),
+                "the wither rejected lethal player damage");
+
+        var drops = helper.getLevel().getEntities(
+                EntityTypeTest.forClass(ItemEntity.class),
+                entity -> entity.getItem().is(ModItems.PRUDENTIUM_ESSENCE)
+        );
+        require(drops.size() == 1,
+                "registered death callback spawned " + drops.size()
+                        + " prudentium essence entities instead of one");
+        require(drops.getFirst().getItem().getCount() >= 1
+                        && drops.getFirst().getItem().getCount() <= 3,
+                "tiered wither essence count was outside the configured 1-3 range");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void fakePlayerWateringHonorsDeniedNeighborAndWatersAllowedPositions(GameTestHelper helper) {
+        var origin = helper.absolutePos(new BlockPos(2, 1, 2));
+        var allowed = origin.east();
+        var denied = origin.west();
+        var dry = Blocks.FARMLAND.defaultBlockState().setValue(FarmlandBlock.MOISTURE, 0);
+        helper.getLevel().setBlock(origin, dry, 3);
+        helper.getLevel().setBlock(allowed, dry, 3);
+        helper.getLevel().setBlock(denied, dry, 3);
+        var player = makePermissionPlayer(helper, position -> !position.equals(denied));
+        player.setPos(origin.getX() + 0.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D);
+        var stack = new ItemStack(ModItems.WATERING_CAN);
+        WateringCanItem.setFilled(stack, true);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        var hit = new BlockHitResult(Vec3.atCenterOf(origin), Direction.UP, origin, false);
+
+        stack.useOn(new net.minecraft.world.item.context.UseOnContext(
+                player,
+                InteractionHand.MAIN_HAND,
+                hit
+        ));
+
+        require(helper.getLevel().getBlockState(origin).getValue(FarmlandBlock.MOISTURE) == 7,
+                "the Fabric fake player did not water the clicked farmland");
+        require(helper.getLevel().getBlockState(allowed).getValue(FarmlandBlock.MOISTURE) == 7,
+                "the Fabric fake player did not water an allowed neighbor");
+        require(helper.getLevel().getBlockState(denied).getValue(FarmlandBlock.MOISTURE) == 0,
+                "the Fabric fake player watered a denied neighbor");
         helper.succeed();
     }
 
@@ -188,13 +496,73 @@ public final class GameplayGameTests {
         }
     }
 
-    private static final class TestWateringCan extends WateringCanItem {
-        private TestWateringCan() {
-            super(Identifier.parse("mysticalagriculture:gametest_watering_can"), 1, 1.0D);
-        }
+    private static ExperienceOrb mergedOrb(GameTestHelper helper, int denomination, int count) {
+        var level = helper.getLevel();
+        var position = helper.absolutePos(new BlockPos(1, 2, 1));
+        var orb = new ExperienceOrb(level, Vec3.atCenterOf(position), Vec3.ZERO, denomination);
+        var output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, level.registryAccess());
+        orb.saveWithoutId(output);
+        var tag = output.buildResult();
+        tag.putInt("Count", count);
+        orb.load(TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), tag));
+        level.addFreshEntity(orb);
+        return orb;
+    }
 
-        private boolean allowsFakePlayerWatering() {
-            return this.allowFakePlayerWatering();
+    private static int orbCount(GameTestHelper helper, ExperienceOrb orb) {
+        var output = TagValueOutput.createWithContext(
+                ProblemReporter.DISCARDING,
+                helper.getLevel().registryAccess()
+        );
+        orb.saveWithoutId(output);
+        return output.buildResult().getIntOr("Count", 0);
+    }
+
+    private static ServerPlayer makePermissionPlayer(
+            GameTestHelper helper,
+            Predicate<BlockPos> mayUse
+    ) {
+        var cookie = CommonListenerCookie.createInitial(
+                new GameProfile(UUID.randomUUID(), "task5-permission-player"),
+                false
+        );
+        var level = helper.getLevel();
+        var player = new ServerPlayer(
+                level.getServer(),
+                level,
+                cookie.gameProfile(),
+                cookie.clientInformation()
+        ) {
+            @Override
+            public net.minecraft.world.level.GameType gameMode() {
+                return net.minecraft.world.level.GameType.SURVIVAL;
+            }
+
+            @Override
+            public boolean mayUseItemAt(BlockPos pos, Direction facing, ItemStack stack) {
+                return mayUse.test(pos.relative(facing.getOpposite()));
+            }
+        };
+        var connection = new Connection(PacketFlow.SERVERBOUND);
+        new EmbeddedChannel(connection);
+        level.getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
+        var abilities = player.getAbilities();
+        abilities.invulnerable = false;
+        abilities.flying = false;
+        abilities.mayfly = false;
+        abilities.instabuild = false;
+        abilities.mayBuild = true;
+        return player;
+    }
+
+    private static <T> void setConfigValue(ModConfigs.ConfigValue<T> config, T value) {
+        try {
+            var field = ModConfigs.ConfigValue.class.getDeclaredField("value");
+            field.setAccessible(true);
+            field.set(config, value);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError("could not isolate the runtime config boundary", e);
         }
     }
+
 }
