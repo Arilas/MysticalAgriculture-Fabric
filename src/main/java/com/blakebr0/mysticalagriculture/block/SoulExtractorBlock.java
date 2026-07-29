@@ -2,25 +2,15 @@ package com.blakebr0.mysticalagriculture.block;
 
 import com.blakebr0.cucumber.block.BaseTileEntityBlock;
 import com.blakebr0.cucumber.helper.BlockHelper;
-import com.blakebr0.cucumber.iface.IHoverTextProvider;
-import com.blakebr0.cucumber.lib.Tooltips;
-import com.blakebr0.cucumber.util.Formatting;
-import com.blakebr0.mysticalagriculture.client.util.ClientInputUtil;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
-import com.blakebr0.mysticalagriculture.lib.ModTooltips;
 import com.blakebr0.mysticalagriculture.tileentity.SoulExtractorTileEntity;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -37,9 +27,7 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
-import java.util.function.Consumer;
-
-public class SoulExtractorBlock extends BaseTileEntityBlock implements IHoverTextProvider {
+public class SoulExtractorBlock extends BaseTileEntityBlock {
     public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty RUNNING = BooleanProperty.create("running");
 
@@ -79,21 +67,6 @@ public class SoulExtractorBlock extends BaseTileEntityBlock implements IHoverTex
         }
 
         return InteractionResult.SUCCESS;
-    }
-
-    @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
-        if (ClientInputUtil.isShiftDown()) {
-            var speed = Formatting.number(SoulExtractorTileEntity.OPERATION_TIME).withStyle(ChatFormatting.WHITE);
-            var fuelRate = Formatting.number(SoulExtractorTileEntity.FUEL_USAGE).withStyle(ChatFormatting.WHITE);
-            var fuelCapacity = Formatting.number(SoulExtractorTileEntity.FUEL_CAPACITY).withStyle(ChatFormatting.WHITE);
-
-            builder.accept(ModTooltips.MACHINE_SPEED.args(speed).toComponent());
-            builder.accept(ModTooltips.MACHINE_FUEL_RATE.args(fuelRate).toComponent());
-            builder.accept(ModTooltips.MACHINE_FUEL_CAPACITY.args(fuelCapacity).toComponent());
-        } else {
-            builder.accept(Tooltips.HOLD_SHIFT_FOR_INFO.toComponent());
-        }
     }
 
     @Override

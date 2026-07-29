@@ -4,19 +4,32 @@ import com.blakebr0.cucumber.energy.CEnergyStorage;
 import com.blakebr0.cucumber.inventory.CItemStacksHandler;
 import com.blakebr0.mysticalagriculture.api.machine.MachineUpgradeItemStackHandler;
 import com.blakebr0.mysticalagriculture.api.machine.MachineUpgradeTier;
+import com.blakebr0.mysticalagriculture.container.SouliumSpawnerContainer;
 import com.blakebr0.mysticalagriculture.init.ModBlocks;
 import com.blakebr0.mysticalagriculture.init.ModItems;
+import com.blakebr0.mysticalagriculture.init.ModMenuTypes;
+import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.blakebr0.mysticalagriculture.tileentity.EssenceFurnaceTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.ReprocessorTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.SouliumSpawnerTileEntity;
+import com.blakebr0.mysticalagriculture.util.RecipeIngredientCache;
+import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.SlottedStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class MachineStorageGameTests {
@@ -39,14 +52,28 @@ public final class MachineStorageGameTests {
 
     @GameTest
     public void sidedMachineStorageEnforcesInsertionAndExtractionFaces(GameTestHelper helper) {
-        var machine = new EssenceFurnaceTileEntity(BlockPos.ZERO, ModBlocks.FURNACE.defaultBlockState());
+        var position = helper.absolutePos(BlockPos.ZERO);
+        var machine = new EssenceFurnaceTileEntity(position, ModBlocks.FURNACE.defaultBlockState());
+        machine.setLevel(helper.getLevel());
         var input = ItemVariant.of(Items.DIAMOND);
         var output = ItemVariant.of(Items.GOLD_INGOT);
-        var top = machine.getSidedInventory(Direction.UP);
-        var bottom = machine.getSidedInventory(Direction.DOWN);
+        var top = findStorage(helper, position, machine.getBlockState(), machine, Direction.UP);
+        var bottom = findStorage(helper, position, machine.getBlockState(), machine, Direction.DOWN);
 
-        require(machine.getSidedInventory(null) == null, "a null side exposed unrestricted machine storage");
+        require(findStorage(helper, position, machine.getBlockState(), machine, null) == null,
+                "a null side exposed unrestricted machine storage");
         require(top != null && bottom != null, "a supported machine side did not expose storage");
+
+        for (var direction : Direction.Plane.HORIZONTAL) {
+            var horizontal = findStorage(helper, position, machine.getBlockState(), machine, direction);
+            require(horizontal != null, direction + " did not expose storage");
+            try (var transaction = Transaction.openOuter()) {
+                require(horizontal.insert(ItemVariant.of(Items.COAL), 1, transaction) == 1,
+                        direction + " did not use the canonical horizontal fuel policy");
+            }
+            require(machine.getInventory().getAmountAsLong(1) == 0,
+                    direction + " retained an aborted fuel insertion");
+        }
 
         try (var transaction = Transaction.openOuter()) {
             require(top.insert(input, 1, transaction) == 1, "the top face rejected a valid input");
@@ -68,29 +95,83 @@ public final class MachineStorageGameTests {
 
     @GameTest
     public void outputOnlySlotRejectsExternalInsertion(GameTestHelper helper) {
-        var inventory = ReprocessorTileEntity.createInventoryHandler();
+        var position = helper.absolutePos(BlockPos.ZERO);
+        var machine = new ReprocessorTileEntity(position, ModBlocks.REPROCESSOR.defaultBlockState());
+        machine.setLevel(helper.getLevel());
+        var storage = findStorage(helper, position, machine.getBlockState(), machine, Direction.DOWN);
+        require(storage != null, "the reprocessor did not expose bottom storage");
 
         try (var transaction = Transaction.openOuter()) {
-            long inserted = inventory.insert(2, ItemVariant.of(Items.DIAMOND), 1, transaction);
+            long inserted = storage.getSlot(2).insert(ItemVariant.of(Items.DIAMOND), 1, transaction);
             require(inserted == 0, "the reprocessor output slot accepted insertion");
             transaction.commit();
         }
 
-        require(inventory.getAmountAsLong(2) == 0, "the rejected insertion changed the output slot");
+        require(machine.getInventory().getAmountAsLong(2) == 0,
+                "the rejected insertion changed the output slot");
         helper.succeed();
     }
 
     @GameTest
     public void oversizedMachineInputStopsAtItsSlotLimit(GameTestHelper helper) {
-        var inventory = SouliumSpawnerTileEntity.createInventoryHandler();
+        var previousCaches = RecipeIngredientCache.INSTANCE.copyCaches();
+        var previousVesselItems = RecipeIngredientCache.INSTANCE.copyValidVesselItems();
+        RecipeIngredientCache.INSTANCE.setState(
+                Map.of(
+                        ModRecipeTypes.SOULIUM_SPAWNER,
+                        Map.of(Items.ROTTEN_FLESH, List.of(Ingredient.of(Items.ROTTEN_FLESH)))
+                ),
+                Set.of()
+        );
 
-        try (var transaction = Transaction.openOuter()) {
-            long inserted = inventory.insert(0, ItemVariant.of(Items.ROTTEN_FLESH), 600, transaction);
-            require(inserted == 512, "the soulium spawner did not enforce its 512 item input limit");
-            transaction.commit();
+        try {
+            var position = helper.absolutePos(BlockPos.ZERO);
+            var machine = new SouliumSpawnerTileEntity(
+                    position,
+                    ModBlocks.SOULIUM_SPAWNER.defaultBlockState()
+            );
+            machine.setLevel(helper.getLevel());
+            var storage = findStorage(helper, position, machine.getBlockState(), machine, Direction.UP);
+            require(storage != null, "the soulium spawner did not expose top storage");
+
+            try (var transaction = Transaction.openOuter()) {
+                long inserted = storage.insert(
+                        ItemVariant.of(Items.ROTTEN_FLESH),
+                        600,
+                        transaction
+                );
+                require(inserted == 512,
+                        "the soulium spawner did not enforce its 512 item input limit");
+                transaction.commit();
+            }
+
+            require(machine.getInventory().getAmountAsLong(0) == 512,
+                    "the committed amount did not match the slot limit");
+        } finally {
+            RecipeIngredientCache.INSTANCE.setState(previousCaches, previousVesselItems);
         }
+        helper.succeed();
+    }
 
-        require(inventory.getAmountAsLong(0) == 512, "the committed amount did not match the slot limit");
+    @GameTest
+    @SuppressWarnings("unchecked")
+    public void detachedSpawnerMenuUsesPlayerLevelForFuelPlacementAndQuickMove(GameTestHelper helper) {
+        var relativePosition = new BlockPos(0, 1, 0);
+        helper.setBlock(relativePosition, ModBlocks.SOULIUM_SPAWNER);
+        var position = helper.absolutePos(relativePosition);
+        var player = helper.makeMockServerPlayerInLevel();
+        player.setPos(position.getX() + 0.5, position.getY() + 0.5, position.getZ() + 0.5);
+
+        var type = (ExtendedMenuType<SouliumSpawnerContainer, BlockPos>) ModMenuTypes.SOULIUM_SPAWNER;
+        var menu = type.create(1, player.getInventory(), position);
+        require(menu.getSlot(2).mayPlace(Items.COAL.getDefaultInstance()),
+                "the detached spawner menu rejected valid fuel");
+
+        player.getInventory().setItem(9, Items.COAL.getDefaultInstance());
+        var moved = menu.quickMoveStack(player, 3);
+        require(!moved.isEmpty(), "quick-moving fuel into the detached spawner menu failed");
+        require(menu.getSlot(2).getItem().is(Items.COAL),
+                "quick-moved fuel did not reach the spawner fuel slot");
         helper.succeed();
     }
 
@@ -156,6 +237,23 @@ public final class MachineStorageGameTests {
         require(energy.getAmount() == 100, "aborted energy extraction changed stored energy");
         require(notifications.get() == 1, "aborted energy extraction emitted a notification");
         helper.succeed();
+    }
+
+    private static SlottedStorage<ItemVariant> findStorage(
+            GameTestHelper helper,
+            BlockPos position,
+            BlockState state,
+            BlockEntity machine,
+            Direction side
+    ) {
+        var storage = ItemStorage.SIDED.find(
+                helper.getLevel(),
+                position,
+                state,
+                machine,
+                side
+        );
+        return storage instanceof SlottedStorage<ItemVariant> slotted ? slotted : null;
     }
 
     private static void require(boolean condition, String message) {

@@ -19,8 +19,30 @@ repositories {
     mavenCentral()
 }
 
+sourceSets {
+    task4Gametest {
+        java.srcDirs = ["src/main/java", "src/task4Gametest/java"]
+        java.include "com/blakebr0/mysticalagriculture/handler/MachineItemStorage.java"
+        java.include "com/blakebr0/mysticalagriculture/task4gametest/**"
+    }
+}
+
 loom {
     accessWidenerPath = file("src/main/resources/mysticalagriculture.accesswidener")
+
+    mods {
+        task4Gametest {
+            sourceSet sourceSets.task4Gametest
+        }
+    }
+
+    runs {
+        task4FocusedGameTest {
+            inherit server
+            sourceSet = "task4Gametest"
+            systemProperties.put "fabric-api.gametest", ""
+        }
+    }
 }
 
 fabricApi {
@@ -70,6 +92,7 @@ sourceSets {
 configurations {
     apiSurfaceImplementation.extendsFrom implementation
     apiCompatibilityImplementation.extendsFrom implementation
+    task4GametestImplementation.extendsFrom implementation
     task3LoaderRuntime {
         canBeConsumed = false
         canBeResolved = true
@@ -78,6 +101,9 @@ configurations {
 }
 
 sourceSets.apiSurface.compileClasspath = configurations.compileClasspath
+sourceSets.task4Gametest.compileClasspath = configurations.compileClasspath
+sourceSets.task4Gametest.runtimeClasspath =
+        configurations.runtimeClasspath + sourceSets.task4Gametest.output
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
@@ -118,6 +144,9 @@ def task3LoaderMainOutput = layout.buildDirectory.dir("classes/java/task3LoaderM
 def task3LoaderModOutput = layout.buildDirectory.dir("task3LoaderMod")
 def task4TestOutput = layout.buildDirectory.dir("classes/java/task4Test")
 def task4MainOutput = layout.buildDirectory.dir("classes/java/task4Main")
+def task4LoaderTestOutput = layout.buildDirectory.dir("classes/java/task4LoaderTest")
+def task4LoaderMainOutput = layout.buildDirectory.dir("classes/java/task4LoaderMain")
+def task4LoaderModOutput = layout.buildDirectory.dir("task4LoaderMod")
 
 tasks.register('compileTask2TestJava', JavaCompile) {
     source file("src/test/java/com/blakebr0/mysticalagriculture/registry/PluginRegistryTest.java")
@@ -251,6 +280,8 @@ tasks.register('compileTask3LoaderJava', JavaCompile) {
 
 tasks.register('compileTask4TestJava', JavaCompile) {
     source file("src/test/java/com/blakebr0/mysticalagriculture/network/PayloadCodecTest.java")
+    source file("src/test/java/com/blakebr0/mysticalagriculture/block/CommonMachineBlockBoundaryTest.java")
+    source file("src/test/java/com/blakebr0/mysticalagriculture/init/DetachedMachineMenuBoundaryTest.java")
     classpath = configurations.testCompileClasspath
     destinationDirectory = task4TestOutput
     options.sourcepath = files("src/main/java", "src/test/java")
@@ -261,10 +292,63 @@ tasks.register('compileTask4TestJava', JavaCompile) {
 }
 
 tasks.register('task4Test', Test) {
+    dependsOn tasks.named('task4LoaderTest')
     dependsOn tasks.named('compileTask4TestJava')
     testClassesDirs = files(task4TestOutput)
     classpath = configurations.testRuntimeClasspath + files(task4TestOutput)
     include "**/PayloadCodecTest.class"
+    include "**/CommonMachineBlockBoundaryTest.class"
+    include "**/DetachedMachineMenuBoundaryTest.class"
+    useJUnitPlatform()
+}
+
+tasks.register('compileTask4LoaderJava', JavaCompile) {
+    source file("src/main/java/com/blakebr0/mysticalagriculture/handler/MachineItemStorage.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/network/AOEOffsetLimiter.java")
+    source file("src/main/java/com/blakebr0/mysticalagriculture/util/RecipeIngredientCache.java")
+    classpath = configurations.compileClasspath
+    destinationDirectory = task4LoaderMainOutput
+    options.sourcepath = files("src/main/java")
+    options.compilerArgs += ["-implicit:class"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('prepareTask4LoaderTestMod', Sync) {
+    dependsOn tasks.named('compileTask4LoaderJava')
+    from(task4LoaderMainOutput)
+    from "src/task4Loader/resources"
+    into task4LoaderModOutput
+}
+
+tasks.register('compileTask4LoaderTestJava', JavaCompile) {
+    dependsOn tasks.named('compileTask4LoaderJava')
+    source file("src/test/java/com/blakebr0/mysticalagriculture/handler/MachineItemStorageTest.java")
+    source file("src/test/java/com/blakebr0/mysticalagriculture/network/AOEOffsetAuthorityTest.java")
+    source file("src/test/java/com/blakebr0/mysticalagriculture/util/RecipeIngredientCacheFailureTest.java")
+    classpath = configurations.testCompileClasspath + files(task4LoaderMainOutput)
+    destinationDirectory = task4LoaderTestOutput
+    options.sourcepath = files("src/main/java", "src/test/java")
+    options.compilerArgs += ["-implicit:class"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('task4LoaderTest', Test) {
+    dependsOn tasks.named('prepareTask4LoaderTestMod')
+    dependsOn tasks.named('compileTask4LoaderTestJava')
+    testClassesDirs = files(task4LoaderTestOutput)
+    classpath = files(
+            configurations.task3LoaderRuntime,
+            task4LoaderModOutput,
+            task4LoaderTestOutput
+    )
+    include "**/MachineItemStorageTest.class"
+    include "**/AOEOffsetAuthorityTest.class"
+    include "**/RecipeIngredientCacheFailureTest.class"
+    systemProperty "fabric.addMods", task4LoaderModOutput.get().asFile.absolutePath
     useJUnitPlatform()
 }
 

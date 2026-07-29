@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "mysticalagriculture-task4-tests",
+  "version": "1.0.0",
+  "name": "Mystical Agriculture Task 4 Tests",
+  "environment": "*",
+  "depends": {
+    "fabricloader": "*",
+    "minecraft": "26.2",
+    "fabric-api": "*"
+  }
+}

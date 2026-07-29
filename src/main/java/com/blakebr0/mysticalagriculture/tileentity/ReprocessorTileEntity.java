@@ -14,11 +14,11 @@ import com.blakebr0.mysticalagriculture.api.machine.MachineUpgradeItemStackHandl
 import com.blakebr0.mysticalagriculture.api.machine.MachineUpgradeTier;
 import com.blakebr0.mysticalagriculture.block.ReprocessorBlock;
 import com.blakebr0.mysticalagriculture.container.ReprocessorContainer;
+import com.blakebr0.mysticalagriculture.handler.MachineItemStorage;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
 import com.blakebr0.mysticalagriculture.util.RecipeIngredientCache;
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
-import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
@@ -146,16 +146,7 @@ public class ReprocessorTileEntity extends BaseInventoryTileEntity implements Ex
     }
 
     public @Nullable Storage<ItemVariant> getSidedInventory(@Nullable Direction direction) {
-        if (direction == null) {
-            return null;
-        }
-
-        var wrapper = switch (direction) {
-            case UP -> this.sidedInventoryWrappers[0];
-            case DOWN -> this.sidedInventoryWrappers[1];
-            default -> this.sidedInventoryWrappers[2];
-        };
-        return ContainerStorage.of(wrapper, direction);
+        return MachineItemStorage.sided(this.sidedInventoryWrappers, direction);
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, ReprocessorTileEntity tile) {

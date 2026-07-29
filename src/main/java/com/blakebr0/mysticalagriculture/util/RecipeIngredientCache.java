@@ -5,10 +5,12 @@ import com.blakebr0.mysticalagriculture.crafting.EssenceVesselColorManager;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.google.common.base.Stopwatch;
 import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -44,6 +46,33 @@ public class RecipeIngredientCache {
         var stopwatch = Stopwatch.createStarted();
         var manager = event.getRecipeManager();
         var recipes = RecipeMap.create(manager.getRecipes());
+
+        if (!this.rebuild(recipes)) {
+            return;
+        }
+
+        EssenceVesselColorManager.INSTANCE.finishReload();
+        LOGGER.info("Recipe ingredient caching done in {} ms", stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
+    }
+
+    boolean rebuild(RecipeMap recipes) {
+        try {
+            this.state = buildState(recipes);
+            return true;
+        } catch (RecipeCacheBuildException exception) {
+            LOGGER.error(
+                    "Could not rebuild the recipe ingredient cache because recipe {} failed",
+                    exception.recipeId().identifier(),
+                    exception.getCause()
+            );
+            return false;
+        } catch (RuntimeException exception) {
+            LOGGER.error("Could not rebuild the recipe ingredient cache before the atomic state swap", exception);
+            return false;
+        }
+    }
+
+    static State buildState(RecipeMap recipes) {
         var nextCaches = new HashMap<RecipeType<?>, Map<Item, List<Ingredient>>>();
         var nextValidVesselItems = new HashSet<Item>();
 
@@ -56,10 +85,7 @@ public class RecipeIngredientCache {
                 .toList());
 
         cacheVesselItems(nextValidVesselItems, recipes);
-        this.setState(nextCaches, nextValidVesselItems);
-        EssenceVesselColorManager.INSTANCE.finishReload();
-
-        LOGGER.info("Recipe ingredient caching done in {} ms", stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
+        return new State(immutableCaches(nextCaches), Set.copyOf(nextValidVesselItems));
     }
 
     public void setState(
@@ -100,31 +126,49 @@ public class RecipeIngredientCache {
         caches.put(type, new HashMap<>());
 
         for (var holder : recipes.byType(type)) {
-            for (var ingredient : ingredients.apply(holder.value())) {
-                var items = new HashSet<>();
-                for (var stack : ingredient.items().toList()) {
-                    var item = stack.value();
-                    if (items.contains(item))
-                        continue;
+            try {
+                for (var ingredient : ingredients.apply(holder.value())) {
+                    var items = new HashSet<>();
+                    for (var stack : ingredient.items().toList()) {
+                        var item = stack.value();
+                        if (items.contains(item))
+                            continue;
 
-                    var cache = caches.get(type).computeIfAbsent(item, _ -> new ArrayList<>());
+                        var cache = caches.get(type).computeIfAbsent(item, _ -> new ArrayList<>());
 
-                    items.add(item);
-                    cache.add(ingredient);
+                        items.add(item);
+                        cache.add(ingredient);
+                    }
                 }
+            } catch (RuntimeException exception) {
+                throw failure(holder, exception);
             }
         }
     }
 
     private static void cacheVesselItems(Set<Item> validVesselItems, RecipeMap recipes) {
         for (var holder : recipes.byType(ModRecipeTypes.AWAKENING)) {
-            var recipe = holder.value();
-            for (var essence : recipe.getEssenceIngredients()) {
-                validVesselItems.addAll(
-                        essence.ingredient().items().map(Holder::value).toList()
-                );
+            try {
+                var recipe = holder.value();
+                for (var essence : recipe.getEssenceIngredients()) {
+                    validVesselItems.addAll(
+                            essence.ingredient().items().map(Holder::value).toList()
+                    );
+                }
+            } catch (RuntimeException exception) {
+                throw failure(holder, exception);
             }
         }
+    }
+
+    private static RecipeCacheBuildException failure(
+            RecipeHolder<?> holder,
+            RuntimeException exception
+    ) {
+        if (exception instanceof RecipeCacheBuildException cacheBuildException) {
+            return cacheBuildException;
+        }
+        return new RecipeCacheBuildException(holder.id(), exception);
     }
 
     private static Map<RecipeType<?>, Map<Item, List<Ingredient>>> immutableCaches(
@@ -139,9 +183,25 @@ public class RecipeIngredientCache {
         return Map.copyOf(copy);
     }
 
-    private record State(
+    record State(
             Map<RecipeType<?>, Map<Item, List<Ingredient>>> caches,
             Set<Item> validVesselItems
     ) {
+    }
+
+    static final class RecipeCacheBuildException extends RuntimeException {
+        private final ResourceKey<Recipe<?>> recipeId;
+
+        private RecipeCacheBuildException(
+                ResourceKey<Recipe<?>> recipeId,
+                RuntimeException cause
+        ) {
+            super("Could not cache recipe " + recipeId.identifier(), cause);
+            this.recipeId = recipeId;
+        }
+
+        ResourceKey<Recipe<?>> recipeId() {
+            return this.recipeId;
+        }
     }
 }

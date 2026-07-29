@@ -7,7 +7,6 @@ import com.blakebr0.mysticalagriculture.tileentity.OreInfuserTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.ReprocessorTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.SoulExtractorTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.SouliumSpawnerTileEntity;
-import net.fabricmc.fabric.api.transfer.v1.item.ContainerStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -62,7 +61,7 @@ public final class ModStorageProviders {
             CItemStacksHandler inventory,
             @Nullable Direction side
     ) {
-        return side == null ? null : ContainerStorage.of(inventory, side);
+        return side == null ? null : MachineItemStorage.of(inventory);
     }
 
     private static @Nullable EnergyStorage energy(

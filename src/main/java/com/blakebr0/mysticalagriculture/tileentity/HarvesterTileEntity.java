@@ -88,7 +88,10 @@ public class HarvesterTileEntity extends BaseInventoryTileEntity implements Exte
 
         this.progress = input.getIntOr("progress", 0);
         this.fuelLeft = input.getIntOr("fuel_left", 0);
-        this.fuelItemValue = input.getIntOr("fuel_left_value", 0);
+        this.fuelItemValue = input.getIntOr(
+                "fuel_item_value",
+                input.getIntOr("fuel_left_value", 0)
+        );
         this.lastScanIndex = input.getIntOr("last_scan_index", -1);
         this.energy.deserialize(input.childOrEmpty("energy"));
         this.upgradeInventory.deserialize(input.childOrEmpty("upgrade_inventory"));

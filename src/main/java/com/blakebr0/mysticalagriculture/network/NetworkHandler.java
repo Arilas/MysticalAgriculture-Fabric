@@ -11,7 +11,6 @@ import com.blakebr0.mysticalagriculture.network.payloads.UpdateAOEAugmentOffsetP
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 
 public final class NetworkHandler {
     private NetworkHandler() {
@@ -60,11 +59,17 @@ public final class NetworkHandler {
                 ModDataComponentTypes.AOE_AUGMENT_OFFSET,
                 AOEAugmentOffsetComponent.DEFAULT
         );
-        var horizontalOffset = Mth.clamp(offset.horizontalOffset(), -range, range);
-        var verticalOffset = Mth.clamp(offset.verticalOffset(), -range, range);
         stack.set(ModDataComponentTypes.AOE_AUGMENT_OFFSET, new AOEAugmentOffsetComponent(
-                Mth.clamp(horizontalOffset + payload.horizontalOffsetChange(), -range, range),
-                Mth.clamp(verticalOffset + payload.verticalOffsetChange(), -range, range)
+                AOEOffsetLimiter.applyOffsetChange(
+                        offset.horizontalOffset(),
+                        payload.horizontalOffsetChange(),
+                        range
+                ),
+                AOEOffsetLimiter.applyOffsetChange(
+                        offset.verticalOffset(),
+                        payload.verticalOffsetChange(),
+                        range
+                )
         ));
         return true;
     }

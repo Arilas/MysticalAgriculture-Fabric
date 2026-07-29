@@ -5,6 +5,7 @@ import com.blakebr0.mysticalagriculture.init.ModItems;
 import com.blakebr0.mysticalagriculture.api.machine.MachineUpgradeTier;
 import com.blakebr0.mysticalagriculture.tileentity.AwakeningAltarTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.EssenceVesselTileEntity;
+import com.blakebr0.mysticalagriculture.tileentity.HarvesterTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.ReprocessorTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.SouliumSpawnerTileEntity;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
@@ -79,6 +80,28 @@ public final class MachinePersistenceGameTests {
         require(loaded.getInventory().getAmountAsLong(0) == 128, "spawner input count was lost");
         require(loaded.getEnergy().getAmount() == 4_000, "spawner energy was lost");
         require(expectedRecipeId.equals(loaded.getActiveRecipeId()), "spawner recipe ID was lost");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void harvesterRoundTripsCurrentAndLegacyFuelItemValueKeys(GameTestHelper helper) {
+        var original = new HarvesterTileEntity(BlockPos.ZERO, ModBlocks.HARVESTER.defaultBlockState());
+        original.setLevel(helper.getLevel());
+        original.getInventory().set(0, ItemVariant.of(Items.COAL), 1);
+        HarvesterTileEntity.tick(helper.getLevel(), BlockPos.ZERO, original.getBlockState(), original);
+        var expectedFuelItemValue = original.getFuelItemValue();
+
+        require(expectedFuelItemValue > 0, "harvester did not establish a fuel item value");
+        var loaded = roundTrip(original, HarvesterTileEntity.class, helper);
+        require(loaded.getFuelItemValue() == expectedFuelItemValue,
+                "harvester lost the current fuel_item_value field");
+
+        var legacyTag = original.saveWithFullMetadata(helper.getLevel().registryAccess());
+        legacyTag.remove("fuel_item_value");
+        legacyTag.putInt("fuel_left_value", expectedFuelItemValue);
+        var legacyLoaded = load(original, legacyTag, HarvesterTileEntity.class, helper);
+        require(legacyLoaded.getFuelItemValue() == expectedFuelItemValue,
+                "harvester did not read the legacy fuel_left_value field");
         helper.succeed();
     }
 
