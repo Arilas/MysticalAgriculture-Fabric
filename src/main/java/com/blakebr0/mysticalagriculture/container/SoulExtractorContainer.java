@@ -67,7 +67,7 @@ public class SoulExtractorContainer extends BaseContainerMenu {
                     if (!this.moveItemStackTo(itemstack1, 3, 4, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (RecipeIngredientCache.INSTANCE.isValidInput(itemstack1, ModRecipeTypes.SOUL_EXTRACTION.get())) {
+                } else if (RecipeIngredientCache.INSTANCE.isValidInput(itemstack1, ModRecipeTypes.SOUL_EXTRACTION)) {
                     if (!this.moveItemStackTo(itemstack1, 1, 2, false)) {
                         return ItemStack.EMPTY;
                     }

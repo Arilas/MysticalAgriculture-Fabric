@@ -37,13 +37,13 @@ public final class ClientRecipeHandler {
     public void onRecipesReceived(RecipesReceivedEvent event) {
         var recipes = event.getRecipeMap();
 
-        AWAKENING_RECIPES.addAll(recipes.byType(ModRecipeTypes.AWAKENING.get()));
-        ENCHANTER_RECIPES.addAll(recipes.byType(ModRecipeTypes.ENCHANTER.get()));
-        INFUSION_RECIPES.addAll(recipes.byType(ModRecipeTypes.INFUSION.get()));
-        REPROCESSOR_RECIPES.addAll(recipes.byType(ModRecipeTypes.REPROCESSOR.get()));
-        SOUL_EXTRACTION_RECIPES.addAll(recipes.byType(ModRecipeTypes.SOUL_EXTRACTION.get()));
-        SOULIUM_SPAWNER_RECIPES.addAll(recipes.byType(ModRecipeTypes.SOULIUM_SPAWNER.get()));
-        ORE_INFUSION_RECIPES.addAll(recipes.byType(ModRecipeTypes.ORE_INFUSION.get()));
+        AWAKENING_RECIPES.addAll(recipes.byType(ModRecipeTypes.AWAKENING));
+        ENCHANTER_RECIPES.addAll(recipes.byType(ModRecipeTypes.ENCHANTER));
+        INFUSION_RECIPES.addAll(recipes.byType(ModRecipeTypes.INFUSION));
+        REPROCESSOR_RECIPES.addAll(recipes.byType(ModRecipeTypes.REPROCESSOR));
+        SOUL_EXTRACTION_RECIPES.addAll(recipes.byType(ModRecipeTypes.SOUL_EXTRACTION));
+        SOULIUM_SPAWNER_RECIPES.addAll(recipes.byType(ModRecipeTypes.SOULIUM_SPAWNER));
+        ORE_INFUSION_RECIPES.addAll(recipes.byType(ModRecipeTypes.ORE_INFUSION));
 
         map(AWAKENING_RECIPES, AWAKENING_RECIPE_MAP);
         map(INFUSION_RECIPES, INFUSION_RECIPE_MAP);

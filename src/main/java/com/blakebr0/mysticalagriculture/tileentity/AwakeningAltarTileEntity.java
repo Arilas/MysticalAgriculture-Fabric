@@ -48,7 +48,7 @@ public class AwakeningAltarTileEntity extends BaseInventoryTileEntity implements
             handler.setOutputSlots(1);
         });
         this.recipeInventory = CItemStacksHandler.create(9);
-        this.recipe = new CachedRecipe<>(ModRecipeTypes.AWAKENING.get());
+        this.recipe = new CachedRecipe<>(ModRecipeTypes.AWAKENING);
     }
 
     @Override

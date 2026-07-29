@@ -1,67 +1,47 @@
 package com.blakebr0.mysticalagriculture.crafting;
 
 import com.blakebr0.cucumber.helper.ParsingHelper;
-import com.blakebr0.mysticalagriculture.MysticalAgriculture;
-import com.blakebr0.mysticalagriculture.network.payloads.SyncEssenceVesselColorsPayload;
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.google.common.base.Stopwatch;
 import com.google.gson.JsonParser;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModLoader;
-import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
-import net.neoforged.neoforge.event.OnDatapackSyncEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.transfer.item.ItemResource;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.LoggerFactory;
 
-public class EssenceVesselColorManager implements PreparableReloadListener {
+public class EssenceVesselColorManager implements SimpleSynchronousResourceReloadListener {
     public static final EssenceVesselColorManager INSTANCE = new EssenceVesselColorManager();
+    private static final org.slf4j.Logger LOGGER =
+            LoggerFactory.getLogger("Mystical Agriculture");
 
     private final Map<String, Integer> colors = new HashMap<>();
 
-    @SubscribeEvent
-    public void onAddReloadListeners(AddServerReloadListenersEvent event) {
-        event.addListener(MysticalAgriculture.resource("essence_vessel_color_manager"), this);
-    }
-
-    @SubscribeEvent
-    public void onDataPackSync(OnDatapackSyncEvent event) {
-        var payload = new SyncEssenceVesselColorsPayload(this.colors);
-        var player = event.getPlayer();
-
-        // send the new caches to the client
-        if (player != null) {
-            PacketDistributor.sendToPlayer(player, payload);
-        } else {
-            PacketDistributor.sendToAllPlayers(payload);
-        }
+    public static void register() {
+        ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(INSTANCE);
     }
 
     @Override
-    public CompletableFuture<Void> reload(SharedState currentReload, Executor taskExecutor, PreparationBarrier barrier, Executor reloadExecutor) {
-        return CompletableFuture.runAsync(() -> {
-            if (!ModLoader.hasErrors()) {
-                this.load(currentReload.resourceManager());
-            }
-        }, reloadExecutor).thenCompose(barrier::wait);
+    public Identifier getFabricId() {
+        return MysticalAgricultureAPI.resource("essence_vessel_color_manager");
+    }
+
+    @Override
+    public void onResourceManagerReload(ResourceManager manager) {
+        this.load(manager);
     }
 
     public int getColor(ItemStack stack) {
         var id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return this.colors.getOrDefault(id.toString(), 0xFFFFFF);
-    }
-
-    public int getColor(ItemResource resource) {
-        return getColor(resource.toStack());
     }
 
     public void addColor(ItemStack stack, int color) {
@@ -91,10 +71,10 @@ public class EssenceVesselColorManager implements PreparableReloadListener {
                     this.colors.put(item, color);
                 }
             } catch (IOException e) {
-                MysticalAgriculture.LOGGER.error("Failed to load {}", resource.getKey(), e);
+                LOGGER.error("Failed to load {}", resource.getKey(), e);
             }
         }
 
-        MysticalAgriculture.LOGGER.info("Loaded {} essence vessel colors in {} ms", this.colors.size(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
+        LOGGER.info("Loaded {} essence vessel colors in {} ms", this.colors.size(), stopwatch.stop().elapsed(TimeUnit.MILLISECONDS));
     }
 }

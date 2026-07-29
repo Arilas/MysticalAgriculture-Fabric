@@ -1,13 +1,15 @@
 {
   "type": "mysticalagriculture:ore_infusion",
-  "neoforge:conditions": [
+  "fabric:load_conditions": [
     {
-      "type": "mysticalagriculture:crop_enabled",
+      "condition": "mysticalagriculture:crop_enabled",
       "crop": "mysticalagriculture:aquamarine"
     },
     {
-      "type": "neoforge:mod_loaded",
-      "modid": "astralsorcery"
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "astralsorcery"
+      ]
     }
   ],
   "ingredients": [

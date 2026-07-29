@@ -1,15 +1,18 @@
 {
   "type": "cucumber:shaped_tag",
-  "neoforge:conditions": [
+  "fabric:load_conditions": [
     {
-      "type": "mysticalagriculture:crop_enabled",
+      "condition": "mysticalagriculture:crop_enabled",
       "crop": "mysticalagriculture:sulfur"
     },
     {
-      "type": "neoforge:not",
+      "condition": "fabric:not",
       "value": {
-        "type": "neoforge:tag_empty",
-        "tag": "c:dusts/sulfur"
+        "condition": "fabric:tags_populated",
+        "registry": "minecraft:item",
+        "values": [
+          "c:dusts/sulfur"
+        ]
       }
     }
   ],

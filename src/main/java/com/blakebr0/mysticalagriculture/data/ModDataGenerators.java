@@ -1,26 +1,27 @@
 package com.blakebr0.mysticalagriculture.data;
 
-import com.blakebr0.mysticalagriculture.MysticalAgriculture;
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.data.generator.BlockModelJsonGenerator;
 import com.blakebr0.mysticalagriculture.data.generator.BlockTagsJsonGenerator;
 import com.blakebr0.mysticalagriculture.data.generator.ItemModelJsonGenerator;
 import com.blakebr0.mysticalagriculture.data.generator.ItemTagsJsonGenerator;
 import com.blakebr0.mysticalagriculture.data.generator.RecipeJsonGenerator;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.data.event.GatherDataEvent;
+import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 
-public final class ModDataGenerators {
-    @SubscribeEvent
-    public void onGatherData(GatherDataEvent.Client event) {
-        var generator = event.getGenerator();
-        var packOutput = generator.getPackOutput();
-        var lookupProvider = event.getLookupProvider();
+public final class ModDataGenerators implements DataGeneratorEntrypoint {
+    @Override
+    public void onInitializeDataGenerator(FabricDataGenerator generator) {
+        var pack = generator.createPack();
 
-        event.addProvider(new BlockModelJsonGenerator(packOutput, MysticalAgriculture.MOD_ID));
-        event.addProvider(new ItemModelJsonGenerator(packOutput, MysticalAgriculture.MOD_ID));
-
-        event.addProvider(new RecipeJsonGenerator.Runner(packOutput, lookupProvider));
-        event.addProvider(new BlockTagsJsonGenerator(packOutput, lookupProvider, MysticalAgriculture.MOD_ID));
-        event.addProvider(new ItemTagsJsonGenerator(packOutput, lookupProvider, MysticalAgriculture.MOD_ID));
+        pack.addProvider((FabricDataGenerator.Pack.Factory<BlockModelJsonGenerator>) output ->
+                new BlockModelJsonGenerator(output, MysticalAgricultureAPI.MOD_ID));
+        pack.addProvider((FabricDataGenerator.Pack.Factory<ItemModelJsonGenerator>) output ->
+                new ItemModelJsonGenerator(output, MysticalAgricultureAPI.MOD_ID));
+        pack.addProvider(RecipeJsonGenerator::new);
+        pack.addProvider((output, lookup) ->
+                new BlockTagsJsonGenerator(output, lookup, MysticalAgricultureAPI.MOD_ID));
+        pack.addProvider((output, lookup) ->
+                new ItemTagsJsonGenerator(output, lookup, MysticalAgricultureAPI.MOD_ID));
     }
 }

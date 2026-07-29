@@ -115,6 +115,6 @@ public class OreInfuserContainer extends BaseContainerMenu {
     }
 
     private static boolean isRecipeInput(ItemStack stack) {
-        return RecipeIngredientCache.INSTANCE.isValidInput(stack, ModRecipeTypes.ORE_INFUSION.get());
+        return RecipeIngredientCache.INSTANCE.isValidInput(stack, ModRecipeTypes.ORE_INFUSION);
     }
 }

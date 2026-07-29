@@ -19,7 +19,7 @@
 //public final class ReprocessorCrafting implements IRecipeManager<IReprocessorRecipe> {
 //    @Override
 //    public RecipeType<IReprocessorRecipe> getRecipeType() {
-//        return ModRecipeTypes.REPROCESSOR.get();
+//        return ModRecipeTypes.REPROCESSOR;
 //    }
 //
 //    @ZenCodeType.Method

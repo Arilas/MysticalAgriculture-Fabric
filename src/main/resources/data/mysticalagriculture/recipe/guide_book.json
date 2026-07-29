@@ -1,10 +1,12 @@
 {
   "type": "crafting_shapeless",
-  "neoforge:conditions": [
+  "fabric:load_conditions": [
     {
-      "type": "neoforge:registered",
+      "condition": "fabric:registry_contains",
       "registry": "minecraft:item",
-      "value": "patchouli:guide_book"
+      "values": [
+        "patchouli:guide_book"
+      ]
     }
   ],
   "ingredients": [

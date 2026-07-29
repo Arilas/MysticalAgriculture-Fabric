@@ -1,8 +1,8 @@
 {
   "type": "mysticalagriculture:infusion",
-  "neoforge:conditions": [
+  "fabric:load_conditions": [
     {
-      "type": "mysticalagriculture:augment_enabled",
+      "condition": "mysticalagriculture:augment_enabled",
       "augment": "mysticalagriculture:poison_resistance"
     }
   ],

@@ -32,7 +32,7 @@ public class EnchanterOutputSlot extends Slot {
             return;
 
         var input = this.matrix.toCraftingInput(2, 1);
-        var recipe = ((ServerLevel) player.level()).recipeAccess().getRecipeFor(ModRecipeTypes.ENCHANTER.get(), input, player.level());
+        var recipe = ((ServerLevel) player.level()).recipeAccess().getRecipeFor(ModRecipeTypes.ENCHANTER, input, player.level());
         var remaining = recipe.map(r -> r.value().getRemainingItems(input)).orElseGet(NonNullList::create);
 
         for (int i = 0; i < remaining.size(); i++) {

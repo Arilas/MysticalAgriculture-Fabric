@@ -1,15 +1,18 @@
 {
   "type": "mysticalagriculture:ore_infusion",
-  "neoforge:conditions": [
+  "fabric:load_conditions": [
     {
-      "type": "mysticalagriculture:crop_enabled",
+      "condition": "mysticalagriculture:crop_enabled",
       "crop": "mysticalagriculture:saltpeter"
     },
     {
-      "type": "neoforge:not",
+      "condition": "fabric:not",
       "value": {
-        "type": "neoforge:tag_empty",
-        "tag": "c:ores/saltpeter"
+        "condition": "fabric:tags_populated",
+        "registry": "minecraft:item",
+        "values": [
+          "c:ores/saltpeter"
+        ]
       }
     }
   ],

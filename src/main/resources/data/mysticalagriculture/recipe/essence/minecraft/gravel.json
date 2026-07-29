@@ -1,12 +1,12 @@
 {
   "type": "crafting_shaped",
-  "neoforge:conditions": [
+  "fabric:load_conditions": [
     {
-      "type": "mysticalagriculture:crop_enabled",
+      "condition": "mysticalagriculture:crop_enabled",
       "crop": "mysticalagriculture:dirt"
     },
     {
-      "type": "mysticalagriculture:crop_enabled",
+      "condition": "mysticalagriculture:crop_enabled",
       "crop": "mysticalagriculture:stone"
     }
   ],

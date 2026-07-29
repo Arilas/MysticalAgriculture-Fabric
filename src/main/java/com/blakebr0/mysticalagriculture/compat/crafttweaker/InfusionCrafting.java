@@ -22,7 +22,7 @@
 //public final class InfusionCrafting implements IRecipeManager<IInfusionRecipe> {
 //    @Override
 //    public RecipeType<IInfusionRecipe> getRecipeType() {
-//        return ModRecipeTypes.INFUSION.get();
+//        return ModRecipeTypes.INFUSION;
 //    }
 //
 //    @ZenCodeType.Method

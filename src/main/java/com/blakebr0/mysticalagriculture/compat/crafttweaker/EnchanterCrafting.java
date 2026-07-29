@@ -27,7 +27,7 @@
 //public final class EnchanterCrafting implements IRecipeManager<IEnchanterRecipe>, IRegistryHelper {
 //    @Override
 //    public RecipeType<IEnchanterRecipe> getRecipeType() {
-//        return ModRecipeTypes.ENCHANTER.get();
+//        return ModRecipeTypes.ENCHANTER;
 //    }
 //
 //    @ZenCodeType.Method

@@ -5,19 +5,18 @@ import com.blakebr0.mysticalagriculture.crafting.condition.CropEnabledCondition;
 import com.blakebr0.mysticalagriculture.crafting.condition.CropHasMaterialCondition;
 import com.blakebr0.mysticalagriculture.crafting.ingredient.CropComponentIngredient;
 import com.blakebr0.mysticalagriculture.crafting.recipe.InfusionRecipe;
-import net.minecraft.advancements.Criterion;
+import net.minecraft.advancements.triggers.Criterion;
+import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
+import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditions;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.recipes.RecipeBuilder;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
-import net.neoforged.neoforge.common.conditions.ICondition;
-import net.neoforged.neoforge.common.conditions.NotCondition;
-import net.neoforged.neoforge.common.conditions.TagEmptyCondition;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -27,7 +26,7 @@ public class InfusionRecipeBuilder implements RecipeBuilder {
     private final Identifier id;
     private final List<Ingredient> inputs;
     private final ItemStackTemplate result;
-    private final List<ICondition> conditions;
+    private final List<ResourceCondition> conditions;
     private Ingredient input;
 
     public InfusionRecipeBuilder(Identifier id, ItemStackTemplate result) {
@@ -41,7 +40,7 @@ public class InfusionRecipeBuilder implements RecipeBuilder {
         this.inputs.add(ingredient);
     }
 
-    public void addCondition(ICondition condition) {
+    public void addCondition(ResourceCondition condition) {
         this.conditions.add(condition);
     }
 
@@ -69,8 +68,8 @@ public class InfusionRecipeBuilder implements RecipeBuilder {
         var ingredient = crop.getLazyIngredient();
 
         if (ingredient.isTag()) {
-            var tag = ItemTags.create(Identifier.parse(ingredient.getId()));
-            builder.addCondition(new NotCondition(new TagEmptyCondition<>(tag)));
+            var tag = TagKey.create(Registries.ITEM, Identifier.parse(ingredient.getId()));
+            builder.addCondition(ResourceConditions.not(ResourceConditions.tagsPopulated(tag)));
         }
 
         return builder;
@@ -93,11 +92,11 @@ public class InfusionRecipeBuilder implements RecipeBuilder {
 
     @Override
     public void save(RecipeOutput output, ResourceKey<Recipe<?>> id) {
-        output.accept(id, new InfusionRecipe(
+        ((ConditionedRecipeOutput) output).accept(id, new InfusionRecipe(
                 this.input,
                 this.inputs,
                 this.result,
                 false
-        ), null, this.conditions.toArray(new ICondition[0]));
+        ), List.copyOf(this.conditions));
     }
 }

@@ -3,16 +3,25 @@ package com.blakebr0.mysticalagriculture;
 import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.api.MysticalAgricultureConfigValues;
 import com.blakebr0.mysticalagriculture.config.ModConfigs;
+import com.blakebr0.mysticalagriculture.crafting.DynamicRecipeManager;
+import com.blakebr0.mysticalagriculture.crafting.EssenceVesselColorManager;
 import com.blakebr0.mysticalagriculture.init.ModBlocks;
 import com.blakebr0.mysticalagriculture.init.ModCreativeModeTabs;
 import com.blakebr0.mysticalagriculture.init.ModDataComponentTypes;
 import com.blakebr0.mysticalagriculture.init.ModItems;
+import com.blakebr0.mysticalagriculture.init.ModConditionSerializers;
+import com.blakebr0.mysticalagriculture.init.ModIngredientTypes;
 import com.blakebr0.mysticalagriculture.init.ModMenuTypes;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
+import com.blakebr0.mysticalagriculture.init.ModRecipeSerializers;
+import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
+import com.blakebr0.mysticalagriculture.init.ModWorldFeatures;
 import com.blakebr0.mysticalagriculture.registry.AugmentRegistry;
 import com.blakebr0.mysticalagriculture.registry.CropRegistry;
 import com.blakebr0.mysticalagriculture.registry.FabricPluginRegistry;
 import com.blakebr0.mysticalagriculture.registry.MobSoulTypeRegistry;
+import com.blakebr0.mysticalagriculture.util.RecipeIngredientCache;
+import com.blakebr0.mysticalagriculture.world.ModWorldGeneration;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -44,13 +53,24 @@ public final class MysticalAgriculture implements ModInitializer {
         ModTileEntities.register();
         ModMenuTypes.register();
         ModCreativeModeTabs.register();
+        ModWorldFeatures.register();
 
-        // 5. Recipe, world, network, and storage registration are installed by Tasks 3 and 4.
+        // 5. Data-driven content and world generation
+        ModIngredientTypes.register();
+        ModConditionSerializers.register();
+        ModRecipeTypes.register();
+        ModRecipeSerializers.register();
+        ModWorldGeneration.register();
 
         // 6. Dynamic registry finalization
         plugins.finalizeContent();
 
-        // 7. Callbacks and reload listeners are installed by the gameplay and lifecycle tasks.
+        // 7. Recipe lifecycle and server-data reload state
+        DynamicRecipeManager.register();
+        RecipeIngredientCache.register();
+        EssenceVesselColorManager.register();
+
+        // 8. Networking, storage, gameplay, and remaining lifecycle hooks are installed by Tasks 4–7.
     }
 
     public static Identifier resource(String path) {

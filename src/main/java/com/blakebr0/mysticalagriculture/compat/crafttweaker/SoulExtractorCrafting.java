@@ -22,7 +22,7 @@
 //public final class SoulExtractorCrafting implements IRecipeManager<ISoulExtractionRecipe> {
 //    @Override
 //    public RecipeType<ISoulExtractionRecipe> getRecipeType() {
-//        return ModRecipeTypes.SOUL_EXTRACTION.get();
+//        return ModRecipeTypes.SOUL_EXTRACTION;
 //    }
 //
 //    @ZenCodeType.Method

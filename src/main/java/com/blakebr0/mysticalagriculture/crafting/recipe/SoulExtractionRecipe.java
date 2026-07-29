@@ -1,18 +1,22 @@
 package com.blakebr0.mysticalagriculture.crafting.recipe;
 
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.api.crafting.ISoulExtractionRecipe;
 import com.blakebr0.mysticalagriculture.api.soul.MobSoulType;
 import com.blakebr0.mysticalagriculture.api.util.MobSoulUtils;
-import com.blakebr0.mysticalagriculture.init.ModItems;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.blakebr0.mysticalagriculture.registry.MobSoulTypeRegistry;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -21,6 +25,10 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
 public class SoulExtractionRecipe implements ISoulExtractionRecipe {
+    private static final ResourceKey<Item> SOUL_JAR = ResourceKey.create(
+            Registries.ITEM,
+            MysticalAgricultureAPI.resource("soul_jar")
+    );
     public static final MapCodec<SoulExtractionRecipe> MAP_CODEC = RecordCodecBuilder.mapCodec(builder ->
             builder.group(
                     Ingredient.CODEC.fieldOf("input").forGetter(recipe -> recipe.input),
@@ -85,7 +93,7 @@ public class SoulExtractionRecipe implements ISoulExtractionRecipe {
 
     @Override
     public RecipeType<ISoulExtractionRecipe> getType() {
-        return ModRecipeTypes.SOUL_EXTRACTION.get();
+        return ModRecipeTypes.SOUL_EXTRACTION;
     }
 
     @Override
@@ -137,7 +145,8 @@ public class SoulExtractionRecipe implements ISoulExtractionRecipe {
 
         public ItemStack stack() {
             if (stack == null) {
-                this.stack = MobSoulUtils.getSoulJar(MobSoulTypeRegistry.getInstance().getMobSoulTypeById(type), souls, ModItems.SOUL_JAR);
+                var soulJar = BuiltInRegistries.ITEM.getValueOrThrow(SOUL_JAR);
+                this.stack = MobSoulUtils.getSoulJar(MobSoulTypeRegistry.getInstance().getMobSoulTypeById(type), souls, soulJar);
             }
 
             return this.stack;

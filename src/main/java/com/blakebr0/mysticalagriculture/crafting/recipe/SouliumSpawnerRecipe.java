@@ -1,6 +1,7 @@
 package com.blakebr0.mysticalagriculture.crafting.recipe;
 
 import com.blakebr0.mysticalagriculture.api.crafting.ISouliumSpawnerRecipe;
+import com.blakebr0.mysticalagriculture.api.crafting.IngredientWithCount;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -17,7 +18,6 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 import java.util.Optional;
 
@@ -25,7 +25,7 @@ public class SouliumSpawnerRecipe implements ISouliumSpawnerRecipe {
     private static final StreamCodec<RegistryFriendlyByteBuf, EntityType<?>> ENTITY_TYPE_STREAM_CODEC = ByteBufCodecs.registry(Registries.ENTITY_TYPE);
     public static final MapCodec<SouliumSpawnerRecipe> MAP_CODEC = RecordCodecBuilder.mapCodec(builder ->
             builder.group(
-                    SizedIngredient.NESTED_CODEC.fieldOf("input").forGetter(recipe -> recipe.input),
+                    IngredientWithCount.CODEC.fieldOf("input").forGetter(recipe -> recipe.input),
                     WeightedList.codec(BuiltInRegistries.ENTITY_TYPE.byNameCodec().fieldOf("entity")).fieldOf("entities").forGetter(recipe -> recipe.entityTypes)
             ).apply(builder, SouliumSpawnerRecipe::new)
     );
@@ -34,10 +34,10 @@ public class SouliumSpawnerRecipe implements ISouliumSpawnerRecipe {
     );
     public static final RecipeSerializer<SouliumSpawnerRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
 
-    private final SizedIngredient input;
+    private final IngredientWithCount input;
     private final WeightedList<EntityType<?>> entityTypes;
 
-    public SouliumSpawnerRecipe(SizedIngredient input, WeightedList<EntityType<?>> entityTypes) {
+    public SouliumSpawnerRecipe(IngredientWithCount input, WeightedList<EntityType<?>> entityTypes) {
         this.input = input;
         this.entityTypes = entityTypes;
     }
@@ -54,7 +54,7 @@ public class SouliumSpawnerRecipe implements ISouliumSpawnerRecipe {
     }
 
     @Override
-    public SizedIngredient getIngredient() {
+    public IngredientWithCount getIngredient() {
         return this.input;
     }
 
@@ -65,7 +65,7 @@ public class SouliumSpawnerRecipe implements ISouliumSpawnerRecipe {
 
     @Override
     public RecipeType<? extends ISouliumSpawnerRecipe> getType() {
-        return ModRecipeTypes.SOULIUM_SPAWNER.get();
+        return ModRecipeTypes.SOULIUM_SPAWNER;
     }
 
     @Override
@@ -84,14 +84,14 @@ public class SouliumSpawnerRecipe implements ISouliumSpawnerRecipe {
     }
 
     private static SouliumSpawnerRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
-        var input = SizedIngredient.STREAM_CODEC.decode(buffer);
+        var input = IngredientWithCount.STREAM_CODEC.decode(buffer);
         var entities = WeightedList.streamCodec(ENTITY_TYPE_STREAM_CODEC).decode(buffer);
 
         return new SouliumSpawnerRecipe(input, entities);
     }
 
     private static void toNetwork(RegistryFriendlyByteBuf buffer, SouliumSpawnerRecipe recipe) {
-        SizedIngredient.STREAM_CODEC.encode(buffer, recipe.input);
+        IngredientWithCount.STREAM_CODEC.encode(buffer, recipe.input);
         WeightedList.streamCodec(ENTITY_TYPE_STREAM_CODEC).encode(buffer, recipe.entityTypes);
     }
 }

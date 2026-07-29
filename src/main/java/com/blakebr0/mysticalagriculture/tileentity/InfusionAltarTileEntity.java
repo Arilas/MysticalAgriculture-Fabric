@@ -43,7 +43,7 @@ public class InfusionAltarTileEntity extends BaseInventoryTileEntity implements 
         super(ModTileEntities.INFUSION_ALTAR, pos, state);
         this.inventory = createInventoryHandler((_, _) -> this.setChanged());
         this.recipeInventory = CItemStacksHandler.create(9);
-        this.recipe = new CachedRecipe<>(ModRecipeTypes.INFUSION.get());
+        this.recipe = new CachedRecipe<>(ModRecipeTypes.INFUSION);
     }
 
     @Override

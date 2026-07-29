@@ -10,7 +10,6 @@ import net.minecraft.world.item.crafting.RecipeBookCategories;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 import java.util.List;
 
@@ -18,7 +17,7 @@ import java.util.List;
  * Used to represent an Enchanter recipe for the recipe type
  */
 public interface IEnchanterRecipe extends Recipe<CraftingInput> {
-    List<SizedIngredient> getIngredients();
+    List<IngredientWithCount> getIngredients();
     Holder<Enchantment> getEnchantment();
 
     /**

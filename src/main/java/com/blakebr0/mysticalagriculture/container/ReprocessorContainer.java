@@ -63,7 +63,7 @@ public class ReprocessorContainer extends BaseContainerMenu {
                     if (!this.moveItemStackTo(itemstack1, 0, 1, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (RecipeIngredientCache.INSTANCE.isValidInput(itemstack1, ModRecipeTypes.REPROCESSOR.get())) {
+                } else if (RecipeIngredientCache.INSTANCE.isValidInput(itemstack1, ModRecipeTypes.REPROCESSOR)) {
                     if (!this.moveItemStackTo(itemstack1, 1, 2, false)) {
                         return ItemStack.EMPTY;
                     }

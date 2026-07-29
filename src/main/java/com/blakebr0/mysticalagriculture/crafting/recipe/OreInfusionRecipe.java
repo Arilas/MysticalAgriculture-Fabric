@@ -1,7 +1,9 @@
 package com.blakebr0.mysticalagriculture.crafting.recipe;
 
 import com.blakebr0.cucumber.crafting.OutputResolver;
+import com.blakebr0.mysticalagriculture.api.crafting.IngredientWithCount;
 import com.blakebr0.mysticalagriculture.api.crafting.IOreInfusionRecipe;
+import com.blakebr0.mysticalagriculture.crafting.RecipeIngredientMatcher;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
@@ -16,16 +18,13 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.crafting.SizedIngredient;
-import net.neoforged.neoforge.common.util.RecipeMatcher;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 public class OreInfusionRecipe implements IOreInfusionRecipe {
     public static final MapCodec<OreInfusionRecipe> MAP_CODEC = RecordCodecBuilder.mapCodec(builder ->
             builder.group(
-                    SizedIngredient.NESTED_CODEC
+                    IngredientWithCount.CODEC
                             .listOf()
                             .fieldOf("ingredients")
                             .flatXmap(
@@ -48,10 +47,10 @@ public class OreInfusionRecipe implements IOreInfusionRecipe {
     );
     public static final RecipeSerializer<OreInfusionRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
 
-    private final List<SizedIngredient> inputs;
+    private final List<IngredientWithCount> inputs;
     private final ItemStackTemplate result;
 
-    public OreInfusionRecipe(List<SizedIngredient> inputs, ItemStackTemplate result) {
+    public OreInfusionRecipe(List<IngredientWithCount> inputs, ItemStackTemplate result) {
         this.inputs = inputs;
         this.result = result;
     }
@@ -70,7 +69,7 @@ public class OreInfusionRecipe implements IOreInfusionRecipe {
             }
         }
 
-        return RecipeMatcher.findMatches(inputs, this.inputs.stream().map(ingredient -> (Predicate<ItemStack>) ingredient::test).toList()) != null;
+        return RecipeIngredientMatcher.matches(inputs, this.inputs);
     }
 
     @Override
@@ -79,7 +78,7 @@ public class OreInfusionRecipe implements IOreInfusionRecipe {
     }
 
     @Override
-    public List<SizedIngredient> getIngredients() {
+    public List<IngredientWithCount> getIngredients() {
         return this.inputs;
     }
 
@@ -90,18 +89,18 @@ public class OreInfusionRecipe implements IOreInfusionRecipe {
 
     @Override
     public RecipeType<IOreInfusionRecipe> getType() {
-        return ModRecipeTypes.ORE_INFUSION.get();
+        return ModRecipeTypes.ORE_INFUSION;
     }
 
     private static OreInfusionRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
-        var inputs = SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buffer);
+        var inputs = IngredientWithCount.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buffer);
         var result = ItemStackTemplate.STREAM_CODEC.decode(buffer);
 
         return new OreInfusionRecipe(inputs, result);
     }
 
     private static void toNetwork(RegistryFriendlyByteBuf buffer, OreInfusionRecipe recipe) {
-        SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buffer, recipe.inputs);
+        IngredientWithCount.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buffer, recipe.inputs);
         ItemStackTemplate.STREAM_CODEC.encode(buffer, recipe.result);
     }
 }

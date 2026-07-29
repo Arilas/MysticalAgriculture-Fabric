@@ -70,7 +70,7 @@ public class ReprocessorTileEntity extends BaseInventoryTileEntity implements Me
         this.upgradeInventory = new MachineUpgradeItemStackHandler();
         this.energy = new CEnergyStorage(FUEL_CAPACITY, _ -> this.setChangedFast());
         this.sidedInventoryWrappers = SidedInventoryWrapper.create(this.inventory, List.of(Direction.UP, Direction.DOWN, Direction.NORTH), this::canInsertStackSided, null);
-        this.recipe = new CachedRecipe<>(ModRecipeTypes.REPROCESSOR.get());
+        this.recipe = new CachedRecipe<>(ModRecipeTypes.REPROCESSOR);
 
         this.dataAccess = ContainerDataBuilder.builder()
                 .sync(this.energy::getAmountAsInt, this.energy::set)
@@ -291,7 +291,7 @@ public class ReprocessorTileEntity extends BaseInventoryTileEntity implements Me
         if (direction == null)
             return true;
         if (slot == INPUT_SLOT && direction == Direction.UP)
-            return RecipeIngredientCache.INSTANCE.isValidInput(stack, ModRecipeTypes.REPROCESSOR.get());
+            return RecipeIngredientCache.INSTANCE.isValidInput(stack, ModRecipeTypes.REPROCESSOR);
         if (slot == FUEL_SLOT && direction == Direction.NORTH)
             return this.level != null && this.level.fuelValues().isFuel(stack);
 

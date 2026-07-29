@@ -1,13 +1,16 @@
 package com.blakebr0.mysticalagriculture.crafting.recipe;
 
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.api.util.MobSoulUtils;
 import com.blakebr0.mysticalagriculture.crafting.ingredient.FilledSoulJarIngredient;
-import com.blakebr0.mysticalagriculture.init.ModItems;
-import com.blakebr0.mysticalagriculture.item.SoulJarItem;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
@@ -25,16 +28,17 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 
 public class SoulJarEmptyRecipe implements CraftingRecipe {
-    public static final MapCodec<SoulJarEmptyRecipe> MAP_CODEC = MapCodec.unit(() -> new SoulJarEmptyRecipe(
-            new ItemStackTemplate(ModItems.SOUL_JAR),
-            NonNullList.withSize(1, FilledSoulJarIngredient.of())
-    ));
+    private static final ResourceKey<Item> SOUL_JAR = ResourceKey.create(
+            Registries.ITEM,
+            MysticalAgricultureAPI.resource("soul_jar")
+    );
+    public static final MapCodec<SoulJarEmptyRecipe> MAP_CODEC = MapCodec.unit(SoulJarEmptyRecipe::create);
     public static final StreamCodec<RegistryFriendlyByteBuf, SoulJarEmptyRecipe> STREAM_CODEC = StreamCodec.of(
             SoulJarEmptyRecipe::toNetwork, SoulJarEmptyRecipe::fromNetwork
     );
     public static final RecipeSerializer<SoulJarEmptyRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
 
-    private final ItemStackTemplate result;
+    private ItemStackTemplate result;
     private final List<Ingredient> ingredients;
 
     private PlacementInfo placementInfo;
@@ -54,13 +58,8 @@ public class SoulJarEmptyRecipe implements CraftingRecipe {
             if (hasJar && !stack.isEmpty())
                 return false;
 
-            var item = stack.getItem();
-
-            if (item instanceof SoulJarItem) {
-                double souls = MobSoulUtils.getSouls(stack);
-                if (souls > 0) {
-                    hasJar = true;
-                }
+            if (!stack.isEmpty() && stack.is(SOUL_JAR) && MobSoulUtils.getSouls(stack) > 0) {
+                hasJar = true;
             } else if (!stack.isEmpty()) {
                 return false;
             }
@@ -71,7 +70,7 @@ public class SoulJarEmptyRecipe implements CraftingRecipe {
 
     @Override
     public ItemStack assemble(CraftingInput input) {
-        return this.result.create();
+        return this.result().create();
     }
 
     @Override
@@ -87,7 +86,7 @@ public class SoulJarEmptyRecipe implements CraftingRecipe {
     @Override
     public PlacementInfo placementInfo() {
         if (this.placementInfo == null) {
-            this.placementInfo = PlacementInfo.create(this.ingredients);
+            this.placementInfo = PlacementInfo.create(this.ingredients());
         }
 
         return this.placementInfo;
@@ -101,8 +100,8 @@ public class SoulJarEmptyRecipe implements CraftingRecipe {
     @Override
     public List<RecipeDisplay> display() {
         return List.of(new ShapelessCraftingRecipeDisplay(
-                this.ingredients.stream().map(Ingredient::display).toList(),
-                new SlotDisplay.ItemStackSlotDisplay(this.result),
+                this.ingredients().stream().map(Ingredient::display).toList(),
+                new SlotDisplay.ItemStackSlotDisplay(this.result()),
                 new SlotDisplay.ItemSlotDisplay(Items.CRAFTING_TABLE)
         ));
     }
@@ -113,8 +112,25 @@ public class SoulJarEmptyRecipe implements CraftingRecipe {
     }
 
     private static SoulJarEmptyRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
-        return new SoulJarEmptyRecipe(new ItemStackTemplate(ModItems.SOUL_JAR), NonNullList.withSize(1, FilledSoulJarIngredient.of()));
+        return create();
     }
 
     private static void toNetwork(RegistryFriendlyByteBuf buffer, SoulJarEmptyRecipe recipe) { }
+
+    private static SoulJarEmptyRecipe create() {
+        return new SoulJarEmptyRecipe(null, null);
+    }
+
+    private List<Ingredient> ingredients() {
+        return this.ingredients != null
+                ? this.ingredients
+                : NonNullList.withSize(1, FilledSoulJarIngredient.of());
+    }
+
+    private ItemStackTemplate result() {
+        if (this.result == null) {
+            this.result = new ItemStackTemplate(BuiltInRegistries.ITEM.getValueOrThrow(SOUL_JAR));
+        }
+        return this.result;
+    }
 }

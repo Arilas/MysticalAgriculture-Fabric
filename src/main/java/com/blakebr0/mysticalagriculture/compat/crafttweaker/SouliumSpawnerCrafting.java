@@ -29,7 +29,7 @@
 //public final class SouliumSpawnerCrafting implements IRecipeManager<ISouliumSpawnerRecipe> {
 //    @Override
 //    public RecipeType<ISouliumSpawnerRecipe> getRecipeType() {
-//        return ModRecipeTypes.SOULIUM_SPAWNER.get();
+//        return ModRecipeTypes.SOULIUM_SPAWNER;
 //    }
 //
 //    @ZenCodeType.Method

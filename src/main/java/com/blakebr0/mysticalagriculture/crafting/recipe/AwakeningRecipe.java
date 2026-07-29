@@ -1,6 +1,8 @@
 package com.blakebr0.mysticalagriculture.crafting.recipe;
 
 import com.blakebr0.mysticalagriculture.api.crafting.IAwakeningRecipe;
+import com.blakebr0.mysticalagriculture.api.crafting.IngredientWithCount;
+import com.blakebr0.mysticalagriculture.crafting.RecipeIngredientMatcher;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -17,8 +19,6 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.crafting.SizedIngredient;
-import net.neoforged.neoforge.common.util.RecipeMatcher;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,14 +50,14 @@ public class AwakeningRecipe implements IAwakeningRecipe {
                                     },
                                     DataResult::success
                             )
-                            .forGetter(recipe -> recipe.allIngredients),
-                    SizedIngredient.NESTED_CODEC
+                            .forGetter(recipe -> recipe.ingredients),
+                    IngredientWithCount.CODEC
                             .listOf()
                             .fieldOf("essences")
                             .flatXmap(
                                     field -> {
                                         var max = 4;
-                                        var ingredients = field.toArray(SizedIngredient[]::new);
+                                        var ingredients = field.toArray(IngredientWithCount[]::new);
                                         if (ingredients.length == 0) {
                                             return DataResult.error(() -> "No essences for awakening recipe");
                                         } else {
@@ -82,15 +82,16 @@ public class AwakeningRecipe implements IAwakeningRecipe {
 
     private final Ingredient input;
     private final List<Ingredient> ingredients;
-    private final List<SizedIngredient> essences;
+    private final List<IngredientWithCount> essences;
     private final List<Ingredient> allIngredients;
+    private final List<IngredientWithCount> matchingIngredients;
     private final ItemStackTemplate result;
     private final boolean transferComponents;
     // for CraftTweaker recipes
     private BiFunction<Integer, ItemStack, ItemStack> transformer;
 
     // the input is specified separately in JSON but is part of the ingredient list in practice
-    public AwakeningRecipe(Ingredient input, List<Ingredient> ingredients, List<SizedIngredient> essences, ItemStackTemplate result, boolean transferComponents) {
+    public AwakeningRecipe(Ingredient input, List<Ingredient> ingredients, List<IngredientWithCount> essences, ItemStackTemplate result, boolean transferComponents) {
         this.input = input;
         this.ingredients = ingredients;
         this.essences = essences;
@@ -106,6 +107,16 @@ public class AwakeningRecipe implements IAwakeningRecipe {
                 ingredients.get(2),
                 essences.get(3).ingredient(),
                 ingredients.get(3)
+        );
+        this.matchingIngredients = List.of(
+                essences.get(0),
+                new IngredientWithCount(ingredients.get(0), 1),
+                essences.get(1),
+                new IngredientWithCount(ingredients.get(1), 1),
+                essences.get(2),
+                new IngredientWithCount(ingredients.get(2), 1),
+                essences.get(3),
+                new IngredientWithCount(ingredients.get(3), 1)
         );
     }
 
@@ -128,7 +139,7 @@ public class AwakeningRecipe implements IAwakeningRecipe {
             }
         }
 
-        return RecipeMatcher.findMatches(inputs, this.allIngredients) != null;
+        return RecipeIngredientMatcher.matches(inputs, this.matchingIngredients);
     }
 
     @Override
@@ -158,7 +169,7 @@ public class AwakeningRecipe implements IAwakeningRecipe {
     }
 
     @Override
-    public List<SizedIngredient> getEssenceIngredients() {
+    public List<IngredientWithCount> getEssenceIngredients() {
         return this.essences;
     }
 
@@ -169,7 +180,7 @@ public class AwakeningRecipe implements IAwakeningRecipe {
 
     @Override
     public RecipeType<IAwakeningRecipe> getType() {
-        return ModRecipeTypes.AWAKENING.get();
+        return ModRecipeTypes.AWAKENING;
     }
 
     @Override
@@ -231,9 +242,9 @@ public class AwakeningRecipe implements IAwakeningRecipe {
     }
 
     @Override
-    public Map<SizedIngredient, Integer> getMissingEssences(List<ItemStack> items) {
+    public Map<IngredientWithCount, Integer> getMissingEssences(List<ItemStack> items) {
         var remaining = new ArrayList<>(this.essences);
-        var missing = new LinkedHashMap<SizedIngredient, Integer>();
+        var missing = new LinkedHashMap<IngredientWithCount, Integer>();
 
         for (var item : items) {
             for (var essence : remaining) {
@@ -271,7 +282,7 @@ public class AwakeningRecipe implements IAwakeningRecipe {
             inputs.add(Ingredient.CONTENTS_STREAM_CODEC.decode(buffer));
         }
 
-        var essences = SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buffer);
+        var essences = IngredientWithCount.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buffer);
         var result = ItemStackTemplate.STREAM_CODEC.decode(buffer);
         var transferComponents = buffer.readBoolean();
 
@@ -286,7 +297,7 @@ public class AwakeningRecipe implements IAwakeningRecipe {
             Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, recipe.allIngredients.get(i));
         }
 
-        SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buffer, recipe.essences);
+        IngredientWithCount.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buffer, recipe.essences);
         ItemStackTemplate.STREAM_CODEC.encode(buffer, recipe.result);
         buffer.writeBoolean(recipe.transferComponents);
     }

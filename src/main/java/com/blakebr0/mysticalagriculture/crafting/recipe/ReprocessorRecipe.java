@@ -56,7 +56,7 @@ public class ReprocessorRecipe implements IReprocessorRecipe {
 
     @Override
     public RecipeType<IReprocessorRecipe> getType() {
-        return ModRecipeTypes.REPROCESSOR.get();
+        return ModRecipeTypes.REPROCESSOR;
     }
 
     private static ReprocessorRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {

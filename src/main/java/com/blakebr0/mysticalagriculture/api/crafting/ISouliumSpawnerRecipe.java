@@ -8,12 +8,11 @@ import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeBookCategories;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
-import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 import java.util.Optional;
 
 public interface ISouliumSpawnerRecipe extends Recipe<CraftingInput> {
-    SizedIngredient getIngredient();
+    IngredientWithCount getIngredient();
     WeightedList<EntityType<?>> getEntityTypes();
     EntityType<?> getFirstEntityType();
     Optional<EntityType<?>> getRandomEntityType(RandomSource random);

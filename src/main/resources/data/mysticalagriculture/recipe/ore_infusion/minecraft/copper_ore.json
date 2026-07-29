@@ -1,8 +1,8 @@
 {
   "type": "mysticalagriculture:ore_infusion",
-  "neoforge:conditions": [
+  "fabric:load_conditions": [
     {
-      "type": "mysticalagriculture:crop_enabled",
+      "condition": "mysticalagriculture:crop_enabled",
       "crop": "mysticalagriculture:copper"
     }
   ],

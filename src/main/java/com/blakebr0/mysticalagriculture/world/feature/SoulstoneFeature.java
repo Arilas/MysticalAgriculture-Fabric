@@ -1,9 +1,12 @@
 package com.blakebr0.mysticalagriculture.world.feature;
 
 import com.blakebr0.mysticalagriculture.config.ModConfigs;
-import com.blakebr0.mysticalagriculture.init.ModBlocks;
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.LevelAccessor;
@@ -11,10 +14,15 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
+import net.minecraft.world.level.block.Block;
 
 import java.util.BitSet;
 
 public class SoulstoneFeature extends Feature<OreConfiguration> {
+    private static final ResourceKey<Block> SOULIUM_ORE = ResourceKey.create(
+            Registries.BLOCK,
+            MysticalAgricultureAPI.resource("soulium_ore")
+    );
     public SoulstoneFeature(Codec<OreConfiguration> config) {
         super(config);
     }
@@ -120,7 +128,11 @@ public class SoulstoneFeature extends Feature<OreConfiguration> {
                                             var target = config.targetStates.stream().filter(s -> s.target.test(world.getBlockState(blockpos$mutableblockpos), random)).findFirst().orElse(null);
                                             if (target != null) {
                                                 if (random.nextDouble() < ModConfigs.SOULIUM_ORE_CHANCE.get()) {
-                                                    world.setBlock(blockpos$mutableblockpos, ModBlocks.SOULIUM_ORE.defaultBlockState(), 2);
+                                                    world.setBlock(
+                                                            blockpos$mutableblockpos,
+                                                            BuiltInRegistries.BLOCK.getValueOrThrow(SOULIUM_ORE).defaultBlockState(),
+                                                            2
+                                                    );
                                                 } else {
                                                     world.setBlock(blockpos$mutableblockpos, target.state, 2);
                                                 }

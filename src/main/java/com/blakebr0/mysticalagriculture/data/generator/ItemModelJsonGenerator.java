@@ -1,109 +1,139 @@
 package com.blakebr0.mysticalagriculture.data.generator;
 
-import com.blakebr0.mysticalagriculture.MysticalAgriculture;
-import com.blakebr0.mysticalagriculture.client.tints.AugmentTintSource;
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.registry.AugmentRegistry;
 import com.blakebr0.mysticalagriculture.registry.CropRegistry;
-import net.minecraft.client.data.models.BlockModelGenerators;
-import net.minecraft.client.data.models.ItemModelGenerators;
-import net.minecraft.client.data.models.ModelProvider;
-import net.minecraft.client.data.models.model.ItemModelUtils;
-import net.minecraft.client.data.models.model.ModelLocationUtils;
-import net.minecraft.client.data.models.model.ModelTemplates;
-import net.minecraft.client.data.models.model.TextureMapping;
-import net.minecraft.client.data.models.model.TextureSlot;
-import net.minecraft.client.renderer.item.ClientItem;
-import net.minecraft.client.resources.model.sprite.Material;
-import net.minecraft.core.Holder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.data.CachedOutput;
+import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.resources.Identifier;
 
-import java.util.Map;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
 
-public class ItemModelJsonGenerator extends ModelProvider {
-    public ItemModelJsonGenerator(PackOutput output, String modid) {
-        super(output, modid);
+public final class ItemModelJsonGenerator implements DataProvider {
+    private final PackOutput.PathProvider itemDefinitions;
+    private final PackOutput.PathProvider itemModels;
+
+    public ItemModelJsonGenerator(PackOutput output, String modId) {
+        this.itemDefinitions = output.createPathProvider(
+                PackOutput.Target.RESOURCE_PACK,
+                "items"
+        );
+        this.itemModels = output.createPathProvider(
+                PackOutput.Target.RESOURCE_PACK,
+                "models/item"
+        );
     }
 
     @Override
-    protected void registerModels(BlockModelGenerators blockModels, ItemModelGenerators itemModels) {
+    public CompletableFuture<?> run(CachedOutput output) {
+        var writes = new ArrayList<CompletableFuture<?>>();
+
         for (var crop : CropRegistry.getInstance().getCrops()) {
             if (crop.shouldRegisterEssenceItem()) {
-                var item = crop.getEssenceItem();
-
-                itemModels.itemModelOutput.register(
-                        item,
-                        new ClientItem(
-                                ItemModelUtils.plainModel(ModelLocationUtils.getModelLocation(item)),
-                                ClientItem.Properties.DEFAULT
-                        )
-                );
-
-                ModelTemplates.FLAT_ITEM.create(
-                        item,
-                        TextureMapping.singleSlot(TextureSlot.LAYER0, new Material(crop.getModels().getEssenceModel())),
-                        itemModels.modelOutput
+                addFlatItem(
+                        output,
+                        writes,
+                        BuiltInRegistries.ITEM.getKey(crop.getEssenceItem()),
+                        crop.getModels().getEssenceModel()
                 );
             }
-
             if (crop.shouldRegisterSeedsItem()) {
-                var item = crop.getSeedsItem();
-
-                itemModels.itemModelOutput.register(
-                        item,
-                        new ClientItem(
-                                ItemModelUtils.plainModel(ModelLocationUtils.getModelLocation(item)),
-                                ClientItem.Properties.DEFAULT
-                        )
-                );
-
-                ModelTemplates.FLAT_ITEM.create(
-                        item,
-                        TextureMapping.singleSlot(TextureSlot.LAYER0, new Material(crop.getModels().getSeedModel())),
-                        itemModels.modelOutput
+                addFlatItem(
+                        output,
+                        writes,
+                        BuiltInRegistries.ITEM.getKey(crop.getSeedsItem()),
+                        crop.getModels().getSeedModel()
                 );
             }
         }
 
-        {
-            var template = ModelTemplates.createItem(MysticalAgriculture.resource("augment").toString());
+        for (var augment : AugmentRegistry.getInstance().getAugments()) {
+            var itemId = BuiltInRegistries.ITEM.getKey(augment.getItem());
 
-            for (var augment : AugmentRegistry.getInstance().getAugments()) {
-                var item = augment.getItem();
-                var location = ModelLocationUtils.getModelLocation(item);
+            var textures = new JsonObject();
+            textures.addProperty(
+                    "layer1",
+                    MysticalAgricultureAPI.resource("item/augment_" + augment.getTier()).toString()
+            );
+            var model = new JsonObject();
+            model.addProperty("parent", MysticalAgricultureAPI.resource("item/augment").toString());
+            model.add("textures", textures);
+            writes.add(DataProvider.saveStable(
+                    output,
+                    model,
+                    this.itemModels.json(itemId)
+            ));
 
-                itemModels.itemModelOutput.register(
-                        item,
-                        new ClientItem(
-                                ItemModelUtils.tintedModel(location, new AugmentTintSource(augment.getId(), 0), new AugmentTintSource(augment.getId(), 1)),
-                                ClientItem.Properties.DEFAULT
-                        )
-                );
-
-                itemModels.modelOutput.accept(location, () -> template.createBaseTemplate(
-                        MysticalAgriculture.resource(augment.getNameWithSuffix("augment")),
-                        Map.of(
-                                TextureSlot.LAYER1, new Material(MysticalAgriculture.resource("item/augment_%s".formatted(augment.getTier())))
-                        )
-                ));
-            }
+            var tints = new JsonArray();
+            tints.add(augmentTint(augment.getId(), 0));
+            tints.add(augmentTint(augment.getId(), 1));
+            writes.add(DataProvider.saveStable(
+                    output,
+                    itemDefinition(itemId, tints),
+                    this.itemDefinitions.json(itemId)
+            ));
         }
+
+        return CompletableFuture.allOf(writes.toArray(CompletableFuture[]::new));
     }
 
-    @Override
-    protected Stream<? extends Holder<Block>> getKnownBlocks() {
-        return Stream.empty();
+    private void addFlatItem(
+            CachedOutput output,
+            ArrayList<CompletableFuture<?>> writes,
+            Identifier itemId,
+            Identifier texture
+    ) {
+        var textures = new JsonObject();
+        textures.addProperty("layer0", texture.toString());
+        var model = new JsonObject();
+        model.addProperty("parent", "minecraft:item/generated");
+        model.add("textures", textures);
+        writes.add(DataProvider.saveStable(
+                output,
+                model,
+                this.itemModels.json(itemId)
+        ));
+        writes.add(DataProvider.saveStable(
+                output,
+                itemDefinition(itemId, null),
+                this.itemDefinitions.json(itemId)
+        ));
     }
 
-    @Override
-    protected Stream<? extends Holder<Item>> getKnownItems() {
-        return Stream.empty();
+    private static JsonObject itemDefinition(Identifier itemId, JsonArray tints) {
+        var model = new JsonObject();
+        model.addProperty("type", "minecraft:model");
+        model.addProperty(
+                "model",
+                Identifier.fromNamespaceAndPath(
+                        itemId.getNamespace(),
+                        "item/" + itemId.getPath()
+                ).toString()
+        );
+        if (tints != null) {
+            model.add("tints", tints);
+        }
+
+        var definition = new JsonObject();
+        definition.add("model", model);
+        return definition;
+    }
+
+    private static JsonObject augmentTint(Identifier augment, int index) {
+        var tint = new JsonObject();
+        tint.addProperty("type", MysticalAgricultureAPI.resource("augment").toString());
+        tint.addProperty("id", augment.toString());
+        tint.addProperty("index", index);
+        return tint;
     }
 
     @Override
     public String getName() {
-        return MysticalAgriculture.NAME + " item model generator";
+        return "Mystical Agriculture item model generator";
     }
 }

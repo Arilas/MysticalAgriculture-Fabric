@@ -57,7 +57,7 @@ public class EnchanterContainer extends BaseContainerMenu {
     public void slotsChanged(Container matrix) {
         if (this.level instanceof ServerLevel serverLevel) {
             var inventory = this.inventory.toShapelessCraftingInput(0, 3);
-            var recipe = serverLevel.recipeAccess().getRecipeFor(ModRecipeTypes.ENCHANTER.get(), inventory, this.level);
+            var recipe = serverLevel.recipeAccess().getRecipeFor(ModRecipeTypes.ENCHANTER, inventory, this.level);
 
             if (recipe.isPresent()) {
                 this.result.setItem(0, recipe.get().value().assemble(inventory));

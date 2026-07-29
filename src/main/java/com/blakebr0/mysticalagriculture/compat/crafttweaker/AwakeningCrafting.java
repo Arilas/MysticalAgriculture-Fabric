@@ -27,7 +27,7 @@
 //public final class AwakeningCrafting implements IRecipeManager<IAwakeningRecipe> {
 //    @Override
 //    public RecipeType<IAwakeningRecipe> getRecipeType() {
-//        return ModRecipeTypes.AWAKENING.get();
+//        return ModRecipeTypes.AWAKENING;
 //    }
 //
 //    @ZenCodeType.Method

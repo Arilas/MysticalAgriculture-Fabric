@@ -8,7 +8,6 @@ import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeBookCategories;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
-import net.neoforged.neoforge.common.crafting.SizedIngredient;
 
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,7 @@ import java.util.Map;
 public interface IAwakeningRecipe extends Recipe<CraftingInput> {
     Ingredient getAltarIngredient();
     List<Ingredient> getPedestalIngredients();
-    List<SizedIngredient> getEssenceIngredients();
+    List<IngredientWithCount> getEssenceIngredients();
 
     /**
      * Gets a map of missing essences and the amount of each that is missing
@@ -27,7 +26,7 @@ public interface IAwakeningRecipe extends Recipe<CraftingInput> {
      * @param items the list essence vessel items
      * @return a map of missing essences -> amount missing
      */
-    Map<SizedIngredient, Integer> getMissingEssences(List<ItemStack> items);
+    Map<IngredientWithCount, Integer> getMissingEssences(List<ItemStack> items);
 
     /**
      * Checks if the given list of items has the required essences and stack sizes for this recipe

@@ -71,7 +71,7 @@ public class OreInfuserTileEntity extends BaseInventoryTileEntity implements Men
         this.upgradeInventory = new MachineUpgradeItemStackHandler();
         this.energy = new CEnergyStorage(FUEL_CAPACITY, _ -> this.setChangedFast());
         this.sidedInventoryWrappers = SidedInventoryWrapper.create(this.inventory, List.of(Direction.UP, Direction.DOWN, Direction.NORTH), this::canInsertStackSided, null);
-        this.recipe = new CachedRecipe<>(ModRecipeTypes.ORE_INFUSION.get());
+        this.recipe = new CachedRecipe<>(ModRecipeTypes.ORE_INFUSION);
 
         this.dataAccess = ContainerDataBuilder.builder()
                 .sync(this.energy::getAmountAsInt, this.energy::set)
@@ -290,9 +290,9 @@ public class OreInfuserTileEntity extends BaseInventoryTileEntity implements Men
 
         var stack = resource.toStack();
         if (slot == INPUT_SLOTS[0] && direction == Direction.NORTH)
-            return RecipeIngredientCache.INSTANCE.isValidInput(stack, ModRecipeTypes.ORE_INFUSION.get());
+            return RecipeIngredientCache.INSTANCE.isValidInput(stack, ModRecipeTypes.ORE_INFUSION);
         if (slot == INPUT_SLOTS[1] && direction == Direction.UP)
-            return RecipeIngredientCache.INSTANCE.isValidInput(stack, ModRecipeTypes.ORE_INFUSION.get());
+            return RecipeIngredientCache.INSTANCE.isValidInput(stack, ModRecipeTypes.ORE_INFUSION);
         if (slot == FUEL_SLOT && direction == Direction.NORTH)
             return this.level != null && this.level.fuelValues().isFuel(stack);
 

@@ -1,6 +1,7 @@
 package com.blakebr0.mysticalagriculture.crafting.recipe;
 
 import com.blakebr0.mysticalagriculture.api.crafting.IInfusionRecipe;
+import com.blakebr0.mysticalagriculture.crafting.RecipeIngredientMatcher;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -17,7 +18,6 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.util.RecipeMatcher;
 
 import java.util.Arrays;
 import java.util.List;
@@ -88,7 +88,7 @@ public class InfusionRecipe implements IInfusionRecipe {
             }
         }
 
-        return RecipeMatcher.findMatches(inputs, this.inputs) != null;
+        return RecipeIngredientMatcher.matchesIngredients(inputs, this.inputs);
     }
 
     @Override
@@ -124,7 +124,7 @@ public class InfusionRecipe implements IInfusionRecipe {
 
     @Override
     public RecipeType<IInfusionRecipe> getType() {
-        return ModRecipeTypes.INFUSION.get();
+        return ModRecipeTypes.INFUSION;
     }
 
     @Override

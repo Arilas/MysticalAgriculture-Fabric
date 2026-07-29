@@ -1,12 +1,12 @@
 {
   "type": "mysticalagriculture:infusion",
-  "neoforge:conditions": [
+  "fabric:load_conditions": [
     {
-      "type": "mysticalagriculture:augment_enabled",
+      "condition": "mysticalagriculture:augment_enabled",
       "augment": "mysticalagriculture:tilling_aoe_iii"
     },
     {
-      "type": "mysticalagriculture:augment_enabled",
+      "condition": "mysticalagriculture:augment_enabled",
       "augment": "mysticalagriculture:tilling_aoe_iv"
     }
   ],

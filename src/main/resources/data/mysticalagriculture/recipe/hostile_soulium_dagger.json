@@ -5,9 +5,8 @@
   "ingredients": [
     "mysticalagriculture:soulium_ingot",
     {
-      "neoforge:ingredient_type": "neoforge:components",
-      "items": ["mysticalagriculture:soul_jar"],
-      "strict": false,
+      "fabric:type": "fabric:components",
+      "base": "mysticalagriculture:soul_jar",
       "components": {
         "mysticalagriculture:soul_jar": {
           "type": "mysticalagriculture:zombie",
@@ -17,9 +16,8 @@
     },
     "mysticalagriculture:soulium_gemstone",
     {
-      "neoforge:ingredient_type": "neoforge:components",
-      "items": ["mysticalagriculture:soul_jar"],
-      "strict": false,
+      "fabric:type": "fabric:components",
+      "base": "mysticalagriculture:soul_jar",
       "components": {
         "mysticalagriculture:soul_jar": {
           "type": "mysticalagriculture:skeleton",
@@ -29,9 +27,8 @@
     },
     "mysticalagriculture:soulium_ingot",
     {
-      "neoforge:ingredient_type": "neoforge:components",
-      "items": ["mysticalagriculture:soul_jar"],
-      "strict": false,
+      "fabric:type": "fabric:components",
+      "base": "mysticalagriculture:soul_jar",
       "components": {
         "mysticalagriculture:soul_jar": {
           "type": "mysticalagriculture:creeper",
@@ -41,9 +38,8 @@
     },
     "mysticalagriculture:soulium_gemstone",
     {
-      "neoforge:ingredient_type": "neoforge:components",
-      "items": ["mysticalagriculture:soul_jar"],
-      "strict": false,
+      "fabric:type": "fabric:components",
+      "base": "mysticalagriculture:soul_jar",
       "components": {
         "mysticalagriculture:soul_jar": {
           "type": "mysticalagriculture:spider",

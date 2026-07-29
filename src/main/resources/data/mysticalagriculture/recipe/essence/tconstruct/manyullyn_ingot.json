@@ -1,12 +1,14 @@
 {
   "type": "crafting_shaped",
-  "neoforge:conditions": [
+  "fabric:load_conditions": [
     {
-      "type": "neoforge:mod_loaded",
-      "modid": "tconstruct"
+      "condition": "fabric:all_mods_loaded",
+      "values": [
+        "tconstruct"
+      ]
     },
     {
-      "type": "mysticalagriculture:crop_enabled",
+      "condition": "mysticalagriculture:crop_enabled",
       "crop": "mysticalagriculture:manyullyn"
     }
   ],

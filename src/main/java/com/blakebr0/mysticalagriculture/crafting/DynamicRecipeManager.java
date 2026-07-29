@@ -1,7 +1,7 @@
 package com.blakebr0.mysticalagriculture.crafting;
 
 import com.blakebr0.cucumber.event.RecipeManagerLoadingEvent;
-import com.blakebr0.mysticalagriculture.MysticalAgriculture;
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.api.crop.Crop;
 import com.blakebr0.mysticalagriculture.config.ModConfigs;
 import com.blakebr0.mysticalagriculture.crafting.recipe.InfusionRecipe;
@@ -18,7 +18,6 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipePattern;
-import net.neoforged.bus.api.SubscribeEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -26,7 +25,10 @@ import java.util.Map;
 public class DynamicRecipeManager {
     public static final DynamicRecipeManager INSTANCE = new DynamicRecipeManager();
 
-    @SubscribeEvent
+    public static void register() {
+        RecipeManagerLoadingEvent.EVENT.register(INSTANCE::onRecipeManagerLoading);
+    }
+
     public void onRecipeManagerLoading(RecipeManagerLoadingEvent event) {
         var registries = event.getRegistries();
 
@@ -68,7 +70,7 @@ public class DynamicRecipeManager {
                 material, essence, material, essence, material, essence, material, essence
         );
 
-        var id = MysticalAgriculture.resource(crop.getNameWithSuffix("seeds_infusion"));
+        var id = MysticalAgricultureAPI.resource(crop.getNameWithSuffix("seeds_infusion"));
         var result = new ItemStackTemplate(crop.getSeedsItem());
 
         return new RecipeHolder<>(
@@ -109,7 +111,7 @@ public class DynamicRecipeManager {
                 "MEM"
         );
 
-        var id = MysticalAgriculture.resource(crop.getNameWithSuffix("seeds_vanilla"));
+        var id = MysticalAgricultureAPI.resource(crop.getNameWithSuffix("seeds_vanilla"));
         var pattern = ShapedRecipePattern.of(keys, shape);
         var result = new ItemStackTemplate(crop.getSeedsItem());
 
@@ -124,7 +126,7 @@ public class DynamicRecipeManager {
             return null;
 
         var input = Ingredient.of(crop.getSeedsItem());
-        var id = MysticalAgriculture.resource(crop.getNameWithSuffix("seeds_reprocessor"));
+        var id = MysticalAgricultureAPI.resource(crop.getNameWithSuffix("seeds_reprocessor"));
         var result = new ItemStackTemplate(crop.getEssenceItem(), 2);
 
         return new RecipeHolder<>(

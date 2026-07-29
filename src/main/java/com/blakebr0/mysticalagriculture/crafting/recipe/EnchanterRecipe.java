@@ -1,6 +1,8 @@
 package com.blakebr0.mysticalagriculture.crafting.recipe;
 
 import com.blakebr0.mysticalagriculture.api.crafting.IEnchanterRecipe;
+import com.blakebr0.mysticalagriculture.api.crafting.IngredientWithCount;
+import com.blakebr0.mysticalagriculture.crafting.RecipeIngredientMatcher;
 import com.blakebr0.mysticalagriculture.init.ModRecipeTypes;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
@@ -21,8 +23,6 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.crafting.SizedIngredient;
-import net.neoforged.neoforge.common.util.RecipeMatcher;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,13 +30,13 @@ import java.util.List;
 public class EnchanterRecipe implements IEnchanterRecipe {
     public static final MapCodec<EnchanterRecipe> MAP_CODEC = RecordCodecBuilder.mapCodec(builder ->
             builder.group(
-                    SizedIngredient.NESTED_CODEC
+                    IngredientWithCount.CODEC
                             .listOf()
                             .fieldOf("ingredients")
                             .flatXmap(
                                     field -> {
                                         var max = 2;
-                                        var ingredients = field.toArray(SizedIngredient[]::new);
+                                        var ingredients = field.toArray(IngredientWithCount[]::new);
                                         if (ingredients.length == 0) {
                                             return DataResult.error(() -> "No ingredients for enchanter recipe");
                                         } else {
@@ -56,10 +56,10 @@ public class EnchanterRecipe implements IEnchanterRecipe {
     );
     public static final RecipeSerializer<EnchanterRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
 
-    private final List<SizedIngredient> inputs;
+    private final List<IngredientWithCount> inputs;
     private final Holder<Enchantment> enchantment;
 
-    public EnchanterRecipe(List<SizedIngredient> inputs, Holder<Enchantment> enchantment) {
+    public EnchanterRecipe(List<IngredientWithCount> inputs, Holder<Enchantment> enchantment) {
         this.inputs = inputs;
         this.enchantment = enchantment;
     }
@@ -78,7 +78,7 @@ public class EnchanterRecipe implements IEnchanterRecipe {
             }
         }
 
-        return RecipeMatcher.findMatches(inputs, this.inputs.stream().map(SizedIngredient::ingredient).toList()) != null;
+        return RecipeIngredientMatcher.matches(inputs, this.inputs);
     }
 
     @Override
@@ -118,7 +118,7 @@ public class EnchanterRecipe implements IEnchanterRecipe {
     }
 
     @Override
-    public List<SizedIngredient> getIngredients() {
+    public List<IngredientWithCount> getIngredients() {
         return this.inputs;
     }
 
@@ -134,7 +134,7 @@ public class EnchanterRecipe implements IEnchanterRecipe {
 
     @Override
     public RecipeType<IEnchanterRecipe> getType() {
-        return ModRecipeTypes.ENCHANTER.get();
+        return ModRecipeTypes.ENCHANTER;
     }
 
     @Override
@@ -158,47 +158,26 @@ public class EnchanterRecipe implements IEnchanterRecipe {
 
     @Override
     public int getMaxResultEnchantmentLevel(RecipeInput inventory) {
-        var levels = new int[this.inputs.size()];
-        var taken = new boolean[this.inputs.size()];
-
-        for (var i = 0; i < this.inputs.size(); i++) {
-            var stack = inventory.getItem(i);
-            var count = 0;
-
-            for (var input : this.inputs) {
-                if (taken[i])
-                    continue;
-
-                if (input.test(stack)) {
-                    count = input.count();
-                    break;
-                }
-            }
-
-            if (count == 0)
-                continue;
-
-            taken[i] = true;
-
-            var newLevel = stack.getCount() / count;
-
-            if (levels[i] == 0 || newLevel < levels[i]) {
-                levels[i] = Math.min(newLevel, this.enchantment.value().getMaxLevel());
-            }
-        }
-
-        return Arrays.stream(levels).min().orElse(0);
+        var stacks = java.util.stream.IntStream.range(0, this.inputs.size())
+                .mapToObj(inventory::getItem)
+                .filter(stack -> !stack.isEmpty())
+                .toList();
+        return RecipeIngredientMatcher.maxMultiplier(
+                stacks,
+                this.inputs,
+                this.enchantment.value().getMaxLevel()
+        );
     }
 
     private static EnchanterRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
-        var inputs = SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buffer);
+        var inputs = IngredientWithCount.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buffer);
         var enchantment = Enchantment.STREAM_CODEC.decode(buffer);
 
         return new EnchanterRecipe(inputs, enchantment);
     }
 
     private static void toNetwork(RegistryFriendlyByteBuf buffer, EnchanterRecipe recipe) {
-        SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buffer, recipe.inputs);
+        IngredientWithCount.STREAM_CODEC.apply(ByteBufCodecs.list()).encode(buffer, recipe.inputs);
         Enchantment.STREAM_CODEC.encode(buffer, recipe.enchantment);
     }
 }

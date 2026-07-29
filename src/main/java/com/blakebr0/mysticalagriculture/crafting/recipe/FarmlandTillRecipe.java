@@ -1,5 +1,6 @@
 package com.blakebr0.mysticalagriculture.crafting.recipe;
 
+import com.blakebr0.mysticalagriculture.crafting.RecipeIngredientMatcher;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -22,7 +23,6 @@ import net.minecraft.world.item.crafting.display.RecipeDisplay;
 import net.minecraft.world.item.crafting.display.ShapelessCraftingRecipeDisplay;
 import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.util.RecipeMatcher;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,8 +40,8 @@ public class FarmlandTillRecipe implements CraftingRecipe {
                                         if (ingredients.length == 0) {
                                             return DataResult.error(() -> "No ingredients for shapeless recipe");
                                         } else {
-                                            return ingredients.length > ShapedRecipePattern.getMaxHeight() * ShapedRecipePattern.getMaxWidth()
-                                                    ? DataResult.error(() -> "Too many ingredients for shapeless recipe. The maximum is: %s".formatted(ShapedRecipePattern.getMaxHeight() * ShapedRecipePattern.getMaxWidth()))
+                                            return ingredients.length > 9
+                                                    ? DataResult.error(() -> "Too many ingredients for shapeless recipe. The maximum is: 9")
                                                     : DataResult.success(Arrays.stream(ingredients).toList());
                                         }
                                     },
@@ -97,10 +97,10 @@ public class FarmlandTillRecipe implements CraftingRecipe {
 
         var inputs = input.items()
                 .stream()
-                .filter(ItemStack::isEmpty)
+                .filter(stack -> !stack.isEmpty())
                 .toList();
 
-        return RecipeMatcher.findMatches(inputs, this.inputs) != null;
+        return RecipeIngredientMatcher.matchesIngredients(inputs, this.inputs);
     }
 
     @Override

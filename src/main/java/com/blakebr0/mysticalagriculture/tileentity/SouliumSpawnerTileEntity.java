@@ -84,7 +84,7 @@ public class SouliumSpawnerTileEntity extends BaseInventoryTileEntity implements
         this.upgradeInventory = new MachineUpgradeItemStackHandler();
         this.energy = new CEnergyStorage(FUEL_CAPACITY, _ -> this.setChangedFast());
         this.sidedInventoryWrappers = SidedInventoryWrapper.create(this.inventory, List.of(Direction.UP, Direction.DOWN, Direction.NORTH), this::canInsertStackSided, null);
-        this.recipe = new CachedRecipe<>(ModRecipeTypes.SOULIUM_SPAWNER.get());
+        this.recipe = new CachedRecipe<>(ModRecipeTypes.SOULIUM_SPAWNER);
 
         this.dataAccess = ContainerDataBuilder.builder()
                 .sync(this.energy::getAmountAsInt, this.energy::set)
