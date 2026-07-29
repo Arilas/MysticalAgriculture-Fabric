@@ -14,28 +14,107 @@ import com.blakebr0.mysticalagriculture.tileentity.SoulExtractorTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.SouliumSpawnerTileEntity;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.RandomizableContainer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+import net.minecraft.world.level.storage.loot.LootTable;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import snownee.jade.api.BlockAccessor;
 import snownee.jade.api.IWailaCommonRegistration;
+import snownee.jade.api.JadeIds;
+import snownee.jade.addon.universal.ItemStorageProvider;
+import snownee.jade.addon.universal.UniversalPlugin;
+import snownee.jade.impl.WailaCommonRegistration;
 import snownee.jade.api.view.EnergyView;
 import snownee.jade.api.view.IServerExtensionProvider;
 import snownee.jade.api.view.ViewGroup;
+import snownee.jade.util.CommonProxy;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JadeStorageProviderTest {
     @BeforeAll
     static void bootstrapMinecraft() {
         Task7TestBootstrap.ensureInitialized();
+    }
+
+    @AfterEach
+    void resetJadeRegistration() {
+        WailaCommonRegistration.reset();
+    }
+
+    @Test
+    void sharedNativeViewPrioritiesPreserveUniversalFallbackAndUnrelatedTargetProviders() {
+        WailaCommonRegistration.reset();
+        var registration = WailaCommonRegistration.instance();
+        new UniversalPlugin().register(registration);
+        new JadeCompat().register(registration);
+
+        var unrelatedUid = Identifier.fromNamespaceAndPath("task7", "unrelated_item_storage");
+        IServerExtensionProvider<ItemStack> unrelated = new IServerExtensionProvider<>() {
+            @Override
+            public List<ViewGroup<ItemStack>> getGroups(snownee.jade.api.Accessor<?> accessor) {
+                return List.of(new ViewGroup<>(List.of(new ItemStack(Items.APPLE, 2))));
+            }
+
+            @Override
+            public Identifier getUid() {
+                return unrelatedUid;
+            }
+        };
+        registration.registerItemStorage(unrelated, ChestBlockEntity.class);
+        registration.loadComplete();
+
+        assertEquals(9999, registration.priorities.byKey(JadeIds.UNIVERSAL_ITEM_STORAGE_DEFAULT));
+        assertEquals(9999, registration.priorities.byKey(JadeIds.UNIVERSAL_ENERGY_STORAGE_DEFAULT));
+
+        var altar = new LootProtectedInfusionAltar();
+        altar.getInventory().set(0, ItemVariant.of(Items.DIAMOND), 7);
+        var altarAccessor = accessor(altar);
+        var altarProviders = registration.itemStorageProviders.wrappedGet(altarAccessor);
+
+        assertEquals(2, altarProviders.size());
+        assertSame(ItemStorageProvider.Extension.INSTANCE, altarProviders.getFirst());
+        assertNull(altarProviders.getFirst().getGroups(altarAccessor));
+
+        var altarResult = CommonProxy.getServerExtensionData(
+                altarAccessor,
+                registration.itemStorageProviders
+        );
+        assertEquals(JadeIds.UNIVERSAL_ITEM_STORAGE_DEFAULT, altarResult.getKey());
+        assertEquals(7, altarResult.getValue().getFirst().views.getFirst().getCount());
+
+        var chest = new ChestBlockEntity(BlockPos.ZERO, Blocks.CHEST.defaultBlockState());
+        chest.setLootTable(BuiltInLootTables.SIMPLE_DUNGEON);
+        var chestAccessor = accessor(chest);
+        var chestProviders = registration.itemStorageProviders.wrappedGet(chestAccessor);
+
+        assertEquals(2, chestProviders.size());
+        assertSame(unrelated, chestProviders.getFirst());
+        assertTrue(chestProviders.contains(ItemStorageProvider.Extension.INSTANCE));
+
+        var chestResult = CommonProxy.getServerExtensionData(
+                chestAccessor,
+                registration.itemStorageProviders
+        );
+        assertEquals(unrelatedUid, chestResult.getKey());
+        assertEquals(2, chestResult.getValue().getFirst().views.getFirst().getCount());
     }
 
     @Test
@@ -249,6 +328,72 @@ class JadeStorageProviderTest {
             List<ProviderRegistration<ItemStack>> item,
             List<ProviderRegistration<EnergyView.Data>> energy
     ) {
+    }
+
+    private static final class LootProtectedInfusionAltar
+            extends InfusionAltarTileEntity
+            implements RandomizableContainer {
+        private ResourceKey<LootTable> lootTable = BuiltInLootTables.SIMPLE_DUNGEON;
+        private long lootTableSeed;
+
+        private LootProtectedInfusionAltar() {
+            super(BlockPos.ZERO, ModBlocks.INFUSION_ALTAR.defaultBlockState());
+        }
+
+        @Override
+        public ResourceKey<LootTable> getLootTable() {
+            return this.lootTable;
+        }
+
+        @Override
+        public void setLootTable(ResourceKey<LootTable> lootTable) {
+            this.lootTable = lootTable;
+        }
+
+        @Override
+        public long getLootTableSeed() {
+            return this.lootTableSeed;
+        }
+
+        @Override
+        public void setLootTableSeed(long lootTableSeed) {
+            this.lootTableSeed = lootTableSeed;
+        }
+
+        @Override
+        public int getContainerSize() {
+            return this.getInventory().getContainerSize();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return this.getInventory().isEmpty();
+        }
+
+        @Override
+        public ItemStack getItem(int slot) {
+            return this.getInventory().getItem(slot);
+        }
+
+        @Override
+        public ItemStack removeItem(int slot, int amount) {
+            return this.getInventory().removeItem(slot, amount);
+        }
+
+        @Override
+        public ItemStack removeItemNoUpdate(int slot) {
+            return this.getInventory().removeItemNoUpdate(slot);
+        }
+
+        @Override
+        public void setItem(int slot, ItemStack stack) {
+            this.getInventory().setItem(slot, stack);
+        }
+
+        @Override
+        public boolean stillValid(Player player) {
+            return true;
+        }
     }
 
     @FunctionalInterface

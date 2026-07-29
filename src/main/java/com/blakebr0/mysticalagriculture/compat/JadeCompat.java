@@ -309,6 +309,11 @@ public class JadeCompat implements IWailaPlugin {
             public Identifier getUid() {
                 return JadeIds.UNIVERSAL_ITEM_STORAGE_DEFAULT;
             }
+
+            @Override
+            public int getDefaultPriority() {
+                return 9999;
+            }
         };
     }
 
@@ -340,6 +345,11 @@ public class JadeCompat implements IWailaPlugin {
             @Override
             public Identifier getUid() {
                 return JadeIds.UNIVERSAL_ENERGY_STORAGE_DEFAULT;
+            }
+
+            @Override
+            public int getDefaultPriority() {
+                return 9999;
             }
         };
     }
