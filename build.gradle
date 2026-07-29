@@ -567,9 +567,11 @@ configurations {
 
 sourceSets.task6Client.compileClasspath =
         configurations.compileClasspath + files(task6MainOutput)
-sourceSets.task6Client.output.dir(task6MainOutput, builtBy: tasks.named('compileTask6Java'))
 sourceSets.task6Client.runtimeClasspath =
-        configurations.runtimeClasspath + sourceSets.task6Client.output
+        configurations.runtimeClasspath + files(
+                task6MainOutput,
+                sourceSets.task6Client.output.resourcesDir
+        )
 
 loom {
     mods {
@@ -588,6 +590,25 @@ loom {
 
 tasks.named('runTask6FocusedClient') {
     dependsOn tasks.named('compileTask6Java')
+}
+
+tasks.register('verifyTask6FocusedClientClasspath') {
+    dependsOn tasks.named('compileTask6Java'), tasks.named('processTask6ClientResources')
+    inputs.files(tasks.named('runTask6FocusedClient').get().classpath)
+    inputs.property('expectedTask6MainOutput', task6MainOutput.map { it.asFile.absolutePath })
+
+    doLast { task ->
+        var classpath = task.inputs.files.files
+        var missing = classpath.findAll { !it.exists() }
+        if (!missing.isEmpty()) {
+            throw new GradleException("Focused client classpath contains missing entries: ${missing}")
+        }
+
+        var expected = new File(task.inputs.properties.expectedTask6MainOutput)
+        if (!classpath.contains(expected)) {
+            throw new GradleException("Focused client classpath omits compiled Task 6 output: ${expected}")
+        }
+    }
 }
 
 artifacts {

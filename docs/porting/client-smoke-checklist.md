@@ -60,6 +60,10 @@ registration or compilation alone is not treated as a completed UI interaction.
   loaded 136 crops, 6 crop tiers, 2 crop types, 55 augments, and 23 mob soul
   types. The ResourceManager reload completed through all texture-atlas
   creation, and the process remained running at the title screen until stopped.
+- The focused launch runtime classpath points directly at
+  `build/classes/java/task6Main`. A clean-build launch emitted no
+  `Class path entries reference missing files` warning, and the generated
+  argument file contains no `build/classes/java/task6Client` entry.
 - The focused runtime intentionally contained neither JEI nor Jade. No missing
   compatibility entrypoint or optional-mod exception occurred.
 - The first runtime pass exposed a missing `particle` reference in the
