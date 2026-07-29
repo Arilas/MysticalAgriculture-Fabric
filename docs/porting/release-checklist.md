@@ -41,7 +41,7 @@ Release publication was approved on 2026-07-30.
   - release:
     `c8a4b7ba16bd0901bbdf26b5d061ae335a89081c077d663243515cb2c11deee1`
   - sources:
-    `95b399cc18657ac38e58c077378c62153a67ae3e20e8ede0ea02d77f38c80ad3`
+    `83379d10f9ea998467d80da08109d97ef2dc6fa7f46900c3af96999a5ae8b24d`
 
 The inspected release JAR has 4,360 entries and contains one declared embedded
 dependency, Team Reborn Energy 5.0.0. The sources JAR has 4,313
