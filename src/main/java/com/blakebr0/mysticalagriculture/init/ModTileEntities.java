@@ -14,6 +14,7 @@ import com.blakebr0.mysticalagriculture.tileentity.ReprocessorTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.SoulExtractorTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.SouliumSpawnerTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.TinkeringTableTileEntity;
+import com.blakebr0.mysticalagriculture.registry.RegistryTypeFactories;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -23,7 +24,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 public final class ModTileEntities {
     private static final Map<Identifier, BlockEntityType<?>> ENTRIES = new LinkedHashMap<>();
@@ -52,7 +52,7 @@ public final class ModTileEntities {
             Block... blocks
     ) {
         var id = MysticalAgriculture.resource(name);
-        var type = new BlockEntityType<>(factory, Set.of(blocks));
+        var type = RegistryTypeFactories.blockEntity(factory, blocks);
         ENTRIES.put(id, type);
         return type;
     }

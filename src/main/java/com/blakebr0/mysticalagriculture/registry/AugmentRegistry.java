@@ -1,12 +1,12 @@
 package com.blakebr0.mysticalagriculture.registry;
 
-import com.blakebr0.mysticalagriculture.MysticalAgriculture;
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.api.registry.IAugmentRegistry;
 import com.blakebr0.mysticalagriculture.api.tinkering.Augment;
-import com.blakebr0.mysticalagriculture.item.AugmentItem;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -14,6 +14,7 @@ import java.util.Map;
 
 public final class AugmentRegistry implements IAugmentRegistry {
     private static final AugmentRegistry INSTANCE = new AugmentRegistry();
+    private static final Logger LOGGER = LoggerFactory.getLogger("Mystical Agriculture");
 
     private final Map<Identifier, Augment> augments = new LinkedHashMap<>();
     private final Map<Identifier, String> sources = new LinkedHashMap<>();
@@ -49,14 +50,11 @@ public final class AugmentRegistry implements IAugmentRegistry {
         return this.augments.get(id);
     }
 
-    public void registerItems() {
+    public void registerItems(ItemFactory factory, DirectRegistryRegistrar<Item> registrar) {
         for (var augment : this.augments.values()) {
-            var id = MysticalAgriculture.resource(augment.getNameWithSuffix("augment"));
+            var id = MysticalAgricultureAPI.resource(augment.getNameWithSuffix("augment"));
             var source = this.sources.getOrDefault(augment.getId(), augment.getModId());
-            if (BuiltInRegistries.ITEM.containsKey(id)) {
-                throw new IllegalStateException("Duplicate item id %s contributed by mod %s".formatted(id, source));
-            }
-            Registry.register(BuiltInRegistries.ITEM, id, new AugmentItem(id, augment));
+            registrar.register(id, factory.create(id, augment), source);
         }
     }
 
@@ -65,7 +63,7 @@ public final class AugmentRegistry implements IAugmentRegistry {
     }
 
     public void onCommonSetup() {
-        MysticalAgriculture.LOGGER.info("Loaded {} augments", this.augments.size());
+        LOGGER.info("Loaded {} augments", this.augments.size());
     }
 
     void beginRegistration(String sourceMod) {
@@ -89,5 +87,10 @@ public final class AugmentRegistry implements IAugmentRegistry {
 
     private static IllegalStateException duplicate(Identifier id, String sourceMod) {
         return new IllegalStateException("Duplicate augment id %s contributed by mod %s".formatted(id, sourceMod));
+    }
+
+    @FunctionalInterface
+    public interface ItemFactory {
+        Item create(Identifier id, Augment augment);
     }
 }

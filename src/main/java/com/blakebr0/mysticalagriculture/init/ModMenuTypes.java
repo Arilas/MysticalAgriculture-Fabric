@@ -10,6 +10,7 @@ import com.blakebr0.mysticalagriculture.container.ReprocessorContainer;
 import com.blakebr0.mysticalagriculture.container.SoulExtractorContainer;
 import com.blakebr0.mysticalagriculture.container.SouliumSpawnerContainer;
 import com.blakebr0.mysticalagriculture.container.TinkeringTableContainer;
+import com.blakebr0.mysticalagriculture.registry.RegistryTypeFactories;
 import com.blakebr0.mysticalagriculture.tileentity.EnchanterTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.EssenceFurnaceTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.HarvesterTileEntity;
@@ -59,7 +60,7 @@ public final class ModMenuTypes {
             ExtendedMenuType.ExtendedFactory<T, BlockPos> factory
     ) {
         var id = MysticalAgriculture.resource(name);
-        var type = new ExtendedMenuType<>(factory, BlockPos.STREAM_CODEC);
+        var type = RegistryTypeFactories.extendedMenu(factory, BlockPos.STREAM_CODEC);
         ENTRIES.put(id, type);
         return type;
     }

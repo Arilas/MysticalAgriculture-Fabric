@@ -14,7 +14,10 @@ import com.blakebr0.mysticalagriculture.item.FertilizedEssenceItem;
 import com.blakebr0.mysticalagriculture.item.InfusionCrystalItem;
 import com.blakebr0.mysticalagriculture.item.MachineUpgradeItem;
 import com.blakebr0.mysticalagriculture.item.MasterInfusionCrystalItem;
+import com.blakebr0.mysticalagriculture.item.AugmentItem;
+import com.blakebr0.mysticalagriculture.item.MysticalEssenceItem;
 import com.blakebr0.mysticalagriculture.item.MysticalFertilizerItem;
+import com.blakebr0.mysticalagriculture.item.MysticalSeedsItem;
 import com.blakebr0.mysticalagriculture.item.SoulJarItem;
 import com.blakebr0.mysticalagriculture.item.SouliumDaggerItem;
 import com.blakebr0.mysticalagriculture.item.WandItem;
@@ -40,7 +43,7 @@ import com.blakebr0.mysticalagriculture.lib.ModArmorMaterials;
 import com.blakebr0.mysticalagriculture.lib.ModToolMaterials;
 import com.blakebr0.mysticalagriculture.registry.AugmentRegistry;
 import com.blakebr0.mysticalagriculture.registry.CropRegistry;
-import net.minecraft.core.Registry;
+import com.blakebr0.mysticalagriculture.registry.DirectRegistryRegistrar;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
@@ -53,6 +56,8 @@ import java.util.function.Function;
 public final class ModItems {
     private static final Map<Identifier, Item> ENTRIES = new LinkedHashMap<>();
     private static final Map<Identifier, Item> GEAR_ENTRIES = new LinkedHashMap<>();
+    private static final DirectRegistryRegistrar<Item> ITEM_REGISTRAR =
+            new DirectRegistryRegistrar<>(BuiltInRegistries.ITEM, "item");
 
     public static final Item PROSPERITY_SHARD = register("prosperity_shard");
     public static final Item INFERIUM_ESSENCE = register("inferium_essence", id -> new EssenceItem(id, CropTier.ONE));
@@ -253,9 +258,13 @@ public final class ModItems {
 
     public static void register() {
         ENTRIES.forEach((id, item) -> registerItem(id, item, MysticalAgriculture.MOD_ID));
-        CropRegistry.getInstance().registerItems((id, item) -> registerItem(id, item, itemSource(id)));
+        CropRegistry.getInstance().registerItems(
+                MysticalEssenceItem::new,
+                MysticalSeedsItem::new,
+                ITEM_REGISTRAR
+        );
         GEAR_ENTRIES.forEach((id, item) -> registerItem(id, item, MysticalAgriculture.MOD_ID));
-        AugmentRegistry.getInstance().registerItems();
+        AugmentRegistry.getInstance().registerItems(AugmentItem::new, ITEM_REGISTRAR);
     }
 
     private static Item register(String name) {
@@ -283,17 +292,6 @@ public final class ModItems {
     }
 
     private static void registerItem(Identifier id, Item item, String sourceMod) {
-        if (BuiltInRegistries.ITEM.containsKey(id)) {
-            throw new IllegalStateException("Duplicate item id %s contributed by mod %s".formatted(id, sourceMod));
-        }
-        Registry.register(BuiltInRegistries.ITEM, id, item);
-    }
-
-    private static String itemSource(Identifier id) {
-        var path = id.getPath();
-        var suffix = path.endsWith("_essence") ? "_essence" : path.endsWith("_seeds") ? "_seeds" : "";
-        var name = suffix.isEmpty() ? path : path.substring(0, path.length() - suffix.length());
-        var crop = CropRegistry.getInstance().getCropByName(name);
-        return crop != null ? crop.getModId() : MysticalAgriculture.MOD_ID;
+        ITEM_REGISTRAR.register(id, item, sourceMod);
     }
 }

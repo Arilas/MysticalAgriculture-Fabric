@@ -1,10 +1,10 @@
 package com.blakebr0.mysticalagriculture.registry;
 
-import com.blakebr0.mysticalagriculture.MysticalAgriculture;
 import com.blakebr0.mysticalagriculture.api.IMysticalAgriculturePlugin;
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.api.lib.PluginConfig;
-import com.blakebr0.mysticalagriculture.lib.ModCorePlugin;
-import net.fabricmc.loader.api.FabricLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,14 +12,7 @@ import java.util.function.BiConsumer;
 
 public final class PluginRegistry {
     public static final String ENTRYPOINT_KEY = "mysticalagriculture:plugin";
-
-    private static final PluginRegistry INSTANCE = new PluginRegistry(
-            PluginRegistry::getFabricCandidates,
-            new ModCorePlugin(),
-            CropRegistry.getInstance(),
-            AugmentRegistry.getInstance(),
-            MobSoulTypeRegistry.getInstance()
-    );
+    private static final Logger LOGGER = LoggerFactory.getLogger("Mystical Agriculture");
 
     private final PluginSource pluginSource;
     private final IMysticalAgriculturePlugin corePlugin;
@@ -47,8 +40,8 @@ public final class PluginRegistry {
         this.requireState(State.NEW, "load plug-ins");
 
         this.loadPlugin(new PluginCandidate(
-                MysticalAgriculture.MOD_ID,
-                ModCorePlugin.class.getName(),
+                MysticalAgricultureAPI.MOD_ID,
+                this.corePlugin.getClass().getName(),
                 () -> this.corePlugin
         ));
 
@@ -57,7 +50,7 @@ public final class PluginRegistry {
         }
 
         this.state = State.LOADED;
-        MysticalAgriculture.LOGGER.info("Loaded {} Mystical Agriculture plug-ins", this.plugins.size());
+        LOGGER.info("Loaded {} Mystical Agriculture plug-ins", this.plugins.size());
     }
 
     public void collectContent() {
@@ -119,6 +112,10 @@ public final class PluginRegistry {
         return this.state == State.FINALIZED;
     }
 
+    boolean isFailed() {
+        return this.state == State.FAILED;
+    }
+
     List<String> getPluginSources() {
         return this.plugins.stream().map(LoadedPlugin::sourceMod).toList();
     }
@@ -135,17 +132,13 @@ public final class PluginRegistry {
         return this.mobSoulTypeRegistry;
     }
 
-    public static PluginRegistry getInstance() {
-        return INSTANCE;
-    }
-
     private void loadPlugin(PluginCandidate candidate) {
         try {
             var plugin = candidate.factory().create();
             var config = new PluginConfig();
             plugin.configure(config);
             this.plugins.add(new LoadedPlugin(candidate.sourceMod(), candidate.definition(), plugin, config));
-            MysticalAgriculture.LOGGER.info(
+            LOGGER.info(
                     "Registered Mystical Agriculture plug-in {} from {}",
                     candidate.definition(),
                     candidate.sourceMod()
@@ -177,18 +170,6 @@ public final class PluginRegistry {
                         .formatted(definition, sourceMod, cause.getMessage()),
                 cause
         );
-    }
-
-    private static List<PluginCandidate> getFabricCandidates() {
-        return FabricLoader.getInstance()
-                .getEntrypointContainers(ENTRYPOINT_KEY, IMysticalAgriculturePlugin.class)
-                .stream()
-                .map(container -> new PluginCandidate(
-                        container.getProvider().getMetadata().getId(),
-                        container.getDefinition(),
-                        container::getEntrypoint
-                ))
-                .toList();
     }
 
     @FunctionalInterface

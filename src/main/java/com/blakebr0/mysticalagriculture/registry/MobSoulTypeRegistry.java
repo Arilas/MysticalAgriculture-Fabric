@@ -1,10 +1,11 @@
 package com.blakebr0.mysticalagriculture.registry;
 
-import com.blakebr0.mysticalagriculture.MysticalAgriculture;
 import com.blakebr0.mysticalagriculture.api.registry.IMobSoulTypeRegistry;
 import com.blakebr0.mysticalagriculture.api.soul.MobSoulType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 public final class MobSoulTypeRegistry implements IMobSoulTypeRegistry {
     private static final MobSoulTypeRegistry INSTANCE = new MobSoulTypeRegistry();
+    private static final Logger LOGGER = LoggerFactory.getLogger("Mystical Agriculture");
 
     private final Map<Identifier, MobSoulType> mobSoulTypes = new LinkedHashMap<>();
     private final Set<Identifier> usedEntityIds = new HashSet<>();
@@ -93,7 +95,7 @@ public final class MobSoulTypeRegistry implements IMobSoulTypeRegistry {
     }
 
     public void onCommonSetup() {
-        MysticalAgriculture.LOGGER.info("Loaded {} mob soul types", this.mobSoulTypes.size());
+        LOGGER.info("Loaded {} mob soul types", this.mobSoulTypes.size());
     }
 
     void beginRegistration(String sourceMod) {

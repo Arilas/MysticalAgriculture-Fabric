@@ -42,15 +42,37 @@ sourceSets.main.resources {
 }
 
 sourceSets {
+    apiSurface {
+        java.srcDir "src/main/java"
+        java.include "com/blakebr0/mysticalagriculture/api/IMysticalAgriculturePlugin.java"
+        java.include "com/blakebr0/mysticalagriculture/api/MysticalAgricultureAPI.java"
+        java.include "com/blakebr0/mysticalagriculture/api/MysticalAgricultureConfigValues.java"
+        java.include "com/blakebr0/mysticalagriculture/api/MysticalAgricultureDataComponentTypes.java"
+        java.include "com/blakebr0/mysticalagriculture/api/MysticalAgriculturePlugin.java"
+        java.include "com/blakebr0/mysticalagriculture/api/MysticalAgricultureTags.java"
+        java.include "com/blakebr0/mysticalagriculture/api/components/**"
+        java.include "com/blakebr0/mysticalagriculture/api/crafting/IInfusionRecipe.java"
+        java.include "com/blakebr0/mysticalagriculture/api/crop/**"
+        java.include "com/blakebr0/mysticalagriculture/api/farmland/**"
+        java.include "com/blakebr0/mysticalagriculture/api/lib/AbilityCache.java"
+        java.include "com/blakebr0/mysticalagriculture/api/lib/LazyIngredient.java"
+        java.include "com/blakebr0/mysticalagriculture/api/lib/PluginConfig.java"
+        java.include "com/blakebr0/mysticalagriculture/api/registry/**"
+        java.include "com/blakebr0/mysticalagriculture/api/soul/**"
+        java.include "com/blakebr0/mysticalagriculture/api/tinkering/**"
+    }
+
     apiCompatibility {
         java.srcDir "src/apiCompatibility/java"
-        compileClasspath += sourceSets.main.output + configurations.compileClasspath
     }
 }
 
 configurations {
+    apiSurfaceImplementation.extendsFrom implementation
     apiCompatibilityImplementation.extendsFrom implementation
 }
+
+sourceSets.apiSurface.compileClasspath = configurations.compileClasspath
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
@@ -70,11 +92,37 @@ dependencies {
 java.withSourcesJar()
 
 tasks.register('apiJar', Jar) {
-    from(sourceSets.main.output) {
-        include 'com/blakebr0/mysticalagriculture/api/**'
-    }
+    from(sourceSets.apiSurface.output)
 
     archiveClassifier = 'api'
+}
+
+sourceSets.apiCompatibility.compileClasspath =
+        files(tasks.named('apiJar')) + configurations.compileClasspath
+
+tasks.named('compileApiCompatibilityJava') {
+    dependsOn tasks.named('apiJar')
+}
+
+def task2TestOutput = layout.buildDirectory.dir("classes/java/task2Test")
+
+tasks.register('compileTask2TestJava', JavaCompile) {
+    source file("src/test/java/com/blakebr0/mysticalagriculture/registry/PluginRegistryTest.java")
+    classpath = configurations.testCompileClasspath
+    destinationDirectory = task2TestOutput
+    options.sourcepath = files("src/main/java", "src/test/java")
+    options.compilerArgs += ["-implicit:class"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('task2Test', Test) {
+    dependsOn tasks.named('compileTask2TestJava'), tasks.named('apiJar')
+    testClassesDirs = files(task2TestOutput)
+    classpath = configurations.testRuntimeClasspath + files(task2TestOutput)
+    systemProperty "apiCompatibilityClasspath", sourceSets.apiCompatibility.compileClasspath.asPath
+    useJUnitPlatform()
 }
 
 artifacts {

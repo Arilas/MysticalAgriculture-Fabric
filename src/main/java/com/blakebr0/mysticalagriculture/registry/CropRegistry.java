@@ -1,18 +1,17 @@
 package com.blakebr0.mysticalagriculture.registry;
 
-import com.blakebr0.mysticalagriculture.MysticalAgriculture;
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.api.crop.Crop;
 import com.blakebr0.mysticalagriculture.api.crop.CropTier;
 import com.blakebr0.mysticalagriculture.api.crop.CropType;
 import com.blakebr0.mysticalagriculture.api.lib.PluginConfig;
 import com.blakebr0.mysticalagriculture.api.registry.ICropRegistry;
-import com.blakebr0.mysticalagriculture.block.MysticalCropBlock;
-import com.blakebr0.mysticalagriculture.item.MysticalEssenceItem;
-import com.blakebr0.mysticalagriculture.item.MysticalSeedsItem;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CropBlock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -24,6 +23,7 @@ import java.util.Set;
 
 public final class CropRegistry implements ICropRegistry {
     private static final CropRegistry INSTANCE = new CropRegistry();
+    private static final Logger LOGGER = LoggerFactory.getLogger("Mystical Agriculture");
 
     private Map<Identifier, Crop> crops = new LinkedHashMap<>();
     private final Map<Identifier, CropTier> tiers = new LinkedHashMap<>();
@@ -91,7 +91,7 @@ public final class CropRegistry implements ICropRegistry {
         return this.types.get(id);
     }
 
-    public void registerBlocks(Registrar<Block> registrar) {
+    public void registerBlocks(BlockFactory factory, DirectRegistryRegistrar<Block> registrar) {
         var claimed = new HashSet<Identifier>();
         var crops = this.crops.values();
 
@@ -100,52 +100,59 @@ public final class CropRegistry implements ICropRegistry {
                 continue;
             }
 
-            var id = MysticalAgriculture.resource(crop.getNameWithSuffix("crop"));
-            this.claimId(id, this.sourceOf(crop), "block", claimed, BuiltInRegistries.BLOCK.containsKey(id));
+            var id = MysticalAgricultureAPI.resource(crop.getNameWithSuffix("crop"));
+            var source = this.sourceOf(crop);
+            this.claimId(id, source, "block", claimed, registrar.contains(id));
 
             var block = crop.getCropBlock();
             if (block == null) {
-                var defaultCrop = new MysticalCropBlock(id, crop);
+                var defaultCrop = factory.create(id, crop);
                 block = defaultCrop;
                 crop.setCropBlock(() -> defaultCrop, true);
             }
 
-            registrar.register(id, block);
+            registrar.register(id, block, source);
         }
 
         this.crops = getSortedCropsMap(crops);
     }
 
-    public void registerItems(Registrar<Item> registrar) {
+    public void registerItems(
+            ItemFactory essenceFactory,
+            ItemFactory seedsFactory,
+            DirectRegistryRegistrar<Item> registrar
+    ) {
         var claimed = new HashSet<Identifier>();
 
         for (var crop : this.crops.values()) {
             if (crop.shouldRegisterEssenceItem()) {
-                var id = MysticalAgriculture.resource(crop.getNameWithSuffix("essence"));
-                this.claimId(id, this.sourceOf(crop), "item", claimed, BuiltInRegistries.ITEM.containsKey(id));
+                var id = MysticalAgricultureAPI.resource(crop.getNameWithSuffix("essence"));
+                var source = this.sourceOf(crop);
+                this.claimId(id, source, "item", claimed, registrar.contains(id));
 
                 var item = crop.getEssenceItem();
                 if (item == null) {
-                    var defaultEssence = new MysticalEssenceItem(id, crop);
+                    var defaultEssence = essenceFactory.create(id, crop);
                     item = defaultEssence;
                     crop.setEssenceItem(() -> defaultEssence, true);
                 }
 
-                registrar.register(id, item);
+                registrar.register(id, item, source);
             }
 
             if (crop.shouldRegisterSeedsItem()) {
-                var id = MysticalAgriculture.resource(crop.getNameWithSuffix("seeds"));
-                this.claimId(id, this.sourceOf(crop), "item", claimed, BuiltInRegistries.ITEM.containsKey(id));
+                var id = MysticalAgricultureAPI.resource(crop.getNameWithSuffix("seeds"));
+                var source = this.sourceOf(crop);
+                this.claimId(id, source, "item", claimed, registrar.contains(id));
 
                 var item = crop.getSeedsItem();
                 if (item == null) {
-                    var defaultSeeds = new MysticalSeedsItem(id, crop);
+                    var defaultSeeds = seedsFactory.create(id, crop);
                     item = defaultSeeds;
                     crop.setSeedsItem(() -> defaultSeeds, true);
                 }
 
-                registrar.register(id, item);
+                registrar.register(id, item, source);
             }
         }
     }
@@ -155,9 +162,9 @@ public final class CropRegistry implements ICropRegistry {
     }
 
     public void onCommonSetup() {
-        MysticalAgriculture.LOGGER.info("Loaded {} crops", this.crops.size());
-        MysticalAgriculture.LOGGER.info("Loaded {} crop tiers", this.tiers.size());
-        MysticalAgriculture.LOGGER.info("Loaded {} crop types", this.types.size());
+        LOGGER.info("Loaded {} crops", this.crops.size());
+        LOGGER.info("Loaded {} crop tiers", this.tiers.size());
+        LOGGER.info("Loaded {} crop types", this.types.size());
     }
 
     void beginRegistration(String sourceMod, PluginConfig config) {
@@ -241,7 +248,12 @@ public final class CropRegistry implements ICropRegistry {
     }
 
     @FunctionalInterface
-    public interface Registrar<T> {
-        void register(Identifier id, T value);
+    public interface BlockFactory {
+        CropBlock create(Identifier id, Crop crop);
+    }
+
+    @FunctionalInterface
+    public interface ItemFactory {
+        Item create(Identifier id, Crop crop);
     }
 }

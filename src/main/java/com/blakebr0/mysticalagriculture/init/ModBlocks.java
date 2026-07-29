@@ -20,6 +20,7 @@ import com.blakebr0.mysticalagriculture.block.InferiumCropBlock;
 import com.blakebr0.mysticalagriculture.block.InfusedFarmlandBlock;
 import com.blakebr0.mysticalagriculture.block.InfusionAltarBlock;
 import com.blakebr0.mysticalagriculture.block.InfusionPedestalBlock;
+import com.blakebr0.mysticalagriculture.block.MysticalCropBlock;
 import com.blakebr0.mysticalagriculture.block.OreInfuserBlock;
 import com.blakebr0.mysticalagriculture.block.ReprocessorBlock;
 import com.blakebr0.mysticalagriculture.block.SoulExtractorBlock;
@@ -30,10 +31,11 @@ import com.blakebr0.mysticalagriculture.block.WitherproofGlassBlock;
 import com.blakebr0.mysticalagriculture.lib.ModCorePlugin;
 import com.blakebr0.mysticalagriculture.lib.ModCrops;
 import com.blakebr0.mysticalagriculture.registry.CropRegistry;
-import net.minecraft.core.Registry;
+import com.blakebr0.mysticalagriculture.registry.DirectRegistryRegistrar;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 
@@ -44,6 +46,10 @@ import java.util.function.Function;
 public final class ModBlocks {
     private static final Map<Identifier, Block> ENTRIES = new LinkedHashMap<>();
     private static final Map<Identifier, Function<Identifier, BlockItem>> BLOCK_ITEMS = new LinkedHashMap<>();
+    private static final DirectRegistryRegistrar<Block> BLOCK_REGISTRAR =
+            new DirectRegistryRegistrar<>(BuiltInRegistries.BLOCK, "block");
+    private static final DirectRegistryRegistrar<Item> ITEM_REGISTRAR =
+            new DirectRegistryRegistrar<>(BuiltInRegistries.ITEM, "item");
 
     public static final Block PROSPERITY_BLOCK = register("prosperity_block", id -> new BaseBlock(id, SoundType.STONE, 4.0F, 6.0F, true));
     public static final Block INFERIUM_BLOCK = register("inferium_block", id -> new BaseBlock(id, SoundType.STONE, 4.0F, 6.0F, true));
@@ -124,17 +130,12 @@ public final class ModBlocks {
 
     public static void register() {
         ENTRIES.forEach((id, block) -> registerBlock(id, block, MysticalAgriculture.MOD_ID));
-        CropRegistry.getInstance().registerBlocks((id, block) -> registerBlock(id, block, blockSource(id)));
+        CropRegistry.getInstance().registerBlocks(MysticalCropBlock::new, BLOCK_REGISTRAR);
     }
 
     public static void registerBlockItems() {
-        BLOCK_ITEMS.forEach((id, factory) -> {
-            if (BuiltInRegistries.ITEM.containsKey(id)) {
-                throw new IllegalStateException("Duplicate item id %s contributed by mod %s"
-                        .formatted(id, MysticalAgriculture.MOD_ID));
-            }
-            Registry.register(BuiltInRegistries.ITEM, id, factory.apply(id));
-        });
+        BLOCK_ITEMS.forEach((id, factory) ->
+                ITEM_REGISTRAR.register(id, factory.apply(id), MysticalAgriculture.MOD_ID));
     }
 
     private static Block register(String name, Function<Identifier, Block> block) {
@@ -159,16 +160,6 @@ public final class ModBlocks {
     }
 
     private static void registerBlock(Identifier id, Block block, String sourceMod) {
-        if (BuiltInRegistries.BLOCK.containsKey(id)) {
-            throw new IllegalStateException("Duplicate block id %s contributed by mod %s".formatted(id, sourceMod));
-        }
-        Registry.register(BuiltInRegistries.BLOCK, id, block);
-    }
-
-    private static String blockSource(Identifier id) {
-        var name = id.getPath();
-        var cropName = name.endsWith("_crop") ? name.substring(0, name.length() - 5) : name;
-        var crop = CropRegistry.getInstance().getCropByName(cropName);
-        return crop != null ? crop.getModId() : MysticalAgriculture.MOD_ID;
+        BLOCK_REGISTRAR.register(id, block, sourceMod);
     }
 }

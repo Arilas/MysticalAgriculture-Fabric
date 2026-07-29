@@ -11,8 +11,8 @@ import com.blakebr0.mysticalagriculture.init.ModMenuTypes;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
 import com.blakebr0.mysticalagriculture.registry.AugmentRegistry;
 import com.blakebr0.mysticalagriculture.registry.CropRegistry;
+import com.blakebr0.mysticalagriculture.registry.FabricPluginRegistry;
 import com.blakebr0.mysticalagriculture.registry.MobSoulTypeRegistry;
-import com.blakebr0.mysticalagriculture.registry.PluginRegistry;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
@@ -32,7 +32,7 @@ public final class MysticalAgriculture implements ModInitializer {
         initAPI();
 
         // 3. Built-in and external plug-in discovery
-        var plugins = PluginRegistry.getInstance();
+        var plugins = FabricPluginRegistry.create();
         plugins.loadPlugins();
 
         // 4. Content collection and vanilla registration

@@ -1,12 +1,13 @@
 package com.blakebr0.mysticalagriculture.api.lib;
 
+import net.fabricmc.fabric.api.recipe.v1.ingredient.DefaultCustomIngredients;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import org.jspecify.annotations.Nullable;
 
 public class LazyIngredient {
@@ -57,7 +58,7 @@ public class LazyIngredient {
     public @Nullable Ingredient getIngredient(HolderLookup.Provider registries) {
         if (!this.loadedIngredient) {
             if (this.isTag()) {
-                registries.get(ItemTags.create(Identifier.parse(this.id))).ifPresent(item -> {
+                registries.get(TagKey.create(Registries.ITEM, Identifier.parse(this.id))).ifPresent(item -> {
                     this.ingredient = Ingredient.of(item);
                 });
             } else if (this.isItem()) {
@@ -65,7 +66,10 @@ public class LazyIngredient {
                     if (this.components == null || this.components.isEmpty()) {
                         this.ingredient = Ingredient.of(item.value());
                     } else {
-                        this.ingredient = DataComponentIngredient.of(false, this.components, item);
+                        this.ingredient = DefaultCustomIngredients.components(
+                                Ingredient.of(item.value()),
+                                builder -> builder.set(this.components)
+                        );
                     }
                 });
             }

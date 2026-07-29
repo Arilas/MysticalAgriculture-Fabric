@@ -1,6 +1,7 @@
 package com.blakebr0.mysticalagriculture.init;
 
 import com.blakebr0.mysticalagriculture.MysticalAgriculture;
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureDataComponentTypes;
 import com.blakebr0.mysticalagriculture.api.components.AOEAugmentOffsetComponent;
 import com.blakebr0.mysticalagriculture.api.components.AugmentComponent;
 import com.blakebr0.mysticalagriculture.api.components.SoulJarComponent;
@@ -21,13 +22,13 @@ public final class ModDataComponentTypes {
     public static final DataComponentType<Boolean> WATERING_CAN_ACTIVE = register("watering_can_active",
             DataComponentType.<Boolean>builder().persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL).build());
     public static final DataComponentType<List<AugmentComponent>> EQUIPPED_AUGMENTS = register("equipped_augments",
-            DataComponentType.<List<AugmentComponent>>builder().persistent(AugmentComponent.EQUIPPED_CODEC).networkSynchronized(AugmentComponent.EQUIPPED_STREAM_CODEC).build());
+            MysticalAgricultureDataComponentTypes.EQUIPPED_AUGMENTS);
     public static final DataComponentType<Integer> EXPERIENCE_CAPSULE = register("experience_capsule",
-            DataComponentType.<Integer>builder().persistent(Codec.INT).networkSynchronized(ByteBufCodecs.INT).build());
+            MysticalAgricultureDataComponentTypes.EXPERIENCE_CAPSULE);
     public static final DataComponentType<SoulJarComponent> SOUL_JAR = register("soul_jar",
-            DataComponentType.<SoulJarComponent>builder().persistent(SoulJarComponent.CODEC).networkSynchronized(SoulJarComponent.STREAM_CODEC).build());
+            MysticalAgricultureDataComponentTypes.SOUL_JAR);
     public static final DataComponentType<AOEAugmentOffsetComponent> AOE_AUGMENT_OFFSET = register("aoe_augment_offset",
-            DataComponentType.<AOEAugmentOffsetComponent>builder().persistent(AOEAugmentOffsetComponent.CODEC).networkSynchronized(AOEAugmentOffsetComponent.STREAM_CODEC).build());
+            MysticalAgricultureDataComponentTypes.AOE_AUGMENT_OFFSET);
 
     public static void register() {
         ENTRIES.forEach((id, type) -> {

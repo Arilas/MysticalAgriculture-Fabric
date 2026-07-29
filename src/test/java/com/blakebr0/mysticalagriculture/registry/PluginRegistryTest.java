@@ -1,6 +1,7 @@
 package com.blakebr0.mysticalagriculture.registry;
 
 import com.blakebr0.mysticalagriculture.api.IMysticalAgriculturePlugin;
+import com.blakebr0.mysticalagriculture.api.MysticalAgricultureAPI;
 import com.blakebr0.mysticalagriculture.api.crop.Crop;
 import com.blakebr0.mysticalagriculture.api.crop.CropTier;
 import com.blakebr0.mysticalagriculture.api.crop.CropType;
@@ -10,18 +11,45 @@ import com.blakebr0.mysticalagriculture.api.registry.IMobSoulTypeRegistry;
 import com.blakebr0.mysticalagriculture.api.soul.MobSoulType;
 import com.blakebr0.mysticalagriculture.api.tinkering.Augment;
 import com.blakebr0.mysticalagriculture.api.tinkering.AugmentType;
+import com.mojang.serialization.Lifecycle;
+import net.minecraft.SharedConstants;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.MappedRegistry;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.Bootstrap;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.ToolProvider;
+import java.net.URI;
 import java.util.EnumSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PluginRegistryTest {
+    @BeforeAll
+    static void bootstrapMinecraft() {
+        SharedConstants.tryDetectVersion();
+        Bootstrap.bootStrap();
+    }
+
     @Test
     void corePluginIsFirstAndFabricCandidateOrderIsPreserved() {
         var registry = registryWith(
@@ -94,6 +122,7 @@ class PluginRegistryTest {
     @Test
     void duplicateDerivedBlockIdNamesTheIdAndSourceMod() {
         var expectedId = Identifier.fromNamespaceAndPath("mysticalagriculture", "shared_crop");
+        MappedRegistry<Block> blocks = registry("derived_blocks");
         var registry = registryWith(
                 candidate("first", "first.Plugin", () -> cropPlugin("first", "shared")),
                 candidate("second", "second.Plugin", () -> cropPlugin("second", "shared"))
@@ -102,14 +131,19 @@ class PluginRegistryTest {
         registry.loadPlugins();
         registry.collectContent();
         var exception = assertThrows(IllegalStateException.class,
-                () -> registry.getCropRegistry().registerBlocks((id, block) -> { }));
+                () -> registry.getCropRegistry().registerBlocks(
+                        (id, crop) -> (CropBlock) Blocks.WHEAT,
+                        new DirectRegistryRegistrar<>(blocks, "block")
+                ));
 
         assertContainsIdAndSource(exception, expectedId, "second");
+        assertTrue(blocks.containsKey(expectedId), "the first derived block must pass through Registry.register");
     }
 
     @Test
     void duplicateDerivedItemIdNamesTheIdAndSourceMod() {
         var expectedId = Identifier.fromNamespaceAndPath("mysticalagriculture", "shared_essence");
+        MappedRegistry<Item> items = registry("derived_items");
         var registry = registryWith(
                 candidate("first", "first.Plugin", () -> itemOnlyCropPlugin("first", "shared")),
                 candidate("second", "second.Plugin", () -> itemOnlyCropPlugin("second", "shared"))
@@ -118,9 +152,14 @@ class PluginRegistryTest {
         registry.loadPlugins();
         registry.collectContent();
         var exception = assertThrows(IllegalStateException.class,
-                () -> registry.getCropRegistry().registerItems((id, item) -> { }));
+                () -> registry.getCropRegistry().registerItems(
+                        PluginRegistryTest::item,
+                        PluginRegistryTest::item,
+                        new DirectRegistryRegistrar<>(items, "item")
+                ));
 
         assertContainsIdAndSource(exception, expectedId, "second");
+        assertTrue(items.containsKey(expectedId), "the first derived item must pass through Registry.register");
     }
 
     @Test
@@ -133,6 +172,59 @@ class PluginRegistryTest {
 
         assertTrue(exception.getMessage().contains("broken"));
         assertTrue(exception.getMessage().contains("broken.Plugin"));
+        assertFalse(registry.isFinalized());
+        assertTrue(registry.isFailed());
+        assertThrows(IllegalStateException.class, registry::collectContent);
+    }
+
+    @Test
+    void configureFailureNamesModAndDefinitionAndPoisonsLifecycle() {
+        var registry = registryWith(candidate("broken_config", "broken.ConfigPlugin", () -> new NoOpPlugin() {
+            @Override
+            public void configure(com.blakebr0.mysticalagriculture.api.lib.PluginConfig config) {
+                throw new IllegalArgumentException("configure boom");
+            }
+        }));
+
+        var exception = assertThrows(IllegalStateException.class, registry::loadPlugins);
+
+        assertPhaseFailure(exception, "broken_config", "broken.ConfigPlugin", "configure boom");
+        assertTrue(registry.isFailed());
+        assertThrows(IllegalStateException.class, registry::collectContent);
+    }
+
+    @Test
+    void registrationFailureNamesModAndDefinitionAndPoisonsLifecycle() {
+        var registry = registryWith(candidate("broken_register", "broken.RegisterPlugin", () -> new NoOpPlugin() {
+            @Override
+            public void onRegisterCrops(ICropRegistry crops) {
+                throw new IllegalArgumentException("registration boom");
+            }
+        }));
+        registry.loadPlugins();
+
+        var exception = assertThrows(IllegalStateException.class, registry::collectContent);
+
+        assertPhaseFailure(exception, "broken_register", "broken.RegisterPlugin", "registration boom");
+        assertTrue(registry.isFailed());
+        assertThrows(IllegalStateException.class, registry::finalizeContent);
+    }
+
+    @Test
+    void postRegistrationFailureNamesModAndDefinitionAndPoisonsLifecycle() {
+        var registry = registryWith(candidate("broken_post", "broken.PostPlugin", () -> new NoOpPlugin() {
+            @Override
+            public void onPostRegisterAugments(IAugmentRegistry augments) {
+                throw new IllegalArgumentException("post boom");
+            }
+        }));
+        registry.loadPlugins();
+        registry.collectContent();
+
+        var exception = assertThrows(IllegalStateException.class, registry::finalizeContent);
+
+        assertPhaseFailure(exception, "broken_post", "broken.PostPlugin", "post boom");
+        assertTrue(registry.isFailed());
         assertFalse(registry.isFinalized());
     }
 
@@ -147,6 +239,84 @@ class PluginRegistryTest {
                 () -> registry.getAugmentRegistry().register(augment(id("late"))));
 
         assertTrue(exception.getMessage().contains("finalized"));
+    }
+
+    @Test
+    void directRegistrarUsesVanillaRegistryCollisionAndFreezeBoundaries() {
+        var blocks = PluginRegistryTest.<Block>registry("direct_blocks");
+        var registrar = new DirectRegistryRegistrar<>(blocks, "block");
+        var duplicateId = id("registered_block");
+        registrar.register(duplicateId, block(duplicateId), "first_mod");
+
+        var duplicate = assertThrows(IllegalStateException.class,
+                () -> registrar.register(duplicateId, block(duplicateId), "second_mod"));
+        assertContainsIdAndSource(duplicate, duplicateId, "second_mod");
+
+        blocks.freeze();
+        var frozen = assertThrows(IllegalStateException.class,
+                () -> registrar.register(id("late_block"), Blocks.DIRT, "late_mod"));
+        assertTrue(frozen.getMessage().toLowerCase().contains("frozen"), frozen.getMessage());
+    }
+
+    @Test
+    void menuFactoryBuildsUsableFabricType() {
+        var menuType = RegistryTypeFactories.extendedMenu(
+                (syncId, inventory, pos) -> new TestMenu(syncId, pos),
+                BlockPos.STREAM_CODEC
+        );
+        assertSame(BlockPos.STREAM_CODEC, menuType.getStreamCodec());
+        var menu = menuType.create(7, null, BlockPos.ZERO);
+        assertEquals(7, menu.containerId);
+        assertEquals(BlockPos.ZERO, menu.pos);
+    }
+
+    @Test
+    void blockEntityFactoryExposesTheVanillaFactoryBoundary() throws ReflectiveOperationException {
+        var factory = RegistryTypeFactories.class.getMethod(
+                "blockEntity",
+                BlockEntityType.BlockEntitySupplier.class,
+                Block[].class
+        );
+
+        assertEquals(BlockEntityType.class, factory.getReturnType());
+        assertTrue(java.lang.reflect.Modifier.isStatic(factory.getModifiers()));
+    }
+
+    @Test
+    void apiBootstrapRejectsDoubleInitialization() {
+        MysticalAgricultureAPI.bootstrap(null, null, null, null);
+
+        var exception = assertThrows(IllegalStateException.class,
+                () -> MysticalAgricultureAPI.bootstrap(null, null, null, null));
+
+        assertTrue(exception.getMessage().contains("already been initialized"));
+    }
+
+    @Test
+    void apiCompatibilityClasspathCannotCompileImplementationImports() {
+        var compiler = ToolProvider.getSystemJavaCompiler();
+        var diagnostics = new DiagnosticCollector<JavaFileObject>();
+        var source = new StringSource(
+                "consumer.ImplementationLeak",
+                "package consumer; import com.blakebr0.mysticalagriculture.init.ModItems; "
+                        + "final class ImplementationLeak { Object value = ModItems.INFERIUM_ESSENCE; }"
+        );
+        var classpath = System.getProperty("apiCompatibilityClasspath");
+
+        var success = compiler.getTask(
+                null,
+                null,
+                diagnostics,
+                List.of("-proc:none", "-classpath", classpath),
+                null,
+                List.of(source)
+        ).call();
+
+        assertFalse(success, "the API compatibility classpath must not expose implementation classes");
+        assertTrue(diagnostics.getDiagnostics().stream()
+                        .anyMatch(diagnostic -> diagnostic.getMessage(null).contains("does not exist")
+                                || diagnostic.getMessage(null).contains("cannot find symbol")),
+                diagnostics.getDiagnostics().toString());
     }
 
     private static PluginRegistry registryWith(PluginRegistry.PluginCandidate... candidates) {
@@ -199,8 +369,29 @@ class PluginRegistryTest {
         return new MobSoulType(id, entityId, 10, 0xFFFFFF);
     }
 
+    private static Block block(Identifier id) {
+        return Blocks.STONE;
+    }
+
+    private static Item item(Identifier id, Crop crop) {
+        return Items.STONE;
+    }
+
+    private static <T> MappedRegistry<T> registry(String path) {
+        return new MappedRegistry<>(
+                ResourceKey.createRegistryKey(Identifier.fromNamespaceAndPath("task2_test", path)),
+                Lifecycle.stable()
+        );
+    }
+
     private static Identifier id(String path) {
         return Identifier.fromNamespaceAndPath("test", path);
+    }
+
+    private static void assertPhaseFailure(Throwable exception, String source, String definition, String cause) {
+        assertTrue(exception.getMessage().contains(source), exception.getMessage());
+        assertTrue(exception.getMessage().contains(definition), exception.getMessage());
+        assertTrue(exception.getMessage().contains(cause), exception.getMessage());
     }
 
     private static void assertContainsIdAndSource(Throwable exception, Identifier id, String source) {
@@ -208,6 +399,39 @@ class PluginRegistryTest {
         assertTrue(exception.getMessage().contains(source), exception.getMessage());
     }
 
-    private static final class NoOpPlugin implements IMysticalAgriculturePlugin {
+    private static class NoOpPlugin implements IMysticalAgriculturePlugin {
+    }
+
+    private static final class TestMenu extends AbstractContainerMenu {
+        private final BlockPos pos;
+
+        private TestMenu(int syncId, BlockPos pos) {
+            super(null, syncId);
+            this.pos = pos;
+        }
+
+        @Override
+        public boolean stillValid(net.minecraft.world.entity.player.Player player) {
+            return true;
+        }
+
+        @Override
+        public ItemStack quickMoveStack(net.minecraft.world.entity.player.Player player, int slot) {
+            return ItemStack.EMPTY;
+        }
+    }
+
+    private static final class StringSource extends SimpleJavaFileObject {
+        private final String source;
+
+        private StringSource(String className, String source) {
+            super(URI.create("string:///" + className.replace('.', '/') + Kind.SOURCE.extension), Kind.SOURCE);
+            this.source = source;
+        }
+
+        @Override
+        public CharSequence getCharContent(boolean ignoreEncodingErrors) {
+            return this.source;
+        }
     }
 }
