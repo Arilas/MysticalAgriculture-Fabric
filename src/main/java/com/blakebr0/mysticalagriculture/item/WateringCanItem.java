@@ -3,12 +3,12 @@ package com.blakebr0.mysticalagriculture.item;
 import com.blakebr0.cucumber.item.BaseWateringCanItem;
 import com.blakebr0.cucumber.util.Utils;
 import com.blakebr0.mysticalagriculture.config.ModConfigs;
+import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -30,9 +30,9 @@ public class WateringCanItem extends BaseWateringCanItem {
     }
 
     /**
-     * Cucumber's shared implementation still references a removed Fabric API
-     * FakePlayer class and only protects the clicked position. Keep the watering
-     * transaction here so every mutated position observes server permissions.
+     * Cucumber's shared implementation only protects the clicked position. Keep
+     * the watering transaction here so every mutated position observes server
+     * permissions.
      */
     @Override
     public InteractionResult useOn(UseOnContext context) {
@@ -165,8 +165,6 @@ public class WateringCanItem extends BaseWateringCanItem {
     }
 
     private static boolean isFabricFakePlayer(Player player) {
-        // Fabric has no canonical fake-player class in 26.2. Automation mods use
-        // ServerPlayer subclasses; real connected players have the base runtime type.
-        return player instanceof ServerPlayer && player.getClass() != ServerPlayer.class;
+        return player instanceof FakePlayer;
     }
 }

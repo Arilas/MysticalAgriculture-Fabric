@@ -51,6 +51,9 @@ public abstract class ExperienceOrbMixin {
                     orb.getDeltaMovement(),
                     remaining
             );
+            // Player.take broadcasts through ChunkMap, so the split must be tracked
+            // before vanilla handles mending, player XP, and the pickup packet.
+            serverPlayer.level().addFreshEntity(remainder);
             remainder.playerTouch(player);
         }
 

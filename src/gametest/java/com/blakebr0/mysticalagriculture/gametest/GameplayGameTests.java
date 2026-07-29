@@ -1,12 +1,11 @@
 package com.blakebr0.mysticalagriculture.gametest;
 
-import com.mojang.authlib.GameProfile;
 import com.blakebr0.mysticalagriculture.MysticalAgriculture;
 import com.blakebr0.mysticalagriculture.api.lib.AbilityCache;
 import com.blakebr0.mysticalagriculture.api.util.AugmentUtils;
 import com.blakebr0.mysticalagriculture.api.util.ExperienceCapsuleUtils;
-import com.blakebr0.mysticalagriculture.augment.FlightAugment;
 import com.blakebr0.mysticalagriculture.api.util.MobSoulUtils;
+import com.blakebr0.mysticalagriculture.augment.FlightAugment;
 import com.blakebr0.mysticalagriculture.config.ModConfigs;
 import com.blakebr0.mysticalagriculture.handler.ExperienceCapsuleHandler;
 import com.blakebr0.mysticalagriculture.init.ModBlocks;
@@ -17,9 +16,14 @@ import com.blakebr0.mysticalagriculture.item.armor.EssenceChestplateItem;
 import com.blakebr0.mysticalagriculture.lib.ModAugments;
 import com.blakebr0.mysticalagriculture.lib.ModCrops;
 import com.blakebr0.mysticalagriculture.lib.ModMobSoulTypes;
+import com.mojang.authlib.GameProfile;
+import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
+import net.minecraft.advancements.predicates.BlockPredicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
@@ -32,7 +36,10 @@ import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.AdventureModePredicate;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.block.Blocks;
@@ -43,9 +50,12 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import io.netty.channel.embedded.EmbeddedChannel;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class GameplayGameTests {
     @GameTest
@@ -92,7 +102,16 @@ public final class GameplayGameTests {
 
     @GameTest
     public void mergedExperienceOrbPartialCapsuleRoomConservesRemainderAndUntouchedUnits(GameTestHelper helper) {
-        var player = helper.makeMockServerPlayerInLevel();
+        var trackedDuringTake = new AtomicBoolean();
+        var takeCalls = new AtomicInteger();
+        var player = makeTakeObservingPlayer(helper, entity -> {
+            takeCalls.incrementAndGet();
+            trackedDuringTake.set(
+                    entity instanceof ExperienceOrb taken
+                            && taken.getValue() == 3
+                            && helper.getLevel().getChunkSource().hasEntityWithId(entity.getId())
+            );
+        });
         var capsule = ExperienceCapsuleUtils.getExperienceCapsule(
                 ExperienceCapsuleUtils.MAX_XP_POINTS - 2,
                 ModItems.EXPERIENCE_CAPSULE
@@ -111,8 +130,77 @@ public final class GameplayGameTests {
         require(!orb.isRemoved(), "partial absorption discarded untouched merged-orb units");
         require(player.totalExperience == 3,
                 "vanilla did not receive the unabsorbed remainder of the consumed unit");
+        require(takeCalls.get() == 1,
+                "vanilla processed " + takeCalls.get() + " pickup entities instead of one remainder");
+        require(trackedDuringTake.get(),
+                "the partial remainder was not tracked during vanilla Player.take");
+        require(player.takeXpDelay == 2,
+                "vanilla pickup delay was not applied to the partial remainder");
         require(2 + player.totalExperience + orb.getValue() * orbCount(helper, orb) == 15,
                 "partial capsule absorption did not conserve total experience");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void singleExperienceOrbPartialCapsuleRoomConservesTrackedRemainder(GameTestHelper helper) {
+        var trackedDuringTake = new AtomicBoolean();
+        var player = makeTakeObservingPlayer(helper, entity -> trackedDuringTake.set(
+                entity instanceof ExperienceOrb taken
+                        && taken.getValue() == 3
+                        && helper.getLevel().getChunkSource().hasEntityWithId(entity.getId())
+        ));
+        var capsule = ExperienceCapsuleUtils.getExperienceCapsule(
+                ExperienceCapsuleUtils.MAX_XP_POINTS - 2,
+                ModItems.EXPERIENCE_CAPSULE
+        );
+        player.setItemInHand(InteractionHand.OFF_HAND, capsule);
+        var orb = mergedOrb(helper, 5, 1);
+
+        orb.playerTouch(player);
+
+        require(ExperienceCapsuleUtils.getExperience(capsule) == ExperienceCapsuleUtils.MAX_XP_POINTS,
+                "the capsule did not fill its two remaining experience points");
+        require(orb.isRemoved(), "the consumed single-unit orb remained in the level");
+        require(player.totalExperience == 3,
+                "vanilla did not receive the single orb's unabsorbed remainder");
+        require(trackedDuringTake.get(),
+                "the single orb's partial remainder was not tracked during vanilla Player.take");
+        require(player.takeXpDelay == 2,
+                "vanilla pickup delay was not applied to the single orb's remainder");
+        require(2 + player.totalExperience == 5,
+                "single-unit partial capsule absorption did not conserve total experience");
+        helper.succeed();
+    }
+
+    @GameTest
+    public void partialCapsuleRemainderStillRunsVanillaMending(GameTestHelper helper) {
+        var player = makeTakeObservingPlayer(helper, _ -> {
+        });
+        var capsule = ExperienceCapsuleUtils.getExperienceCapsule(
+                ExperienceCapsuleUtils.MAX_XP_POINTS - 2,
+                ModItems.EXPERIENCE_CAPSULE
+        );
+        var tool = new ItemStack(Items.DIAMOND_PICKAXE);
+        tool.setDamageValue(10);
+        tool.enchant(
+                helper.getLevel().registryAccess()
+                        .lookupOrThrow(Registries.ENCHANTMENT)
+                        .getOrThrow(Enchantments.MENDING),
+                1
+        );
+        player.setItemInHand(InteractionHand.OFF_HAND, capsule);
+        player.setItemInHand(InteractionHand.MAIN_HAND, tool);
+        var orb = mergedOrb(helper, 5, 1);
+
+        orb.playerTouch(player);
+
+        require(ExperienceCapsuleUtils.getExperience(capsule) == ExperienceCapsuleUtils.MAX_XP_POINTS,
+                "the capsule did not fill before vanilla mending");
+        require(tool.getDamageValue() < 10,
+                "the tracked partial remainder did not run vanilla mending");
+        require(orb.isRemoved(), "the mending test left the consumed orb in the level");
+        require(player.takeXpDelay == 2,
+                "the mending remainder did not apply vanilla pickup delay");
         helper.succeed();
     }
 
@@ -460,33 +548,87 @@ public final class GameplayGameTests {
     }
 
     @GameTest
-    public void fakePlayerWateringHonorsDeniedNeighborAndWatersAllowedPositions(GameTestHelper helper) {
+    public void canonicalFakePlayerWateringHonorsConfigThrottleAndDeniedNeighbor(GameTestHelper helper) {
         var origin = helper.absolutePos(new BlockPos(2, 1, 2));
         var allowed = origin.east();
         var denied = origin.west();
         var dry = Blocks.FARMLAND.defaultBlockState().setValue(FarmlandBlock.MOISTURE, 0);
         helper.getLevel().setBlock(origin, dry, 3);
         helper.getLevel().setBlock(allowed, dry, 3);
-        helper.getLevel().setBlock(denied, dry, 3);
-        var player = makePermissionPlayer(helper, position -> !position.equals(denied));
+        helper.getLevel().setBlock(
+                denied,
+                ModBlocks.INFERIUM_FARMLAND.defaultBlockState()
+                        .setValue(FarmlandBlock.MOISTURE, 0),
+                3
+        );
+        var player = FakePlayer.get(helper.getLevel());
         player.setPos(origin.getX() + 0.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D);
         var stack = new ItemStack(ModItems.WATERING_CAN);
         WateringCanItem.setFilled(stack, true);
-        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        stack.set(
+                DataComponents.CAN_PLACE_ON,
+                new AdventureModePredicate(List.of(
+                        BlockPredicate.Builder.block()
+                                .of(
+                                        helper.getLevel().registryAccess()
+                                                .lookupOrThrow(Registries.BLOCK),
+                                        Blocks.FARMLAND
+                                )
+                                .build()
+                ))
+        );
         var hit = new BlockHitResult(Vec3.atCenterOf(origin), Direction.UP, origin, false);
+        var previousStack = player.getMainHandItem();
+        var previousMayBuild = player.getAbilities().mayBuild;
+        var previousConfig = ModConfigs.FAKE_PLAYER_WATERING.get();
+        var cooldowns = player.getCooldowns();
+        var cooldownGroup = cooldowns.getCooldownGroup(stack);
 
-        stack.useOn(new net.minecraft.world.item.context.UseOnContext(
-                player,
-                InteractionHand.MAIN_HAND,
-                hit
-        ));
+        try {
+            player.getAbilities().mayBuild = false;
+            player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+            cooldowns.removeCooldown(cooldownGroup);
 
-        require(helper.getLevel().getBlockState(origin).getValue(FarmlandBlock.MOISTURE) == 7,
-                "the Fabric fake player did not water the clicked farmland");
-        require(helper.getLevel().getBlockState(allowed).getValue(FarmlandBlock.MOISTURE) == 7,
-                "the Fabric fake player did not water an allowed neighbor");
-        require(helper.getLevel().getBlockState(denied).getValue(FarmlandBlock.MOISTURE) == 0,
-                "the Fabric fake player watered a denied neighbor");
+            setConfigValue(ModConfigs.FAKE_PLAYER_WATERING, false);
+            stack.useOn(new net.minecraft.world.item.context.UseOnContext(
+                    player,
+                    InteractionHand.MAIN_HAND,
+                    hit
+            ));
+            require(helper.getLevel().getBlockState(origin).getValue(FarmlandBlock.MOISTURE) == 0,
+                    "the canonical Fabric fake player bypassed disabled watering");
+            require(!cooldowns.isOnCooldown(stack),
+                    "denied fake-player watering incorrectly started a cooldown");
+
+            setConfigValue(ModConfigs.FAKE_PLAYER_WATERING, true);
+            stack.useOn(new net.minecraft.world.item.context.UseOnContext(
+                    player,
+                    InteractionHand.MAIN_HAND,
+                    hit
+            ));
+
+            require(helper.getLevel().getBlockState(origin).getValue(FarmlandBlock.MOISTURE) == 7,
+                    "the canonical Fabric fake player did not water the clicked farmland");
+            require(helper.getLevel().getBlockState(allowed).getValue(FarmlandBlock.MOISTURE) == 7,
+                    "the canonical Fabric fake player did not water an allowed neighbor");
+            require(helper.getLevel().getBlockState(denied).getValue(FarmlandBlock.MOISTURE) == 0,
+                    "the canonical Fabric fake player watered a denied neighbor");
+            for (int tick = 0; tick < 9; tick++) {
+                cooldowns.tick();
+            }
+            require(cooldowns.isOnCooldown(stack),
+                    "canonical fake-player watering cooldown ended before tick 10");
+            cooldowns.tick();
+            require(!cooldowns.isOnCooldown(stack),
+                    "canonical fake-player watering cooldown lasted beyond tick 10");
+        } finally {
+            cooldowns.removeCooldown(cooldownGroup);
+            player.setItemInHand(InteractionHand.MAIN_HAND, previousStack);
+            player.getAbilities().mayBuild = previousMayBuild;
+            setConfigValue(ModConfigs.FAKE_PLAYER_WATERING, previousConfig);
+        }
+        require(ModConfigs.FAKE_PLAYER_WATERING.get().equals(previousConfig),
+                "fake-player watering test did not restore the global config value");
         helper.succeed();
     }
 
@@ -522,6 +664,22 @@ public final class GameplayGameTests {
             GameTestHelper helper,
             Predicate<BlockPos> mayUse
     ) {
+        return makePlayer(helper, mayUse, _ -> {
+        });
+    }
+
+    private static ServerPlayer makeTakeObservingPlayer(
+            GameTestHelper helper,
+            Consumer<net.minecraft.world.entity.Entity> onTake
+    ) {
+        return makePlayer(helper, _ -> true, onTake);
+    }
+
+    private static ServerPlayer makePlayer(
+            GameTestHelper helper,
+            Predicate<BlockPos> mayUse,
+            Consumer<net.minecraft.world.entity.Entity> onTake
+    ) {
         var cookie = CommonListenerCookie.createInitial(
                 new GameProfile(UUID.randomUUID(), "task5-permission-player"),
                 false
@@ -541,6 +699,12 @@ public final class GameplayGameTests {
             @Override
             public boolean mayUseItemAt(BlockPos pos, Direction facing, ItemStack stack) {
                 return mayUse.test(pos.relative(facing.getOpposite()));
+            }
+
+            @Override
+            public void take(net.minecraft.world.entity.Entity entity, int count) {
+                onTake.accept(entity);
+                super.take(entity, count);
             }
         };
         var connection = new Connection(PacketFlow.SERVERBOUND);

@@ -385,6 +385,7 @@ tasks.register('compileTask5TestJava', JavaCompile) {
     source file("src/test/java/com/blakebr0/mysticalagriculture/network/AOEUpdateValidatorTest.java")
     source file("src/test/java/com/blakebr0/mysticalagriculture/handler/GameplayMixinApplicationTest.java")
     source file("src/test/java/com/blakebr0/mysticalagriculture/item/MachineUpgradeTooltipBoundaryTest.java")
+    source file("src/test/java/com/blakebr0/mysticalagriculture/item/WateringCanFakePlayerBoundaryTest.java")
     classpath = configurations.testCompileClasspath + files(task5MainOutput)
     destinationDirectory = task5TestOutput
     options.sourcepath = files("src/main/java", "src/test/java")
@@ -406,6 +407,7 @@ tasks.register('task5Test', Test) {
     include "**/AOEUpdateValidatorTest.class"
     include "**/GameplayMixinApplicationTest.class"
     include "**/MachineUpgradeTooltipBoundaryTest.class"
+    include "**/WateringCanFakePlayerBoundaryTest.class"
     systemProperty "fabric.addMods", task5LoaderModOutput.get().asFile.absolutePath
     useJUnitPlatform()
 }
