@@ -43,7 +43,7 @@ public class TinkeringTableRenderer implements BlockEntityRenderer<TinkeringTabl
 
     @Override
     public void submit(TinkeringTableRenderState state, PoseStack matrix, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        if (!state.itemResource.isEmpty() && state.facing != null) {
+        if (!state.itemResource.isBlank() && state.facing != null) {
             matrix.pushPose();
             matrix.translate(0.5D, 0.9D, 0.5D);
             float scale = 0.7F;

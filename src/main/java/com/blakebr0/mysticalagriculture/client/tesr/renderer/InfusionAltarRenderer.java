@@ -19,7 +19,6 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.block.CropBlock;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -43,7 +42,7 @@ public class InfusionAltarRenderer implements BlockEntityRenderer<InfusionAltarT
 
         var inventory = tile.getInventory();
 
-        state.itemResource = inventory.getResource(1).isEmpty() ? inventory.getResource(0) : inventory.getResource(1);
+        state.itemResource = inventory.getResource(1).isBlank() ? inventory.getResource(0) : inventory.getResource(1);
         state.pedestalPositions = tile.getPedestalPositions();
 
         int seed = HashCommon.long2int(state.blockPos.asLong());
@@ -52,17 +51,22 @@ public class InfusionAltarRenderer implements BlockEntityRenderer<InfusionAltarT
 
         var level = tile.getLevel();
 
-        for (int i = 0; i < state.pedestalPositions.size(); i++) {
+        for (int i = 0; i < state.blockModelRenderStates.length; i++) {
+            state.renderGhosts[i] = false;
+        }
+
+        for (int i = 0; i < Math.min(state.pedestalPositions.size(), state.blockModelRenderStates.length); i++) {
             var aoePos = state.pedestalPositions.get(i);
             if (level != null && level.isEmptyBlock(aoePos)) {
                 this.blockModelResolver.update(state.blockModelRenderStates[i], ModBlocks.INFUSION_PEDESTAL.defaultBlockState(), BlockDisplayContext.create());
+                state.renderGhosts[i] = true;
             }
         }
     }
 
     @Override
     public void submit(InfusionAltarRenderState state, PoseStack matrix, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        if (!state.itemResource.isEmpty()) {
+        if (!state.itemResource.isBlank()) {
             matrix.pushPose();
             matrix.translate(0.5D, 1.1D, 0.5D);
             float scale = state.itemResource.getItem() instanceof BlockItem blockItem && !(blockItem.getBlock() instanceof CropBlock) ? 0.55F : 0.35F;
@@ -77,7 +81,10 @@ public class InfusionAltarRenderer implements BlockEntityRenderer<InfusionAltarT
         matrix.pushPose();
         matrix.translate(-state.blockPos.getX(), -state.blockPos.getY(), -state.blockPos.getZ());
 
-        for (int i = 0; i < state.blockModelRenderStates.length; i++) {
+        for (int i = 0; i < Math.min(state.blockModelRenderStates.length, state.pedestalPositions.size()); i++) {
+            if (!state.renderGhosts[i])
+                continue;
+
             var blockModelRenderState = state.blockModelRenderStates[i];
             var aoePos = state.pedestalPositions.get(i);
 
@@ -96,10 +103,5 @@ public class InfusionAltarRenderer implements BlockEntityRenderer<InfusionAltarT
     @Override
     public boolean shouldRenderOffScreen() {
         return true;
-    }
-
-    @Override
-    public AABB getRenderBoundingBox(InfusionAltarTileEntity tile) {
-        return AABB.INFINITE;
     }
 }

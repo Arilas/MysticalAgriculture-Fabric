@@ -24,6 +24,6 @@ public record ExperienceCapsuleProperty() implements RangeSelectItemModelPropert
 
     @Override
     public MapCodec<? extends RangeSelectItemModelProperty> type() {
-        return null;
+        return MAP_CODEC;
     }
 }

@@ -29,6 +29,7 @@ public class SouliumSpawnerRenderer implements BlockEntityRenderer<SouliumSpawne
     @Override
     public void extractRenderState(SouliumSpawnerTileEntity tile, SouliumSpawnerRenderState state, float partialTicks, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
         BlockEntityRenderer.super.extractRenderState(tile, state, partialTicks, cameraPosition, breakProgress);
+        state.partialTicks = partialTicks;
 
         var displayEntity = tile.getDisplayEntity();
         if (displayEntity != null) {
@@ -44,7 +45,6 @@ public class SouliumSpawnerRenderer implements BlockEntityRenderer<SouliumSpawne
 
         state.spin = tile.getSpin();
         state.oSpin = tile.getoSpin();
-        state.partialTicks = partialTicks;
     }
 
     @Override

@@ -22,8 +22,8 @@ public class ReprocessorScreen extends BaseContainerScreen<ReprocessorContainer>
     protected void init() {
         super.init();
 
-        int x = this.getLeftPos();
-        int y = this.getTopPos();
+        int x = this.leftPos;
+        int y = this.topPos;
 
         this.addRenderableWidget(new EnergyBarWidget(x + 7, y + 17, this.menu::getEnergyStored, this.menu::getEnergyCapacity));
     }
@@ -36,8 +36,8 @@ public class ReprocessorScreen extends BaseContainerScreen<ReprocessorContainer>
 
     @Override
     protected void extractTooltip(GuiGraphicsExtractor gfx, int mouseX, int mouseY) {
-        int x = this.getLeftPos();
-        int y = this.getTopPos();
+        int x = this.leftPos;
+        int y = this.topPos;
 
         super.extractTooltip(gfx, mouseX, mouseY);
 
@@ -50,8 +50,8 @@ public class ReprocessorScreen extends BaseContainerScreen<ReprocessorContainer>
     public void extractBackground(GuiGraphicsExtractor gfx, int mouseX, int mouseY, float a) {
         super.extractBackground(gfx, mouseX, mouseY, a);
 
-        int x = this.getLeftPos();
-        int y = this.getTopPos();
+        int x = this.leftPos;
+        int y = this.topPos;
 
         if (this.menu.getFuelItemValue() > 0) {
             int i = this.getBurnLeftScaled(13);

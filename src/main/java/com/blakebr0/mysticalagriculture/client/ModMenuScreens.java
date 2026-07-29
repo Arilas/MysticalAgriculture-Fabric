@@ -9,19 +9,20 @@ import com.blakebr0.mysticalagriculture.client.screen.SoulExtractorScreen;
 import com.blakebr0.mysticalagriculture.client.screen.SouliumSpawnerScreen;
 import com.blakebr0.mysticalagriculture.client.screen.TinkeringTableScreen;
 import com.blakebr0.mysticalagriculture.init.ModMenuTypes;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.minecraft.client.gui.screens.MenuScreens;
 
 public final class ModMenuScreens {
-    @SubscribeEvent
-    public void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
-        event.register(ModMenuTypes.TINKERING_TABLE, TinkeringTableScreen::new);
-        event.register(ModMenuTypes.ENCHANTER, EnchanterScreen::new);
-        event.register(ModMenuTypes.FURNACE, EssenceFurnaceScreen::new);
-        event.register(ModMenuTypes.REPROCESSOR, ReprocessorScreen::new);
-        event.register(ModMenuTypes.SOUL_EXTRACTOR, SoulExtractorScreen::new);
-        event.register(ModMenuTypes.HARVESTER, HarvesterScreen::new);
-        event.register(ModMenuTypes.SOULIUM_SPAWNER, SouliumSpawnerScreen::new);
-        event.register(ModMenuTypes.ORE_INFUSER, OreInfuserScreen::new);
+    private ModMenuScreens() {
+    }
+
+    public static void register() {
+        MenuScreens.register(ModMenuTypes.TINKERING_TABLE, TinkeringTableScreen::new);
+        MenuScreens.register(ModMenuTypes.ENCHANTER, EnchanterScreen::new);
+        MenuScreens.register(ModMenuTypes.FURNACE, EssenceFurnaceScreen::new);
+        MenuScreens.register(ModMenuTypes.REPROCESSOR, ReprocessorScreen::new);
+        MenuScreens.register(ModMenuTypes.SOUL_EXTRACTOR, SoulExtractorScreen::new);
+        MenuScreens.register(ModMenuTypes.HARVESTER, HarvesterScreen::new);
+        MenuScreens.register(ModMenuTypes.SOULIUM_SPAWNER, SouliumSpawnerScreen::new);
+        MenuScreens.register(ModMenuTypes.ORE_INFUSER, OreInfuserScreen::new);
     }
 }

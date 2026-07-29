@@ -151,6 +151,8 @@ def task5TestOutput = layout.buildDirectory.dir("classes/java/task5Test")
 def task5GameTestOutput = layout.buildDirectory.dir("classes/java/task5GameTest")
 def task5MainOutput = layout.buildDirectory.dir("classes/java/task5Main")
 def task5LoaderModOutput = layout.buildDirectory.dir("task5LoaderMod")
+def task6TestOutput = layout.buildDirectory.dir("classes/java/task6Test")
+def task6MainOutput = layout.buildDirectory.dir("classes/java/task6Main")
 
 tasks.register('compileTask2TestJava', JavaCompile) {
     source file("src/test/java/com/blakebr0/mysticalagriculture/registry/PluginRegistryTest.java")
@@ -514,6 +516,78 @@ tasks.register('prepareTask5LoaderTestMod', Sync) {
     from "src/task5Loader/resources"
     from "src/main/resources/mysticalagriculture.mixins.json"
     into task5LoaderModOutput
+}
+
+tasks.register('compileTask6Java', JavaCompile) {
+    source fileTree("src/main/java") {
+        // Task 7 owns the optional JEI/Jade compatibility boundary.
+        exclude "com/blakebr0/mysticalagriculture/compat/**"
+    }
+    classpath = configurations.compileClasspath
+    destinationDirectory = task6MainOutput
+    options.sourcepath = files("src/main/java")
+    options.compilerArgs += ["-implicit:none"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('compileTask6TestJava', JavaCompile) {
+    dependsOn tasks.named('compileTask6Java')
+    source fileTree("src/test/java/com/blakebr0/mysticalagriculture/client") {
+        include "**/*Test.java"
+    }
+    classpath = configurations.testCompileClasspath + files(task6MainOutput)
+    destinationDirectory = task6TestOutput
+    options.sourcepath = files("src/test/java")
+    options.compilerArgs += ["-implicit:none"]
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.register('task6Test', Test) {
+    dependsOn tasks.named('compileTask6TestJava')
+    testClassesDirs = files(task6TestOutput)
+    classpath = configurations.testRuntimeClasspath + files(task6MainOutput, task6TestOutput)
+    systemProperty "task6AssetsDir", file("src/main/resources/assets/mysticalagriculture").absolutePath
+    useJUnitPlatform()
+}
+
+sourceSets {
+    task6Client {
+        java.srcDirs = []
+        resources.srcDirs = ["src/main/resources", "src/generated/resources"]
+    }
+}
+
+configurations {
+    task6ClientImplementation.extendsFrom implementation
+}
+
+sourceSets.task6Client.compileClasspath =
+        configurations.compileClasspath + files(task6MainOutput)
+sourceSets.task6Client.output.dir(task6MainOutput, builtBy: tasks.named('compileTask6Java'))
+sourceSets.task6Client.runtimeClasspath =
+        configurations.runtimeClasspath + sourceSets.task6Client.output
+
+loom {
+    mods {
+        task6Client {
+            sourceSet sourceSets.task6Client
+        }
+    }
+
+    runs {
+        task6FocusedClient {
+            inherit client
+            sourceSet = "task6Client"
+        }
+    }
+}
+
+tasks.named('runTask6FocusedClient') {
+    dependsOn tasks.named('compileTask6Java')
 }
 
 artifacts {

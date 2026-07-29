@@ -3,10 +3,10 @@ package com.blakebr0.mysticalagriculture.client.tesr.state;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.core.Direction;
-import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 
 public class TinkeringTableRenderState extends BlockEntityRenderState {
     public Direction facing;
-    public ItemResource itemResource;
+    public ItemVariant itemResource = ItemVariant.blank();
     public ItemStackRenderState itemRenderState = new ItemStackRenderState();
 }

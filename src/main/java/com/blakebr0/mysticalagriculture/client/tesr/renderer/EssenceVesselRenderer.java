@@ -41,8 +41,7 @@ public class EssenceVesselRenderer implements BlockEntityRenderer<EssenceVesselT
 
     @Override
     public void submit(EssenceVesselRenderState state, PoseStack matrix, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        if (!state.itemResource.isEmpty()) {
-            var builder = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderTypes.solidMovingBlock());
+        if (!state.itemResource.isBlank()) {
             var sprite = Minecraft.getInstance()
                     .getAtlasManager()
                     .getAtlasOrThrow(AtlasIds.BLOCKS)
@@ -53,23 +52,27 @@ public class EssenceVesselRenderer implements BlockEntityRenderer<EssenceVesselT
 
             matrix.pushPose();
 
-            var color = EssenceVesselColorManager.INSTANCE.getColor(state.itemResource);
+            var color = EssenceVesselColorManager.INSTANCE.getColor(state.itemResource.toStack());
 
             // top
-            addVertex(builder, matrix, 0.2f, 0.75f + filledAmount, 0.8f, sprite.getU0(), sprite.getV1(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.8f, 0.75f + filledAmount, 0.8f, sprite.getU1(), sprite.getV1(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.8f, 0.75f + filledAmount, 0.2f, sprite.getU1(), sprite.getV0(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.2f, 0.75f + filledAmount, 0.2f, sprite.getU0(), sprite.getV0(), color, state.lightCoords);
+            submitNodeCollector.submitCustomGeometry(matrix, RenderTypes.solidMovingBlock(), (pose, builder) -> {
+                addVertex(builder, pose, 0.2f, 0.75f + filledAmount, 0.8f, sprite.getU0(), sprite.getV1(), color, state.lightCoords);
+                addVertex(builder, pose, 0.8f, 0.75f + filledAmount, 0.8f, sprite.getU1(), sprite.getV1(), color, state.lightCoords);
+                addVertex(builder, pose, 0.8f, 0.75f + filledAmount, 0.2f, sprite.getU1(), sprite.getV0(), color, state.lightCoords);
+                addVertex(builder, pose, 0.2f, 0.75f + filledAmount, 0.2f, sprite.getU0(), sprite.getV0(), color, state.lightCoords);
+            });
 
             matrix.pushPose();
             matrix.translate(0, 1, 1);
             matrix.mulPose(Axis.XP.rotationDegrees(180));
 
             // bottom
-            addVertex(builder, matrix, 0.2f, 0.25f, 0.8f, sprite.getU0(), sprite.getV1(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.8f, 0.25f, 0.8f, sprite.getU1(), sprite.getV1(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.8f, 0.25f, 0.2f, sprite.getU1(), sprite.getV0(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.2f, 0.25f, 0.2f, sprite.getU0(), sprite.getV0(), color, state.lightCoords);
+            submitNodeCollector.submitCustomGeometry(matrix, RenderTypes.solidMovingBlock(), (pose, builder) -> {
+                addVertex(builder, pose, 0.2f, 0.25f, 0.8f, sprite.getU0(), sprite.getV1(), color, state.lightCoords);
+                addVertex(builder, pose, 0.8f, 0.25f, 0.8f, sprite.getU1(), sprite.getV1(), color, state.lightCoords);
+                addVertex(builder, pose, 0.8f, 0.25f, 0.2f, sprite.getU1(), sprite.getV0(), color, state.lightCoords);
+                addVertex(builder, pose, 0.2f, 0.25f, 0.2f, sprite.getU0(), sprite.getV0(), color, state.lightCoords);
+            });
 
             matrix.popPose();
 
@@ -79,10 +82,12 @@ public class EssenceVesselRenderer implements BlockEntityRenderer<EssenceVesselT
             matrix.mulPose(Axis.ZP.rotationDegrees(90));
 
             // west
-            addVertex(builder, matrix, 0.2f, 1, 0.8f, sprite.getU(textureOffset), sprite.getV1(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.2f + filledAmount, 1, 0.8f, sprite.getU1(), sprite.getV1(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.2f + filledAmount, 1, 0.2f, sprite.getU1(), sprite.getV0(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.2f, 1, 0.2f, sprite.getU(textureOffset), sprite.getV0(), color, state.lightCoords);
+            submitNodeCollector.submitCustomGeometry(matrix, RenderTypes.solidMovingBlock(), (pose, builder) -> {
+                addVertex(builder, pose, 0.2f, 1, 0.8f, sprite.getU(textureOffset), sprite.getV1(), color, state.lightCoords);
+                addVertex(builder, pose, 0.2f + filledAmount, 1, 0.8f, sprite.getU1(), sprite.getV1(), color, state.lightCoords);
+                addVertex(builder, pose, 0.2f + filledAmount, 1, 0.2f, sprite.getU1(), sprite.getV0(), color, state.lightCoords);
+                addVertex(builder, pose, 0.2f, 1, 0.2f, sprite.getU(textureOffset), sprite.getV0(), color, state.lightCoords);
+            });
 
             matrix.popPose();
             matrix.pushPose();
@@ -92,10 +97,12 @@ public class EssenceVesselRenderer implements BlockEntityRenderer<EssenceVesselT
             matrix.mulPose(Axis.YP.rotationDegrees(180));
 
             // east
-            addVertex(builder, matrix, 0.2f, 1, 0.8f, sprite.getU(textureOffset), sprite.getV1(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.2f + filledAmount, 1, 0.8f, sprite.getU1(), sprite.getV1(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.2f + filledAmount, 1, 0.2f, sprite.getU1(), sprite.getV0(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.2f, 1, 0.2f, sprite.getU(textureOffset), sprite.getV0(), color, state.lightCoords);
+            submitNodeCollector.submitCustomGeometry(matrix, RenderTypes.solidMovingBlock(), (pose, builder) -> {
+                addVertex(builder, pose, 0.2f, 1, 0.8f, sprite.getU(textureOffset), sprite.getV1(), color, state.lightCoords);
+                addVertex(builder, pose, 0.2f + filledAmount, 1, 0.8f, sprite.getU1(), sprite.getV1(), color, state.lightCoords);
+                addVertex(builder, pose, 0.2f + filledAmount, 1, 0.2f, sprite.getU1(), sprite.getV0(), color, state.lightCoords);
+                addVertex(builder, pose, 0.2f, 1, 0.2f, sprite.getU(textureOffset), sprite.getV0(), color, state.lightCoords);
+            });
 
             matrix.popPose();
             matrix.pushPose();
@@ -105,10 +112,12 @@ public class EssenceVesselRenderer implements BlockEntityRenderer<EssenceVesselT
             matrix.mulPose(Axis.YP.rotationDegrees(180));
 
             // south
-            addVertex(builder, matrix, 0.2f, 1, 0.2f + filledAmount, sprite.getU0(), sprite.getV1(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.8f, 1, 0.2f + filledAmount, sprite.getU1(), sprite.getV1(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.8f, 1, 0.2f, sprite.getU1(), sprite.getV(textureOffset), color, state.lightCoords);
-            addVertex(builder, matrix, 0.2f, 1, 0.2f, sprite.getU0(), sprite.getV(textureOffset), color, state.lightCoords);
+            submitNodeCollector.submitCustomGeometry(matrix, RenderTypes.solidMovingBlock(), (pose, builder) -> {
+                addVertex(builder, pose, 0.2f, 1, 0.2f + filledAmount, sprite.getU0(), sprite.getV1(), color, state.lightCoords);
+                addVertex(builder, pose, 0.8f, 1, 0.2f + filledAmount, sprite.getU1(), sprite.getV1(), color, state.lightCoords);
+                addVertex(builder, pose, 0.8f, 1, 0.2f, sprite.getU1(), sprite.getV(textureOffset), color, state.lightCoords);
+                addVertex(builder, pose, 0.2f, 1, 0.2f, sprite.getU0(), sprite.getV(textureOffset), color, state.lightCoords);
+            });
 
             matrix.popPose();
             matrix.pushPose();
@@ -117,10 +126,12 @@ public class EssenceVesselRenderer implements BlockEntityRenderer<EssenceVesselT
             matrix.mulPose(Axis.XP.rotationDegrees(270));
 
             // north
-            addVertex(builder, matrix, 0.2f, 1, 0.2f + filledAmount, sprite.getU0(), sprite.getV1(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.8f, 1, 0.2f + filledAmount, sprite.getU1(), sprite.getV1(), color, state.lightCoords);
-            addVertex(builder, matrix, 0.8f, 1, 0.2f, sprite.getU1(), sprite.getV(textureOffset), color, state.lightCoords);
-            addVertex(builder, matrix, 0.2f, 1, 0.2f, sprite.getU0(), sprite.getV(textureOffset), color, state.lightCoords);
+            submitNodeCollector.submitCustomGeometry(matrix, RenderTypes.solidMovingBlock(), (pose, builder) -> {
+                addVertex(builder, pose, 0.2f, 1, 0.2f + filledAmount, sprite.getU0(), sprite.getV1(), color, state.lightCoords);
+                addVertex(builder, pose, 0.8f, 1, 0.2f + filledAmount, sprite.getU1(), sprite.getV1(), color, state.lightCoords);
+                addVertex(builder, pose, 0.8f, 1, 0.2f, sprite.getU1(), sprite.getV(textureOffset), color, state.lightCoords);
+                addVertex(builder, pose, 0.2f, 1, 0.2f, sprite.getU0(), sprite.getV(textureOffset), color, state.lightCoords);
+            });
 
             matrix.popPose();
 
@@ -128,12 +139,11 @@ public class EssenceVesselRenderer implements BlockEntityRenderer<EssenceVesselT
         }
     }
 
-    private static void addVertex(VertexConsumer renderer, PoseStack stack, float x, float y, float z, float u, float v, int color, int lightCoords) {
-        renderer.addVertex(stack.last(), x, y, z)
+    private static void addVertex(VertexConsumer renderer, PoseStack.Pose pose, float x, float y, float z, float u, float v, int color, int lightCoords) {
+        renderer.addVertex(pose, x, y, z)
                 .setColor(color)
                 .setUv(u, v)
                 .setLight(lightCoords)
                 .setNormal(1, 0, 0);
     }
 }
-

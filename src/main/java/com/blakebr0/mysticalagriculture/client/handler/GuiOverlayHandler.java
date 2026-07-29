@@ -5,6 +5,8 @@ import com.blakebr0.mysticalagriculture.lib.ModTooltips;
 import com.blakebr0.mysticalagriculture.tileentity.AwakeningAltarTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.EssenceVesselTileEntity;
 import com.blakebr0.mysticalagriculture.tileentity.InfusionAltarTileEntity;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.item.ItemStack;
@@ -12,19 +14,25 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.RenderGuiEvent;
 
 public final class GuiOverlayHandler {
-    @SubscribeEvent
-    public void onPostRenderGui(RenderGuiEvent.Post event) {
+    private GuiOverlayHandler() {
+    }
+
+    public static void register() {
+        HudElementRegistry.attachElementAfter(
+                VanillaHudElements.BOSS_BAR,
+                com.blakebr0.mysticalagriculture.MysticalAgriculture.resource("machine_recipe_overlay"),
+                GuiOverlayHandler::extractRenderState
+        );
+    }
+
+    private static void extractRenderState(GuiGraphicsExtractor gfx, net.minecraft.client.DeltaTracker deltaTracker) {
         var mc = Minecraft.getInstance();
         var level = mc.level;
 
         if (level == null)
             return;
-
-        var gfx = event.getGuiGraphics();
 
         if (mc.hitResult instanceof BlockHitResult result) {
             var pos = result.getBlockPos();
@@ -56,8 +64,8 @@ public final class GuiOverlayHandler {
             }
 
             if (!stack.isEmpty()) {
-                int x = mc.getWindow().getGuiScaledWidth() / 2 - 11;
-                int y = mc.getWindow().getGuiScaledHeight() / 2 - 8;
+                int x = gfx.guiWidth() / 2 - 11;
+                int y = gfx.guiHeight() / 2 - 8;
 
                 gfx.item(stack, x + 26, y);
                 gfx.itemDecorations(mc.font, stack, x + 26, y);
@@ -73,15 +81,15 @@ public final class GuiOverlayHandler {
                 var inventory = vessel.getInventory();
                 var resource = inventory.getResource(0);
 
-                if (!resource.isEmpty()) {
+                if (!resource.isBlank()) {
                     var amount = inventory.getAmountAsInt(0);
-                    int x = mc.getWindow().getGuiScaledWidth() / 2 - 11;
-                    int y = mc.getWindow().getGuiScaledHeight() / 2 - 8;
+                    int x = gfx.guiWidth() / 2 - 11;
+                    int y = gfx.guiHeight() / 2 - 8;
                     var stack = resource.toStack(amount);
 
                     gfx.item(stack, x + 26, y);
                     gfx.itemDecorations(mc.font, stack, x + 26, y);
-                    gfx.text(mc.font, resource.getHoverName(), x + 48, y + 5, 0xFFFFFFFF);
+                    gfx.text(mc.font, stack.getHoverName(), x + 48, y + 5, 0xFFFFFFFF);
                 }
             }
         }
@@ -90,8 +98,8 @@ public final class GuiOverlayHandler {
     private static void drawEssenceRequirements(GuiGraphicsExtractor gfx, IAwakeningRecipe recipe, AwakeningAltarTileEntity altar, Level level) {
         var mc = Minecraft.getInstance();
 
-        int x = mc.getWindow().getGuiScaledWidth() / 2 - 11;
-        int y = mc.getWindow().getGuiScaledHeight() / 2 - 4;
+        int x = gfx.guiWidth() / 2 - 11;
+        int y = gfx.guiHeight() / 2 - 4;
         var lineHeight = mc.font.lineHeight + 6;
 
         var hasMissingEssences = false;

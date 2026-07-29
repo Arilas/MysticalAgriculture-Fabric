@@ -41,7 +41,7 @@ public class EnchanterRenderer implements BlockEntityRenderer<EnchanterTileEntit
 
     @Override
     public void submit(EnchanterRenderState state, PoseStack matrix, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        if (!state.itemResource.isEmpty() && state.facing != null) {
+        if (!state.itemResource.isBlank() && state.facing != null) {
             matrix.pushPose();
             matrix.translate(0.5D, 0.89D, 0.5D);
 

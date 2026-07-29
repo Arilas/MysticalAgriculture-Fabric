@@ -16,7 +16,7 @@ public record CropTintSource(Identifier id, CropTintType tintType) implements It
     public static final MapCodec<CropTintSource> MAP_CODEC = RecordCodecBuilder.mapCodec(builder ->
             builder.group(
                     Identifier.CODEC.fieldOf("id").forGetter(CropTintSource::id),
-                    CropTintType.CODEC.fieldOf("type").forGetter(CropTintSource::tintType)
+                    CropTintType.CODEC.fieldOf("tint_type").forGetter(CropTintSource::tintType)
             ).apply(builder, CropTintSource::new)
     );
 

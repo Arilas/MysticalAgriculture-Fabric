@@ -28,8 +28,8 @@ public class SouliumSpawnerScreen extends BaseContainerScreen<SouliumSpawnerCont
     protected void init() {
         super.init();
 
-        int x = this.getLeftPos();
-        int y = this.getTopPos();
+        int x = this.leftPos;
+        int y = this.topPos;
 
         this.tile = this.getTileEntity();
 
@@ -44,8 +44,8 @@ public class SouliumSpawnerScreen extends BaseContainerScreen<SouliumSpawnerCont
 
     @Override
     protected void extractTooltip(GuiGraphicsExtractor gfx, int mouseX, int mouseY) {
-        int x = this.getLeftPos();
-        int y = this.getTopPos();
+        int x = this.leftPos;
+        int y = this.topPos;
 
         super.extractTooltip(gfx, mouseX, mouseY);
 
@@ -71,8 +71,8 @@ public class SouliumSpawnerScreen extends BaseContainerScreen<SouliumSpawnerCont
     public void extractBackground(GuiGraphicsExtractor gfx, int mouseX, int mouseY, float partialTicks) {
         super.extractBackground(gfx, mouseX, mouseY, partialTicks);
 
-        int x = this.getLeftPos();
-        int y = this.getTopPos();
+        int x = this.leftPos;
+        int y = this.topPos;
 
         if (this.menu.getFuelItemValue() > 0) {
             int i = this.getBurnLeftScaled(13);
@@ -88,7 +88,7 @@ public class SouliumSpawnerScreen extends BaseContainerScreen<SouliumSpawnerCont
     }
 
     private SouliumSpawnerTileEntity getTileEntity() {
-        var level = this.getMinecraft().level;
+        var level = this.minecraft.level;
 
         if (level != null) {
             var tile = level.getBlockEntity(this.getMenu().getBlockPos());
@@ -146,8 +146,8 @@ public class SouliumSpawnerScreen extends BaseContainerScreen<SouliumSpawnerCont
         var translation = new Vector3f(0.0F, entityRenderState.boundingBoxHeight / 2.0F, 0.0F);
         var rotation = new Quaternionf().rotateY(20F).rotateZ((float) Math.PI);
 
-        int x = this.getLeftPos();
-        int y = this.getTopPos();
+        int x = this.leftPos;
+        int y = this.topPos;
 
         if (isHoveringSlot(x + 134, y + 52, mouseX, mouseY)) {
             extractSlotHighlightBack(gfx, x + 130, y + 48);

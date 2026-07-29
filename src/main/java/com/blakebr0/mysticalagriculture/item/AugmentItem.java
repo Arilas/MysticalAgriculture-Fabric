@@ -10,7 +10,10 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.TooltipDisplay;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class AugmentItem extends BaseItem implements IAugmentProvider {
@@ -48,5 +51,16 @@ public class AugmentItem extends BaseItem implements IAugmentProvider {
     @Override
     public Augment getAugment() {
         return this.augment;
+    }
+
+    @Override
+    public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+        return Optional.of(new AugmentTooltipData(List.copyOf(this.augment.getAugmentTypes())));
+    }
+
+    public record AugmentTooltipData(List<com.blakebr0.mysticalagriculture.api.tinkering.AugmentType> types) implements TooltipComponent {
+        public AugmentTooltipData {
+            types = List.copyOf(types);
+        }
     }
 }

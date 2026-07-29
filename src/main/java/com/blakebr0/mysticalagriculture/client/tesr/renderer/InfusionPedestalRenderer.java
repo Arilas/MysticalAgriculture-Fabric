@@ -43,7 +43,7 @@ public class InfusionPedestalRenderer implements BlockEntityRenderer<InfusionPed
 
     @Override
     public void submit(InfusionPedestalRenderState state, PoseStack matrix, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        if (!state.itemResource.isEmpty()) {
+        if (!state.itemResource.isBlank()) {
             matrix.pushPose();
             matrix.translate(0.5D, 1.2D, 0.5D);
             float scale = state.itemResource.getItem() instanceof BlockItem blockItem && !(blockItem.getBlock() instanceof CropBlock) ? 0.55F : 0.35F;

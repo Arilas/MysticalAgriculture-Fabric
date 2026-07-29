@@ -9,19 +9,20 @@ import com.blakebr0.mysticalagriculture.client.tesr.renderer.InfusionPedestalRen
 import com.blakebr0.mysticalagriculture.client.tesr.renderer.SouliumSpawnerRenderer;
 import com.blakebr0.mysticalagriculture.client.tesr.renderer.TinkeringTableRenderer;
 import com.blakebr0.mysticalagriculture.init.ModTileEntities;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 
 public final class ModTESRs {
-    @SubscribeEvent
-    public void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(ModTileEntities.INFUSION_PEDESTAL, InfusionPedestalRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.INFUSION_ALTAR, InfusionAltarRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.TINKERING_TABLE, TinkeringTableRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.ENCHANTER, EnchanterRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.AWAKENING_PEDESTAL, AwakeningPedestalRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.AWAKENING_ALTAR, AwakeningAltarRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.ESSENCE_VESSEL, EssenceVesselRenderer::new);
-        event.registerBlockEntityRenderer(ModTileEntities.SOULIUM_SPAWNER, SouliumSpawnerRenderer::new);
+    private ModTESRs() {
+    }
+
+    public static void register() {
+        BlockEntityRenderers.register(ModTileEntities.INFUSION_PEDESTAL, InfusionPedestalRenderer::new);
+        BlockEntityRenderers.register(ModTileEntities.INFUSION_ALTAR, InfusionAltarRenderer::new);
+        BlockEntityRenderers.register(ModTileEntities.TINKERING_TABLE, TinkeringTableRenderer::new);
+        BlockEntityRenderers.register(ModTileEntities.ENCHANTER, EnchanterRenderer::new);
+        BlockEntityRenderers.register(ModTileEntities.AWAKENING_PEDESTAL, AwakeningPedestalRenderer::new);
+        BlockEntityRenderers.register(ModTileEntities.AWAKENING_ALTAR, AwakeningAltarRenderer::new);
+        BlockEntityRenderers.register(ModTileEntities.ESSENCE_VESSEL, EssenceVesselRenderer::new);
+        BlockEntityRenderers.register(ModTileEntities.SOULIUM_SPAWNER, SouliumSpawnerRenderer::new);
     }
 }

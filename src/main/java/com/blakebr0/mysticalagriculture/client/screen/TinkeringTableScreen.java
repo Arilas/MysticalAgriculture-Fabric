@@ -27,8 +27,8 @@ public class TinkeringTableScreen extends BaseContainerScreen<TinkeringTableCont
     public void extractBackground(GuiGraphicsExtractor gfx, int mouseX, int mouseY, float a) {
         super.extractBackground(gfx, mouseX, mouseY, a);
 
-        int x = this.getLeftPos();
-        int y = this.getTopPos();
+        int x = this.leftPos;
+        int y = this.topPos;
 
         for (var slot : this.menu.slots) {
             if (slot.isActive() && slot instanceof IToggleableSlot) {

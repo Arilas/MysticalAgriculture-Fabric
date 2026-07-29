@@ -19,7 +19,6 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.block.CropBlock;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -43,7 +42,7 @@ public class AwakeningAltarRenderer implements BlockEntityRenderer<AwakeningAlta
 
         var inventory = tile.getInventory();
 
-        state.itemResource = inventory.getResource(1).isEmpty() ? inventory.getResource(0) : inventory.getResource(1);
+        state.itemResource = inventory.getResource(1).isBlank() ? inventory.getResource(0) : inventory.getResource(1);
         state.pedestalPositions = tile.getPedestalPositions();
 
         int seed = HashCommon.long2int(state.blockPos.asLong());
@@ -52,7 +51,11 @@ public class AwakeningAltarRenderer implements BlockEntityRenderer<AwakeningAlta
 
         var level = tile.getLevel();
 
-        for (int i = 0; i < state.pedestalPositions.size(); i++) {
+        for (int i = 0; i < state.blockModelRenderStates.length; i++) {
+            state.renderGhosts[i] = false;
+        }
+
+        for (int i = 0; i < Math.min(state.pedestalPositions.size(), state.blockModelRenderStates.length); i++) {
             var aoePos = state.pedestalPositions.get(i);
             if (level != null && level.isEmptyBlock(aoePos)) {
                 var block = i % 2 == 0
@@ -60,13 +63,14 @@ public class AwakeningAltarRenderer implements BlockEntityRenderer<AwakeningAlta
                         : ModBlocks.ESSENCE_VESSEL.defaultBlockState();
 
                 this.blockModelResolver.update(state.blockModelRenderStates[i], block, BlockDisplayContext.create());
+                state.renderGhosts[i] = true;
             }
         }
     }
 
     @Override
     public void submit(AwakeningAltarRenderState state, PoseStack matrix, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        if (!state.itemResource.isEmpty()) {
+        if (!state.itemResource.isBlank()) {
             matrix.pushPose();
             matrix.translate(0.5D, 1.1D, 0.5D);
             float scale = state.itemResource.getItem() instanceof BlockItem blockItem && !(blockItem.getBlock() instanceof CropBlock) ? 0.55F : 0.35F;
@@ -81,7 +85,10 @@ public class AwakeningAltarRenderer implements BlockEntityRenderer<AwakeningAlta
         matrix.pushPose();
         matrix.translate(-state.blockPos.getX(), -state.blockPos.getY(), -state.blockPos.getZ());
 
-        for (int i = 0; i < state.blockModelRenderStates.length; i++) {
+        for (int i = 0; i < Math.min(state.blockModelRenderStates.length, state.pedestalPositions.size()); i++) {
+            if (!state.renderGhosts[i])
+                continue;
+
             var blockModelRenderState = state.blockModelRenderStates[i];
             var aoePos = state.pedestalPositions.get(i);
 
@@ -100,10 +107,5 @@ public class AwakeningAltarRenderer implements BlockEntityRenderer<AwakeningAlta
     @Override
     public boolean shouldRenderOffScreen() {
         return true;
-    }
-
-    @Override
-    public AABB getRenderBoundingBox(AwakeningAltarTileEntity tile) {
-        return AABB.INFINITE;
     }
 }
